@@ -7,7 +7,7 @@ Created on Sat Jun 01 23:13:36 2013
 
 from sympy import pi,sign,sympify,simplify
 from symoro import *
-from cartpole import *
+from RX90 import *
 
 q = var('Q0:{0}'.format(NJ))
 qp = var('QP0:{0}'.format(NJ))
@@ -81,8 +81,9 @@ for j in reversed(range(NJ)):
         nej[i] += antAj[j]*nj[j] + hat(antPj[j])*fi[j]
 for j in range(NJ):
     if sigm[j] != 2:
-        GAM[j] = sym_replace((sigm[j]*fj[j] + (1-sigm[j])*nj[j])[2],sydi,'GAM',[j])
-# + FS[j]*sign(qp[j]) +                               FV[j]*qp[j] + IA[j]*qdp[j]
-for j in range(NJ):
-    print  'GAM{0}'.format(j), '=', simplify(unfold(GAM[j],sydi))
+        GAM[j] = sym_replace((sigm[j]*fj[j]+(1-sigm[j])*nj[j])[2]+FS[j]*sign(qp[j])+
+                                FV[j]*qp[j]+IA[j]*qdp[j],sydi,'GAM',[j])
+
+#for j in range(NJ):
+#    print  'GAM{0}'.format(j), '=', simplify(unfold(GAM[j],sydi))
 
