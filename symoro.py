@@ -80,43 +80,59 @@ def trig_replace(M,sym_dict,angle,number,disp = True):
 def mat_trig_replace(M,sym_dict,index_list,theta,alpha,gamma,disp = True):
     number = ''
     angle = Integer(0)
-    for index in index_list:
-
-        if not sympify(theta[index]).is_constant():
-            M = trig_replace(M,sym_dict,theta[index],index,disp)
-        if not sympify(alpha[index]).is_constant():
-            M = trig_replace(M,sym_dict,alpha[index],index,disp)
-        if not sympify(gamma[index]).is_constant():
-            M = trig_replace(M,sym_dict,gamma[index],index,disp)
-            if alpha[index] == 0:
+    for j in index_list:
+        index = j + 1
+        if not sympify(theta[j]).is_constant():
+            M = trig_replace(M,sym_dict,theta[j],index,disp)
+        if not sympify(alpha[j]).is_constant():
+            M = trig_replace(M,sym_dict,alpha[j],index,disp)
+        if not sympify(gamma[j]).is_constant():
+            M = trig_replace(M,sym_dict,gamma[j],index,disp)
+            if alpha[j] == 0:
                 number = 'G{0}{1}'.format(index,number)
-                angle += gamma[index]
-
+                angle += gamma[j]
         number = '{0}{1}'.format(index,number)
-        angle += theta[index]
-        if angle != theta[index] and not sympify(angle).is_constant():
+        angle += theta[j]
+        if angle != theta[j] and not sympify(angle).is_constant():
             M = trig_replace(M,sym_dict,angle,number)
     return M
 
-def sym_replace(old_sym, sym_dict, name,index_list = [],disp = True):
-    for i in index_list:
-        name = '{0}{1}'.format(name,i)
-    new_sym = var(name)
-    sym_dict[new_sym] = old_sym
-    if disp:
-        print new_sym, '=', old_sym
-    return new_sym
+def sym_replace(old_sym, sym_dict, name,index = None, index_list = [],disp = True,forced = False):
+    if old_sym.count_ops() != 0 and old_sym.count_ops() != 0 or forced:
+        if index != None:
+            name = '{0}{1}'.format(name,index)
+        else:
+            for i in index_list:
+                name = '{0}{1}'.format(name,i)
+        new_sym = var(name)
+        sym_dict[new_sym] = old_sym
+        if disp:
+            print new_sym, '=', old_sym
+        return new_sym
+    else:
+        return old_sym
 
-def mat_sym_replace(M, sym_dict, name='MATRIX',index_list = [], disp = True):
+def mat_sym_replace(M, sym_dict, name='MATRIX',index = None, disp = True):
     for i1 in range(M.shape[0]):
         for i2 in range(M.shape[1]):
             if M[i1,i2].count_ops() != 0 and (-M[i1,i2]).count_ops() != 0:
                 if M.shape[1] > 1:
-                    indeces = index_list + [i1+1,i2+1]
+                    indeces = [i1+1,i2+1]
                 else:
-                    indeces = index_list + [i1+1]
-                M[i1,i2] = sym_replace(M[i1,i2],sym_dict, name,indeces,disp)
-
+                    indeces = [i1+1]
+                if index != None:
+                    indeces.append(index)
+                M[i1,i2] = sym_replace(M[i1,i2],sym_dict, name,index_list=indeces,disp = disp)
+    return M
+    
+def matsymm_sym_replace(M, sym_dict, name='MATRIX',index = None, disp = True):
+    for i2 in range(M.shape[1]):
+        for i1 in range(i2,M.shape[0]):
+            indeces = [i1+1,i2+1]
+            if index != None:
+                indeces.append(index)
+            M[i1,i2] = sym_replace(M[i1,i2],sym_dict, name,index_list=indeces,disp = disp)
+            M[i2,i1] = M[i1,i2]
     return M
 
 def unfold(expr,symb_dict):
