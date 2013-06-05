@@ -4,9 +4,9 @@ Created on Wed May 29 20:26:47 2013
 
 @author: Bogdqn
 """
-from sympy import pi, sign, zeros
+from sympy import sign, zeros
 from symoro import *
-from cartpole import *
+from acrobat import *
 
 wi = [zeros(3,1) for i in range(NL+1)]
 w = [zeros(3,1) for i in range(NL+1)]
@@ -84,9 +84,7 @@ jvej = [zeros(6,1) for i in range(NL+1)] #Jj*aj
 grandKj = [zeros(6) for i in range(NL+1)] 
 grandwj = [0 for i in range(NL+1)]
 alphaj = [zeros(6,1) for i in range(NL+1)]
-IA = var('IA0:{0}'.format(NL+1))
-FS = var('FS0:{0}'.format(NL+1))
-FV = var('FV0:{0}'.format(NL+1))
+
 #phi is jaj
 for j in reversed(range(NL)):
     index = num[j]

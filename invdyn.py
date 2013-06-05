@@ -5,9 +5,9 @@ Created on Sat Jun 01 23:13:36 2013
 @author: Bogdqn
 """
 
-from sympy import pi,sign,sympify,simplify
+from sympy import sign, zeros
 from symoro import *
-from cartpole import *
+from acrobat import *
 
 w = [zeros(3,1) for i in num]
 wi = [zeros(3,1) for i in num]
