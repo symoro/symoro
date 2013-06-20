@@ -7,7 +7,7 @@ Created on Wed May 29 19:57:45 2013
 from sympy import Matrix, eye, zeros, sin, cos, Integer, var, trigsimp, sympify
 
 axis_dict = {'x':0,'y':1,'z':2}
-
+           
 def get_r(T):
     return T[:3,:3]
 
@@ -97,14 +97,11 @@ def mat_trig_replace(M,sym_dict,index_list,theta,alpha,gamma,disp = True):
             M = trig_replace(M,sym_dict,angle,number)
     return M
 
-def sym_replace(old_sym, sym_dict, name,index = None, index_list = [],disp = True,forced = False):
-    if old_sym.count_ops() != 0 and old_sym.count_ops() != 0 or forced:
+def sym_replace(old_sym,sym_dict,name,index='',disp=True,forced=False):
+    if old_sym.count_ops() != 0 and (-old_sym).count_ops() != 0 or forced:
         if index != None:
-            name = '{0}{1}'.format(name,index)
-        else:
-            for i in index_list:
-                name = '{0}{1}'.format(name,i)
-        new_sym = var(name)
+            name_index = name+str(index)
+        new_sym = var(name_index)
         sym_dict[new_sym] = old_sym
         if disp:
             print new_sym, '=', old_sym
@@ -112,26 +109,22 @@ def sym_replace(old_sym, sym_dict, name,index = None, index_list = [],disp = Tru
     else:
         return old_sym
 
-def mat_sym_replace(M, sym_dict, name='MATRIX',index = None, disp = True):
+def mat_sym_replace(M,sym_dict,name='MATRIX',index = '',disp = True):
     for i1 in range(M.shape[0]):
         for i2 in range(M.shape[1]):
             if M[i1,i2].count_ops() != 0 and (-M[i1,i2]).count_ops() != 0:
                 if M.shape[1] > 1:
-                    indeces = [i1+1,i2+1]
+                    name_index = name+str(i1+1)+str(i2+1)
                 else:
-                    indeces = [i1+1]
-                if index != None:
-                    indeces.append(index)
-                M[i1,i2] = sym_replace(M[i1,i2],sym_dict, name,index_list=indeces,disp = disp)
+                    name_index = name+str(i1+1)
+                M[i1,i2] = sym_replace(M[i1,i2],sym_dict, name_index,index,disp = disp)
     return M
     
-def matsymm_sym_replace(M, sym_dict, name='MATRIX',index = None, disp = True):
+def matsymm_sym_replace(M, sym_dict, name='MATRIX',index = '',disp = True):
     for i2 in range(M.shape[1]):
         for i1 in range(i2,M.shape[0]):
-            indeces = [i1+1,i2+1]
-            if index != None:
-                indeces.append(index)
-            M[i1,i2] = sym_replace(M[i1,i2],sym_dict, name,index_list=indeces,disp = disp)
+            name_index = name+str(i1+1)+str(i2+1)
+            M[i1,i2] = sym_replace(M[i1,i2],sym_dict, name_index,index,disp = disp)
             M[i2,i1] = M[i1,i2]
     return M
 
@@ -144,3 +137,9 @@ def mat_unfold(M,symb_dict):
     for i1 in range(M.shape[0]):
         for i2 in range(M.shape[1]):
             M[i1,i2] = unfold(M[i1,i2],symb_dict)
+
+#P = Matrix(var('PX,PY,PZ'))
+#ang = var('theta,R,alpha,D,gamma,B')
+#T = transform(ang[0],ang[1],ang[2],ang[3],ang[4],ang[5],True)
+#print get_r(T)*P + get_p(T)
+#print transform(ang[0],ang[1],ang[2],ang[3],ang[4],ang[5])#*rot_trans(axis = 'x',th = var('a2'))

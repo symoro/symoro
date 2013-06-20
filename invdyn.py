@@ -7,7 +7,7 @@ Created on Sat Jun 01 23:13:36 2013
 
 from sympy import sign, zeros
 from symoro import *
-from acrobat import *
+from cartpole import *
 
 w = [zeros(3,1) for i in num]
 wi = [zeros(3,1) for i in num]
@@ -75,10 +75,10 @@ for j in range(NL):
     index = num[j]
     if sigm[j] != 2:
         GAM[j] = sym_replace((sigm[j]*fj[j]+(1-sigm[j])*nj[j])[2]+FS[j]*sign(qp[j])+
-                                FV[j]*qp[j]+IA[j]*qdp[j],sydi,'GAM',index)
+                                FV[j]*qp[j]+IA[j]*qdp[j],sydi,'GAM',index,forced = True)
 
-for j in range(NL):
-    print  'GAM{0}'.format(num[j]), '=', unfold(GAM[j],sydi)
+#for j in range(NL):
+#    print  'GAM{0}'.format(num[j]), '=', unfold(GAM[j],sydi)
 
 #    DV11 = sym_replace(-w[j][0]*w[j][0],sydi,'DV11',index)
 #    DV22 = sym_replace(-w[j][1]*w[j][1],sydi,'DV22',index)

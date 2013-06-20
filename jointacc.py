@@ -6,7 +6,7 @@ Created on Wed May 29 20:26:47 2013
 """
 from sympy import sign, zeros
 from symoro import *
-from acrobat import *
+from cartdpole import *
 
 wi = [zeros(3,1) for i in range(NL+1)]
 w = [zeros(3,1) for i in range(NL+1)]
@@ -34,13 +34,13 @@ for j in range(NL):
     wi[j] = mat_sym_replace(jAant*want,sydi,'WI',index)
     w[j] = mat_sym_replace(wi[j] + (1-sigm[j])*Matrix([0,0,qp[j]]),sydi,'W',index)
     quantT = mat_sym_replace(-jAant*hat(antPj[j]),sydi,'JPR',index)
-    jTant[j] = (Matrix([jAant.row_join(zeros(3)),
-                    quantT.row_join(jAant)]))
-    if sigm[j] == 1:
+    jTant[j] = (Matrix([jAant.row_join(quantT),
+                    zeros(3).row_join(jAant)]))
+    if sigm[j] == 0:
         phij[j] = Matrix([0,0,0,0,0,1])
         lamdaj[j] = GAM[j]
         effejppj[j] = Matrix([0,0,0,0,0,GAM[j]])
-    elif sigm[j] == 0:
+    elif sigm[j] == 1:
         phij[j] = Matrix([0,0,1,0,0,0])
         lamdaj[j] = GAM[j]
         effejppj[j] = Matrix([0,0,GAM[j],0,0,0])
@@ -61,7 +61,7 @@ for j in range(NL):
     member4 = mat_sym_replace(hat(w[j])*member3,sydi,'SW',index)
     member5 = -nej[j]-member2
     member6 = -fej[j]-member4
-    vecbetetoil[j] = Matrix([member5,member6])
+    vecbetetoil[j] = Matrix([member6,member5])
     if ant[j] != -1:
         want = w[ant[j]]
     else:
@@ -73,10 +73,10 @@ for j in range(NL):
     quant5 = hat(want)*quant4
     quant6 = antAj[j].T*quant5
     quant7 = mat_sym_replace(quant6+quant3,sydi,'LW',index)
-    gamaj[j] = Matrix([quant2,quant7])
+    gamaj[j] = Matrix([quant7,quant2])
 
     #TODO ask about this matrix, the meaning
-    matMJetoil[j] = Matrix([J[j].row_join(hat(MS[j])),hat(MS[j]).T.row_join(M[j]*eye(3))])
+    matMJetoil[j] = Matrix([(M[j]*eye(3)).row_join(hat(MS[j]).T),hat(MS[j]).row_join(J[j])])
 
 jdej = [0 for i in range(NL+1)] #1/Hj
 juj= [zeros(6,1) for i in range(NL+1)] #Jj*aj/Hj
@@ -129,7 +129,7 @@ for j in range(NL):
     if ant[j] != -1:
         grandVpant = grandVp[ant[j]]
     else:
-        grandVpant = Matrix([WP0,VP0-G])
+        grandVpant = Matrix([VP0-G,WP0])
     grandRj[j] = mat_sym_replace(jTant[j]*grandVpant+gamaj[j],sydi,'VR',index)
        
     member1 = sym_replace(juj[j].dot(grandRj[j]),sydi,'GU',index)
@@ -141,14 +141,14 @@ for j in range(NL):
        
     qdp[j] = sym_replace(qdp[j],sydi,"QDP",index)
     grandVp[j] = (grandRj[j] + qdp[j]*phij[j]) 
-    grandVp[j][:3,0] = mat_sym_replace(grandVp[j][:3,0],sydi,'WP',index)
-    grandVp[j][3:,0] = mat_sym_replace(grandVp[j][3:,0],sydi,'VP',index)
+    grandVp[j][3:,0] = mat_sym_replace(grandVp[j][3:,0],sydi,'WP',index)
+    grandVp[j][:3,0] = mat_sym_replace(grandVp[j][:3,0],sydi,'VP',index)
  
 for j in range(NL):
     index = num[j]
     member3 = mat_sym_replace(matMJetoil[j]*grandVp[j],sydi,'DY',index)
     couplforce = member3 - vecbetetoil[j];
-    mat_sym_replace(couplforce[:3,0],sydi,'N',index)
-    mat_sym_replace(couplforce[3:,0],sydi,'E',index)
+    mat_sym_replace(couplforce[3:,0],sydi,'N',index)
+    mat_sym_replace(couplforce[:3,0],sydi,'E',index)
             
        
