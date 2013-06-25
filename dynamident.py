@@ -1,19 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Sat Jun 08 07:35:39 2013
 
-@author: Bogdqn
-"""
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Jun 01 23:13:36 2013
-
-@author: Bogdqn
-"""
-
+from copy import deepcopy
 from sympy import sign, zeros
 from symoro import *
-from RX90 import *
+from cartpole import *
 
 w = [zeros(3,1) for i in num]
 wi = [zeros(3,1) for i in num]
@@ -27,13 +17,10 @@ effappj = [zeros(3,1) for i in num]
 antAj = [zeros(3,3) for i in num]
 antPj = [zeros(3,1) for i in num]
 U = [zeros(3,3) for i in num]
-F = [zeros(3,1) for i in num]
-Psi = [zeros(3,1) for i in num]
-N = [zeros(3,1) for i in num]
 fj = [zeros(3,1) for i in num]
 fi = [zeros(3,1) for i in num]
 nj = [zeros(3,1) for i in num]
-GAM = [zeros(NL,13) for i in num]
+GAM_calc = [zeros(NL,13) for i in num]
 sydi = {}
 tridi = {}
 for j in range(NL):
@@ -66,16 +53,19 @@ for j in range(NL):
                                 sydi,'VP',index)                         
  
 def get_dyn_param(P):
-    J = Matrix([[P[0],P[1],P[2]],
+    Ji = Matrix([[P[0],P[1],P[2]],
                 [P[1],P[3],P[4]],
                 [P[2],P[4],P[5]]])
-    MS = Matrix(3,1,P[6:9])
-    M = P[9]
-    return J,MS,M
+    MSi = Matrix(3,1,P[6:9])
+    Mi = P[9]
+    return Ji,MSi,Mi
     
 for k in range(NL):
     param_vec = [J[k][0],J[k][1],J[k][2],J[k][4],J[k][5],J[k][8],
                  MS[k][0],MS[k][1],MS[k][2],M[k]]
+    F = [zeros(3,1) for i in num]
+    Psi = [zeros(3,1) for i in num]
+    N = [zeros(3,1) for i in num]
     for i in range(10):
         if param_vec[i] == Integer(0):
             continue
@@ -83,32 +73,34 @@ for k in range(NL):
         mask = zeros(10,1)
         mask[i] = 1
         J_tmp,MS_tmp,M_tmp = get_dyn_param(mask)
-        F[j] = mat_sym_replace(M_tmp*vp[j] + U[j]*MS_tmp,sydi,'F',index)
-        Psi[j] = mat_sym_replace(J_tmp*w[j],sydi,'PSI',index)
-        N[j] = mat_sym_replace(J_tmp*wp[j] + hat(w[j])*Psi[j] + hat(MS_tmp)*vp[j],
+        F[k] = mat_sym_replace(M_tmp*vp[k] + U[k]*MS_tmp,sydi,'F',index)
+        Psi[k] = mat_sym_replace(J_tmp*w[k],sydi,'PSI',index)
+        N[k] = mat_sym_replace(J_tmp*wp[k] + hat(w[k])*Psi[k] + hat(MS_tmp)*vp[k],
                             sydi,'No',index)
-                        
+        fej = deepcopy(f_ext)
+        nej = deepcopy(n_ext)
         for j in reversed(range(k+1)):
             index = str(num[j])+str(param_vec[i])
             fj[j] = mat_sym_replace(F[j] + fej[j],sydi,'E',index)
             nj[j] = mat_sym_replace(N[j] + nej[j],sydi,'N',index)
             aj = ant[j]
             if aj != -1:
-                fej[aj] = antAj[j]*fj[j]
-                nej[aj] = antAj[j]*nj[j] + hat(antPj[j])*fi[j]
+                fej[aj] += antAj[j]*fj[j]
+                nej[aj] += antAj[j]*nj[j] + hat(antPj[j])*fi[j]
         for j in range(k+1):
             index = str(num[j])+str(param_vec[i])
             if sigm[j] != 2:
-                GAM[j][k,i] = sym_replace((sigm[j]*fj[j]+(1-sigm[j])*nj[j])[2],sydi,'DG',index,forced = True)
-        
+                tau = (sigm[j]*fj[j]+(1-sigm[j])*nj[j])
+                GAM_calc[j][k,i] = sym_replace(tau[2],sydi,'DG',index,forced=True)
+    
     if IA[k] != Integer(0) and qdp[k] != Integer(0):
         index = str(num[k])+str(IA[k])
-        GAM[k][k,10] = sym_replace(qdp[k],sydi,'DG',index,forced = True)
+        GAM_calc[k][k,10] = sym_replace(qdp[k],sydi,'DG',index,forced=True)
         
-    if FS[k] != Integer(0) and qp[k] != Integer(0):
-        index = str(num[k])+str(IA[k])
-        GAM[k][k,10] = sym_replace(sign(qp[k]),sydi,'DG',index,forced = True)
+    if FS[k] != Integer(0) and sign(qp[k]) != Integer(0):
+        index = str(num[k])+str(FS[k])
+        GAM_calc[k][k,10] = sym_replace(sign(qp[k]),sydi,'DG',index,forced=True)
         
     if FV[k] != Integer(0) and qp[k] != Integer(0):
-        index = str(num[k])+str(IA[k])
-        GAM[k][k,10] = sym_replace(qp[k],sydi,'DG',index,forced = True)
+        index = str(num[k])+str(FV[k])
+        GAM_calc[k][k,10] = sym_replace(qp[k],sydi,'DG',index,forced=True)

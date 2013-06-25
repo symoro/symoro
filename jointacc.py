@@ -6,7 +6,7 @@ Created on Wed May 29 20:26:47 2013
 """
 from sympy import sign, zeros
 from symoro import *
-from cartdpole import *
+from cartpole import *
 
 wi = [zeros(3,1) for i in range(NL+1)]
 w = [zeros(3,1) for i in range(NL+1)]
@@ -59,8 +59,8 @@ for j in range(NL):
     member2 = mat_sym_replace(hat(w[j])*member1,sydi,'KW',index)
     member3 = hat(w[j])*MS[j]
     member4 = mat_sym_replace(hat(w[j])*member3,sydi,'SW',index)
-    member5 = -nej[j]-member2
-    member6 = -fej[j]-member4
+    member5 = -n_ext[j]-member2
+    member6 = -f_ext[j]-member4
     vecbetetoil[j] = Matrix([member6,member5])
     if ant[j] != -1:
         want = w[ant[j]]
@@ -75,7 +75,6 @@ for j in range(NL):
     quant7 = mat_sym_replace(quant6+quant3,sydi,'LW',index)
     gamaj[j] = Matrix([quant7,quant2])
 
-    #TODO ask about this matrix, the meaning
     matMJetoil[j] = Matrix([(M[j]*eye(3)).row_join(hat(MS[j]).T),hat(MS[j]).row_join(J[j])])
 
 jdej = [0 for i in range(NL+1)] #1/Hj

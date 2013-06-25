@@ -89,9 +89,9 @@ def mat_trig_replace(M,sym_dict,index_list,theta,alpha,gamma,disp = True):
         if not sympify(gamma[j]).is_constant():
             M = trig_replace(M,sym_dict,gamma[j],index,disp)
             if alpha[j] == 0:
-                number = 'G{0}{1}'.format(index,number)
+                number = 'G' + str(index) + number
                 angle += gamma[j]
-        number = '{0}{1}'.format(index,number)
+        number = str(index)+number
         angle += theta[j]
         if angle != theta[j] and not sympify(angle).is_constant():
             M = trig_replace(M,sym_dict,angle,number)
