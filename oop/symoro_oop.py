@@ -1,152 +1,194 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed May 29 19:57:45 2013
-
-@author: Bogdqn
-"""
-from sympy import Matrix, eye, zeros, sin, cos, Integer, var, trigsimp, sympify
+from sympy import Matrix,eye,zeros,sin,cos,var,trigsimp,sympify,pi,sign
 
 axis_dict = {'x':0,'y':1,'z':2}
 
 class Robot:
-    def __init__(self,NL,sigm,ant,theta,r,alpha,d,gamma=[],b=[],J=[],MS=[],M=[],G=Matrix([0,0,var('G3')]),
-                 GAM=[],W0=zeros(3,1),WP0=zeros(3,1),V0=zeros(3,1),VP0=zeros(3,1),q=[],qdot=[],
-                qddot=[],nej=[],fej=[],FS=[],FV=[],IA=[]):
-        self.NL = NL
-        self.sigm = sigm
-        self.ant = ant
-        self.theta = theta
-        self.r = r
-        self.alpha = alpha
-        self.d = d
-        self.set_def_attr('gamma',gamma,[Integer(0) for i in self.num])
-        self.set_def_attr('b',b,[Integer(0) for i in self.num])
-        self.W0 = W0
-        self.WP0 = WP0
-        self.V0 = V0
-        self.VP0 = VP0
-        self.num = range(1,len(sigm)+1)
-        self.set_def_attr('q',q,[var('q{0}'.format(i)) for i in self.num])
-        self.set_def_attr('qd',qd,[var('qdot{0}'.format(i)) for i in self.num])
-        self.set_def_attr('qddot',qddot,[var('qddot{0}'.format(i)) for i in self.num])
-        
-        self.G = G
-        self.set_def_attr('nej',nej,[zeros(3,1) for i in self.num])
-        self.set_def_attr('fej',fej,[zeros(3,1) for i in self.num])
-        self.set_def_attr('FS',FS,[Integer(0) for i in self.num])
-        self.set_def_attr('FV',FV,[Integer(0) for i in self.num])
-        self.set_def_attr('IA',FS,[Integer(0) for i in self.num])
-        
-        self.set_def_attr('M',M,[var('M{0}'.format(i)) for i in self.num])
-        self.set_def_attr('MS',MS,[Matrix(var('MX{0},MY{0},MZ{0}'.format(i))) for i in self.num])
-        self.set_def_attr('J',J,[Matrix(3,3,var(('XX{0},XY{0},XZ{0},'
-                            'XY{0},YY{0},YZ{0},'
-                            'XZ{0},YZ{0},ZZ{0}').format(i))) for i in self.num])
-        
-    def set_def_attr(self,attr,value,def_value):
-       if value == []:
-           setattr(self,attr,def_value)
-       else:
-           setattr(self,attr,value)
-         
-         
+    NL = None
+    NJ = None
+    sigma = None
+    ant = None
+    num = None
+    theta = None
+    r = None
+    alpha = None
+    d = None
+    gamma = None
+    b = None
+    J = None
+    MS = None
+    M = None
+    G = None 
+    GAM = None
+    W0 = None
+    WP0 = None
+    V0 = None
+    VP0 = None
+    qdot = None
+    qddot = None
+    n_ext = None
+    f_ext = None
+    FS = None
+    FV = None
+    IA = None
+
+    def fric_v(self,j):
+        return self.FV[j]*self.qdot[j]
+    
+    def fric_s(self,j):
+        return self.FS[j]*sign(self.qdot[j])
+
+    def tau_ia(self,j):
+        return self.IA[j]*self.qddot[j]
+    
+    def transform(self,index,invert=False):
+        if not invert:
+            R1 = rot_trans('z',self.gamma[index],self.b[index])
+            R2 = rot_trans('x',self.alpha[index],self.d[index])
+            R3 = rot_trans('z',self.theta[index],self.r[index])
+            return R1*R2*R3
+        else:
+            R1 = rot_trans('z',-self.gamma[index],-self.b[index])
+            R2 = rot_trans('x',-self.alpha[index],-self.d[index])
+            R3 = rot_trans('z',-self.theta[index],-self.r[index])
+            return R3*R2*R1
+            
+    def get_angles(self,index):
+        return (self.gamma[index],self.alpha[index],self.theta[index])
+
+def CartPole():
+    robo = Robot()
+    robo.ant = (-1,0)
+    robo.sigma = (1,0)
+    robo.alpha = (pi/2,pi/2)
+    robo.d = (0,0)
+    robo.theta = (pi/2,var('th'))
+    robo.r = (var('x'),0)
+    robo.b = (0,0)
+    robo.gamma = (0,0)
+    robo.num = range(1,3)
+    robo.NJ = 2
+    robo.NL = 2
+    robo.n_ext = [zeros(3,1) for i in robo.num]
+    robo.f_ext = [zeros(3,1) for i in robo.num]
+    robo.FS = [0 for i in robo.num]
+    robo.IA = [0 for i in robo.num]
+    robo.FV = [0 for i in robo.num]
+    robo.MS = [zeros(3,1) for i in robo.num]
+    robo.MS[1][0] = var('m2l')
+    robo.M = [var('m{0}'.format(i)) for i in robo.num]
+    robo.GAM = [var('u'),0]
+    robo.J = [zeros(3) for i in robo.num]
+    robo.J[1][2,2] = var('m2ll')
+    robo.G = Matrix([0,0,-var('g')])
+    robo.W0 = zeros(3,1)
+    robo.WP0 = zeros(3,1)
+    robo.V0 = zeros(3,1)
+    robo.VP0 = zeros(3,1)
+    robo.q = var('x,th')
+    robo.qdot =  var('xd,thd')
+    robo.qddot = var('xdd,thdd')        
+    return robo
+    
+  
+def RX90():
+    robo = Robot()
+    #table of geometric parameters RX90
+    robo.NJ = 6
+    robo.NL = 6
+    robo.num = range(1,robo.NJ+1)
+    robo.ant = (-1,0,1,2,3,4)
+    robo.sigma = (0,0,0,0,0,0)
+    robo.alpha = (0,pi/2,0,-pi/2,pi/2,-pi/2)
+    robo.d = (0,0,var('D3'),0,0,0)
+    robo.theta = list(var('th1:7'))
+    robo.r = (0,0,0,var('RL4'),0,0)
+    robo.b = (0,0,0,0,0,0)
+    robo.gamma = (0,0,0,0,0,0)    
+    robo.W0 = zeros(3,1)
+    robo.WP0 = zeros(3,1)
+    robo.V0 = zeros(3,1)
+    robo.VP0 = zeros(3,1)    
+    robo.q = [var('Q{0}'.format(i)) for i in robo.num]
+    robo.qdot =  [var('QP{0}'.format(i)) for i in robo.num]
+    robo.qddot = [var('QDP{0}'.format(i)) for i in robo.num]    
+    robo.n_ext= [zeros(3,1) for i in robo.num]
+    robo.n_ext[-1] = Matrix(var('CX{0},CY{0},CZ{0}'.format(robo.num[-1])))
+    robo.f_ext = [zeros(3,1) for i in robo.num]
+    robo.f_ext[-1] = Matrix(var('FX{0},FY{0},FZ{0}'.format(robo.num[-1])))
+    robo.FS = var('FS0:{0}'.format(robo.NL))
+    robo.IA = var('IA0:{0}'.format(robo.NL))
+    robo.FV = var('FV0:{0}'.format(robo.NL))
+    robo.MS = [Matrix(var('MX{0},MY{0},MZ{0}'.format(i))) for i in robo.num]
+    robo.M = [var('M{0}'.format(i)) for i in robo.num]
+    robo.GAM = [0 for i in robo.num]
+    robo.J = [Matrix(3,3,var(('XX{0},XY{0},XZ{0},'
+                        'XY{0},YY{0},YZ{0},'
+                        'XZ{0},YZ{0},ZZ{0}').format(i))) for i in robo.num]
+    robo.G = Matrix([0,0,var('G3')])
+    return robo
+
+#section GEOMETRIC
+def rot(axis = 'z',th = 0):
+    if axis == 'x':
+        return  Matrix([[1,0,0],
+                        [0,cos(th),-sin(th)],
+                        [0,sin(th),cos(th)]])
+    elif axis == 'y':
+        return  Matrix([[cos(th),0,sin(th)],
+                        [0,1,0],
+                        [-sin(th),0,cos(th)]])
+    else:
+        return  Matrix([[cos(th),-sin(th),0],
+                        [sin(th),cos(th),0],
+                        [0,0,1]])
+
+def trans_vect(axis = 'z',p = 0):
+    v = zeros(3,1)
+    v[axis_dict[axis]] = p
+    return v
+
+def trans(axis = 'z',p = 0):
+    return Matrix([eye(3).row_join(trans_vect(axis,p)),
+                       [0,0,0,1]])
+
+def rot_trans(axis = 'z',th = 0,p = 0):
+    return Matrix([rot(axis,th).row_join(trans_vect(axis,p)),
+                       [0,0,0,1]])
+#endsection GEOMETRIC
+                       
+#section MISCELANOUS
 def get_r(T):
     return T[:3,:3]
 
 def get_p(T):
     return T[:3,3]
 
-#????????????????????????????????
-def screw_transform(T):
-    R, P = get_rp(T)
-    return screw_transf_rp(R,P)
-
-#??????????????????????????????????
-def screw_transf_rp(R,P):
-    return Matrix([R.row_join(-R*hat(P)),zeros(3).row_join(R)])
-
 def hat(v):
     return Matrix([[0,-v[2],v[1]],
                    [v[2],0,-v[0]],
                    [-v[1],v[0],0]])
-
-def rot(axis = 'z', th = 0):
-    if axis == 'x':
-        return  Matrix([[1, 0, 0],
-                        [0, cos(th),-sin(th)],
-                        [0, sin(th), cos(th)]])
-    elif axis == 'y':
-        return  Matrix([[cos(th), 0, sin(th)],
-                        [0, 1, 0],
-                        [-sin(th),0, cos(th)]])
-    else:
-        return  Matrix([[cos(th),-sin(th), 0],
-                        [sin(th),cos(th), 0],
-                        [0,0, 1]])
-
-def trans_vect(axis = 'z', p = 0):
-    v = zeros(3,1)
-    v[axis_dict[axis]] = p
-    return v
-
-def trans(axis = 'z', p = 0):
-    return Matrix([eye(3).row_join(trans_vect(axis,p)),
-                       [0,0,0,1]])
-
-def rot_trans(axis='z', th=0, p=0):
-    return Matrix([rot(axis,th).row_join(trans_vect(axis,p)),
-                       [0,0,0,1]])
-
-def transform(theta, r, alpha, d, gamma=0, b=0, invert = False):
-    if not invert:
-        return rot_trans('z',gamma,b)*rot_trans('x',alpha,d)*rot_trans('z',theta,r)
-    else:
-        return rot_trans('z',-theta,-r)*rot_trans('x',-alpha,-d)*rot_trans('z',-gamma,-b)
 
 def mat_trigsimp(M):
     for i1 in range(M.shape[0]):
         for i2 in range(M.shape[1]):
             M[i1,i2] = trigsimp(M[i1,i2])
 
-def trig_replace(M,sym_dict,angle,number,disp = True):
-#    print number
-    sin_sym,cos_sym = var('S{0},C{0}'.format(number))
+def trig_replace(M,sym_dict,angle,name,disp = True):
+    if sympify(angle).is_constant():
+        return M
+    cos_sym = var('C'+str(name))
+    sin_sym = var('S'+str(name))
     sym_dict[cos_sym] = cos(angle)
     sym_dict[sin_sym] = sin(angle)
     if disp:
-        print cos_sym, '=', sym_dict[cos_sym]
-        print sin_sym, '=', sym_dict[sin_sym]
-    return M.subs({sym_dict[sin_sym]:sin_sym, sym_dict[cos_sym]:cos_sym})
+        print cos_sym,'=',sym_dict[cos_sym]
+        print sin_sym,'=',sym_dict[sin_sym]
+    return M.subs({sym_dict[sin_sym]:sin_sym,sym_dict[cos_sym]:cos_sym})
 
-
-def mat_trig_replace(M,sym_dict,index_list,theta,alpha,gamma,disp = True):
-    number = ''
-    angle = Integer(0)
-    for j in index_list:
-        index = j + 1
-        if not sympify(theta[j]).is_constant():
-            M = trig_replace(M,sym_dict,theta[j],index,disp)
-        if not sympify(alpha[j]).is_constant():
-            M = trig_replace(M,sym_dict,alpha[j],index,disp)
-        if not sympify(gamma[j]).is_constant():
-            M = trig_replace(M,sym_dict,gamma[j],index,disp)
-            if alpha[j] == 0:
-                number = 'G{0}{1}'.format(index,number)
-                angle += gamma[j]
-        number = '{0}{1}'.format(index,number)
-        angle += theta[j]
-        if angle != theta[j] and not sympify(angle).is_constant():
-            M = trig_replace(M,sym_dict,angle,number)
-    return M
-
-def sym_replace(old_sym, sym_dict, name,index = None, index_list = [],disp = True,forced = False):
-    if old_sym.count_ops() != 0 and old_sym.count_ops() != 0 or forced:
-        if index != None:
-            name = '{0}{1}'.format(name,index)
-        else:
-            for i in index_list:
-                name = '{0}{1}'.format(name,i)
-        new_sym = var(name)
+def sym_replace(old_sym,sym_dict,name,index='',disp=True,forced=False):
+    if old_sym.count_ops() != 0 and (-old_sym).count_ops() != 0 or forced:
+        name_index = name+str(index)
+        new_sym = var(name_index)
         sym_dict[new_sym] = old_sym
         if disp:
             print new_sym, '=', old_sym
@@ -154,26 +196,21 @@ def sym_replace(old_sym, sym_dict, name,index = None, index_list = [],disp = Tru
     else:
         return old_sym
 
-def mat_sym_replace(M, sym_dict, name='MATRIX',index = None, disp = True):
+def sym_mat_replace(M,sym_dict,name,index = '',disp = True,forced = False):
     for i1 in range(M.shape[0]):
         for i2 in range(M.shape[1]):
-            if M[i1,i2].count_ops() != 0 and (-M[i1,i2]).count_ops() != 0:
-                if M.shape[1] > 1:
-                    indeces = [i1+1,i2+1]
-                else:
-                    indeces = [i1+1]
-                if index != None:
-                    indeces.append(index)
-                M[i1,i2] = sym_replace(M[i1,i2],sym_dict, name,index_list=indeces,disp = disp)
+            if M.shape[1] > 1:
+                name_index = name+str(i1+1)+str(i2+1)
+            else:
+                name_index = name+str(i1+1)
+            M[i1,i2] = sym_replace(M[i1,i2],sym_dict,name_index,index,disp,forced)
     return M
     
-def matsymm_sym_replace(M, sym_dict, name='MATRIX',index = None, disp = True):
+def sym_mats_replace(M,sym_dict,name,index = '',disp = True,forced = False):
     for i2 in range(M.shape[1]):
         for i1 in range(i2,M.shape[0]):
-            indeces = [i1+1,i2+1]
-            if index != None:
-                indeces.append(index)
-            M[i1,i2] = sym_replace(M[i1,i2],sym_dict, name,index_list=indeces,disp = disp)
+            name_index = name+str(i1+1)+str(i2+1)
+            M[i1,i2] = sym_replace(M[i1,i2],sym_dict,name_index,index,disp,forced)
             M[i2,i1] = M[i1,i2]
     return M
 
