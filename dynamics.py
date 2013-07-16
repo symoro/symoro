@@ -7,9 +7,10 @@ Needed modules : symoro_oop.py
 
 ECN - ARIA1 2013
 """
-from sympy import sign,eye,zeros,Matrix,Integer,var
+from sympy import sign,eye,zeros,Matrix,Integer
 from symoro import Symoro,RX90,CartPole
 from copy import copy
+from geometric import transform,dgm_serial
 
 chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 
@@ -422,7 +423,7 @@ def compute_transform(robo,symo,j,antRj,antPj):
     antPj and antRj are the output parameters
     """
     robo.num[j] = robo.num[j]
-    antTj = robo.transform(j)
+    antTj = transform(robo,j)
     for angle,name in robo.get_angles(j):
         antTj = symo.trig_replace(antTj,angle,name)
     antRj[j] = symo.mat_replace(get_r(antTj),'A',robo.num[j])
@@ -887,13 +888,8 @@ def group_param_prism(robo,symo,j,antRj):
     robo.J[robo.ant[j]] += antJj
     robo.J[j] = zeros(3,3)  
 
-print 'Direct geometric model'
-symo = Symoro()
 robo = RX90()
-symo.file_open(robo,'dgm')
-symo.write_geom_param(robo,'Direct Geometrix model')
-RX90().dgm_serial(symo, - 1,5,True)
-                    
+     
 print 'Inverse dynamic model using Newton - Euler Algorith'
 inverse_dynamic_NE(robo)
 

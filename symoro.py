@@ -6,7 +6,7 @@ The core symbolic library is sympy.
 
 ECN - ARIA1 2013
 """
-from sympy import Matrix,eye,zeros,sin,cos,var,sympify,pi,sign,Integer
+from sympy import Matrix,zeros,sin,cos,var,sympify,pi,sign,Integer
 
 class Robot:
     """Container of the robot parametric description. 
@@ -120,33 +120,6 @@ class Robot:
             Expression for actuator inertia torque of joint j        
         """
         return self.IA[j]*self.qddot[j]
-    
-    def transform(self,j,invert=False):
-        """Transform matrix between frames j and ant[j]
-        
-        Parameters
-        ==========
-        j : int
-            Frame index.
-        invert : bool, optional
-            Defines the transformation direction
-            
-        Returns
-        =======
-        transform : Matrix 4x4
-            Transformation matrix. If invert is True then j_T_ant,
-            else ant_T_j.
-        """
-        if not invert:
-            R1 = rot_trans('z',self.gamma[j],self.b[j])
-            R2 = rot_trans('x',self.alpha[j],self.d[j])
-            R3 = rot_trans('z',self.theta[j],self.r[j])
-            return R1*R2*R3
-        else:
-            R1 = rot_trans('z', - self.gamma[j], - self.b[j])
-            R2 = rot_trans('x', - self.alpha[j], - self.d[j])
-            R3 = rot_trans('z', - self.theta[j], - self.r[j])
-            return R3*R2*R1
             
     def get_angles(self,j):
         """List of non-constant angles of frame j
@@ -217,90 +190,6 @@ class Robot:
                 return j
             j = self.ant[j]
         return  - 1
-    
-    def dgm_serial(self,symo,k,j,fast_form = True):
-        """Low-level Direct Geometric Model. For serial structures only.
-        Used in Robot.dgm.
-        
-        Parameters
-        ==========
-        symo : Symoro
-            Instance of Symoro. All the substitutions will be put into symo.sydi
-        k : int
-            To-frame index.
-        j : int
-            From-frame index.
-        fast_form : bool, optional
-            if False, result will be in unfolded mode (triginimetric 
-            substitutions only)
-            
-        Returns
-        =======
-        T_res : Matrix 4x4
-            Transformation matrix k_T_j
-        """
-        invert = (k > j)
-        u = self.chain(max(j,k),min(j,k))
-        if invert:
-            u = reversed(u)
-        T_res = eye(4)
-        T = eye(4)
-        syms_CS = []
-        names = []
-        for e2 in u:
-            Te = self.transform(e2,invert)
-            if invert:
-                T = T*Te
-            else:
-                T = Te*T
-            for ang,name in self.get_angles(e2):
-                T = symo.trig_replace(T,ang,name,syms = syms_CS)
-                names.append(name)
-                if len(names) == 2 and len(syms_CS) == 4:
-                    name = names[1] + names[0]
-                    syms_CS =symo.mat_CS12_simp(T,syms_CS,name)
-                    names = [name]
-            if self.alpha[e2] == 0 and self.ant[e2] != k:
-                continue           
-            if invert:
-                T_res = T_res*T
-            else:
-                T_res = T*T_res
-            T = eye(4)
-            syms_CS = []
-            names = []
-            #make substitution with saving the var to the dictionary
-            if self.ant[e2] != k and fast_form: 
-                name = 'U{0}T{1}'.format(self.num[self.ant[e2]],self.num[j])
-                symo.mat_replace(T_res,name)
-        name = 'T{0}T{1}'.format(self.num[k],self.num[j])
-        symo.mat_replace(T_res,name,forced = True,skip = 1)
-        return T_res
-    
-    def dgm(self,symo,i,j,fast_form = True):
-        """Direct Geometric Model.
-        
-        Parameters
-        ==========
-        symo : Symoro
-            Instance of Symoro. All the substitutions will be put into symo.sydi
-        i : int
-            To-frame index.
-        j : int
-            From-frame index.
-        fast_form : bool, optional
-            if False, result will be in unfolded mode (triginimetric 
-            substitutions only)
-            
-        Returns
-        =======
-        T_res : Matrix 4x4
-            Transformation matrix k_T_j
-        """
-        k = self.common_root(i,j)
-        kTj = self.dgm_serial(symo,k,j,False,fast_form)
-        iTk = self.dgm_serial(symo,k,i,True,fast_form)
-        return iTk*kTj
     
     def put_dynam_param(self,K,j):
         """Write the inertia parameters of link j from 10-vector K.
@@ -524,89 +413,6 @@ def RX90():
     robo.G = Matrix([0,0,var('G3')])
     robo.num.append(0)  
     return robo
-
-#section: GEOMETRIC
-def rot(axis = 'z',th = 0):
-    """Rotation matrix about axis
-    
-    Parameters
-    ==========
-    axis : {'x','y','z'}
-        Rotation axis
-    th : var
-        Rotation angle
-        
-    Returns
-    =======
-    rot : Matrix 3x3
-    """
-    if axis == 'x':
-        return  Matrix([[1,0,0],
-                        [0,cos(th), - sin(th)],
-                        [0,sin(th),cos(th)]])
-    elif axis == 'y':
-        return  Matrix([[cos(th),0,sin(th)],
-                        [0,1,0],
-                        [ - sin(th),0,cos(th)]])
-    else:
-        return  Matrix([[cos(th), - sin(th),0],
-                        [sin(th),cos(th),0],
-                        [0,0,1]])
-
-def trans_vect(axis = 'z',p = 0):
-    """Translation vector along axis
-    
-    Parameters
-    ==========
-    axis : {'x','y','z'}
-        Translation axis
-    p : var
-        Translation distance
-        
-    Returns
-    =======
-    v : Matrix 3x1
-    """
-    axis_dict = {'x':0,'y':1,'z':2}
-    v = zeros(3,1)
-    v[axis_dict[axis]] = p
-    return v
-
-def trans(axis = 'z',p = 0):
-    """Translation matrix along axis
-    
-    Parameters
-    ==========
-    axis : {'x','y','z'}
-        Translation axis
-    p : var
-        Translation distance
-        
-    Returns
-    =======
-    trans : Matrix 4x4
-    """
-    return Matrix([eye(3).row_join(trans_vect(axis,p)),
-                       [0,0,0,1]])
-
-def rot_trans(axis = 'z',th = 0,p = 0):
-    """Transformation matrix with rotation about and translation along axis
-    
-    Parameters
-    ==========
-    axis : {'x','y','z'}
-        Transformation axis
-    p : var
-        Translation distance
-    th : var
-        Rotation angle
-        
-    Returns
-    =======
-    rot_trans : Matrix 4x4
-    """
-    return Matrix([rot(axis,th).row_join(trans_vect(axis,p)),
-                       [0,0,0,1]])
 
 def l2str(l,spacing = 7):
     """Converts a list into string, that will be written into the text table.
