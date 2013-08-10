@@ -201,6 +201,9 @@ sdist/
 develop-eggs/
 models/
 old/
+validation/
+symoro math/
+Test RX90/
 .installed.cfg
 
 # Installer logs
