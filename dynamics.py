@@ -11,9 +11,8 @@ import sympy
 from sympy import Matrix
 from symoro import Symoro, Robot, Init, hat, ZERO
 from copy import copy, deepcopy
-from geometry import get_kRj, z_paral, find_r12
-from geometry import compute_screw_transform
-from kinematics import rotatrions_translations, speeds_accelerations, compute_omega
+from geometry import compute_screw_transform, compute_rot_trans, Transform
+from kinematics import compute_speeds_accelerations, compute_omega
 
 chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 inert_names = ('XXR', 'XYR', 'XZR', 'YYR', 'YZR',
@@ -35,20 +34,20 @@ def Newton_Euler(robo, symo):
     Fex = copy(robo.Fex)
     Nex = copy(robo.Nex)
     #init transformation
-    antRj, antPj = rotatrions_translations(robo, symo)
+    antRj, antPj = compute_rot_trans(robo, symo)
     #init velocities and accelerations
-    w, wdot, vdot, U = speeds_accelerations(robo, symo, antRj, antPj)
+    w, wdot, vdot, U = compute_speeds_accelerations(robo, symo, antRj, antPj)
     #init forces vectors
     F = Init.init_vec(robo)
     N = Init.init_vec(robo)
     Fjnt = Init.init_vec(robo)
     Njnt = Init.init_vec(robo)
-    for j in range(robo.NL):
+    for j in xrange(robo.NL):
         compute_wrench(robo, symo, j, w, wdot, U, vdot, F, N)
-    for j in reversed(range(robo.NL)):
+    for j in reversed(xrange(robo.NL)):
         compute_joint_wrench(robo, symo, j, antRj, antPj, vdot,
                              Fjnt, Njnt, F, N, Fex, Nex)
-    for j in range(robo.NL):
+    for j in xrange(robo.NL):
         compute_torque(robo, symo, j, Fjnt, Njnt)
 
 def dynamic_identification_NE(robo):
@@ -74,26 +73,26 @@ def dynamic_identification_NE(robo):
     symo.file_open(robo, 'dim')
     title = "Dynamic identification model using Newton - Euler Algorith"
     symo.write_dynam_param(robo, title)
-    
+
     #init transformation
-    antRj, antPj = rotatrions_translations(robo, symo)
+    antRj, antPj = compute_rot_trans(robo, symo)
     #init velocities and accelerations
-    w, wdot, vdot, U = speeds_accelerations(robo, symo, antRj, antPj)
+    w, wdot, vdot, U = compute_speeds_accelerations(robo, symo, antRj, antPj)
     #virtual robot with only one non-zero parameter at once
     robo_tmp = deepcopy(robo)
     robo_tmp.IA = sympy.zeros(robo.NL, 1)
     robo_tmp.FV = sympy.zeros(robo.NL, 1)
     robo_tmp.FS = sympy.zeros(robo.NL, 1)
-    for k in range(robo.NL):
+    for k in xrange(robo.NL):
         param_vec = robo.get_dynam_param(k)
         F = Init.init_vec(robo)
         N = Init.init_vec(robo)
-        for i in range(10):
+        for i in xrange(10):
             if param_vec[i] == ZERO:
                 continue
             #change link names according to current non-zero parameter
             robo_tmp.num = [str(robo.num[l]) + str(param_vec[i])
-                            for l in range(k + 1)]
+                            for l in xrange(k + 1)]
             #set the parameter to 1
             mask = sympy.zeros(10, 1)
             mask[i] = 1
@@ -103,10 +102,10 @@ def dynamic_identification_NE(robo):
             #init external forces
             Fex = copy(robo.Fex)
             Nex = copy(robo.Nex)
-            for j in reversed(range(k + 1)):
-                compute_joint_wrench(robo_tmp, symo, j, antRj, antPj, 
+            for j in reversed(xrange(k + 1)):
+                compute_joint_wrench(robo_tmp, symo, j, antRj, antPj,
                                      vdot, Fjnt, Njnt, F, N, Fex, Nex)
-            for j in range(k + 1):
+            for j in xrange(k + 1):
                 compute_torque(robo_tmp, symo, j, Fjnt, Njnt, 'DG')
         #reset all the parameters to zero
         robo_tmp.put_dynam_param(sympy.zeros(10, 1), k)
@@ -135,7 +134,8 @@ def direct_dynamic_NE(robo):
     symo.sydi : dictionary
         Dictionary with the information of all the sybstitution
     """
-    wi = Init.init_vec(robo) #antecedent angular velocity, projected into jth frame
+    wi = Init.init_vec(robo)
+        #antecedent angular velocity, projected into jth frame
     w = Init.init_w(robo)
     jaj = Init.init_vec(robo, 6)
     jTant = Init.init_mat(robo, 6) #Twist transform list of Matrices 6x6
@@ -149,31 +149,31 @@ def direct_dynamic_NE(robo):
     grandVp.append(Matrix([robo.vdot0 - robo.G, robo.w0]))
     symo = Symoro()
     symo.file_open(robo, 'ddm')
-    symo.write_dynam_param(robo, 
-                           'Direct dynamic model using Newton - Euler Algorith')
+    symo.write_dynam_param(robo,
+        'Direct dynamic model using Newton - Euler Algorith')
     #init transformation
-    antRj, antPj = rotatrions_translations(robo, symo)
-    for j in range(robo.NL):
+    antRj, antPj = compute_rot_trans(robo, symo)
+    for j in xrange(robo.NL):
         compute_omega(robo, symo, j, antRj, w, wi)
         compute_screw_transform(robo, symo, j, antRj, antPj, jTant)
         if robo.sigma[j] == 0:
             jaj[j] = Matrix([0, 0, 0, 0, 0, 1])
         elif robo.sigma[j] == 1:
             jaj[j] = Matrix([0, 0, 1, 0, 0, 0])
-    for j in range(robo.NL):
+    for j in xrange(robo.NL):
         compute_beta(robo, symo, j, w, beta_star)
         compute_link_acc(robo, symo, j, antRj, antPj, link_acc, w, wi)
         grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
-    for j in reversed(range(robo.NL)):
+    for j in reversed(xrange(robo.NL)):
         replace_beta_J_star(robo, symo, j, grandJ, beta_star)
         compute_Tau(robo, symo, j, grandJ, beta_star, jaj, juj, H_inv, Tau)
         if robo.ant[j] != - 1:
-            compute_beta_J_star(robo, symo, j, grandJ, jaj, juj, Tau, 
+            compute_beta_J_star(robo, symo, j, grandJ, jaj, juj, Tau,
                         beta_star, jTant, link_acc)
-    for j in range(robo.NL):
+    for j in xrange(robo.NL):
         compute_acceleration(robo, symo, j, jTant, grandVp,
                              juj, H_inv, jaj, Tau, link_acc)
-    for j in range(robo.NL):
+    for j in xrange(robo.NL):
         compute_coupled_forces(robo, symo, j, grandVp, grandJ, beta_star)
     symo.file_out.close()
     return symo
@@ -200,12 +200,12 @@ def inertia_matrix(robo):
     symo.file_open(robo, 'inm')
     symo.write_dynam_param(robo, 'Inertia Matrix using composite links')
     #init transformation
-    antRj, antPj = rotatrions_translations(robo, symo)
-    for j in reversed(range( - 1, robo.NL)):
+    antRj, antPj = compute_rot_trans(robo, symo)
+    for j in reversed(xrange(-1, robo.NL)):
         replace_Jplus(robo, symo, j, Jplus, MSplus, Mplus)
         if j != - 1:
             compute_Jplus(robo, symo, j, antRj, antPj, Jplus, MSplus, Mplus, AJE1)
-    for j in range(robo.NL):
+    for j in xrange(robo.NL):
         compute_A_diagonal(robo, symo, j, Jplus, MSplus, Mplus, f, n, A)
         ka = j
         while ka != - 1:
@@ -234,8 +234,8 @@ def inverse_dynamic_NE(robo):
     """
     symo = Symoro()
     symo.file_open(robo, 'idm')
-    symo.write_dynam_param(robo, 
-                           'Inverse dynamic model using Newton - Euler Algorith')
+    symo.write_dynam_param(robo,
+        'Inverse dynamic model using Newton - Euler Algorith')
     Newton_Euler(robo, symo)
     symo.file_out.close()
     return symo
@@ -258,7 +258,7 @@ def pseudo_force_NE(robo):
     robo_pseudo.qddot = sympy.zeros(robo_pseudo.NL, 1)
     symo = Symoro()
     symo.file_open(robo, 'ccg')
-    symo.write_dynam_param(robo, 
+    symo.write_dynam_param(robo,
                            'Pseudo forces using Newton - Euler Algorith')
     Newton_Euler(robo_pseudo, symo)
     symo.file_out.close()
@@ -350,7 +350,7 @@ def compute_link_acc(robo, symo, j, antRj, antPj, link_acc, w, wi):
     =====
     link_acc is the output parameter
     """
-    E1 = symo.mat_replace(hat(wi[j])*Matrix([0, 0, robo.qdot[j]]), 
+    E1 = symo.mat_replace(hat(wi[j])*Matrix([0, 0, robo.qdot[j]]),
                              'WQ', robo.num[j])
     E2 = (1 - robo.sigma[j])*E1
     E3 = 2*robo.sigma[j]*E1
@@ -361,7 +361,8 @@ def compute_link_acc(robo, symo, j, antRj, antPj, link_acc, w, wi):
     link_acc[j] = Matrix([E7, E2])
 
 def replace_beta_J_star(robo, symo, j, grandJ, beta_star):
-    """Internal function. Makes symbol substitution in beta_star and grandJ
+    """Internal function. Makes symbol substitution in beta_star
+    and grandJ
     """
     grandJ[j] = symo.mat_replace(grandJ[j], 'MJE', robo.num[j], symmet = True)
     beta_star[j] = symo.mat_replace(beta_star[j], 'VBE', robo.num[j])
@@ -385,7 +386,7 @@ def compute_Tau(robo, symo, j, grandJ, beta_star, jaj, juj, H_inv, Tau):
         Tau[j] = jaj[j].dot(beta_star[j]) + robo.GAM[j] - joint_friction
         Tau[j] = symo.replace(Tau[j], 'GW', robo.num[j])
 
-def compute_beta_J_star(robo, symo, j, grandJ, jaj, juj, Tau, 
+def compute_beta_J_star(robo, symo, j, grandJ, jaj, juj, Tau,
                         beta_star, jTant, link_acc):
     """Internal function. Computes intermediat dynamic variables
 
@@ -412,7 +413,7 @@ def compute_acceleration(robo, symo, j, jTant, grandVp,
     =====
     grandVp is the output parameter
     """
-    grandR = symo.mat_replace(jTant[j]*grandVp[robo.ant[j]] + link_acc[j], 
+    grandR = symo.mat_replace(jTant[j]*grandVp[robo.ant[j]] + link_acc[j],
                               'VR', robo.num[j])
     E1 = symo.replace(juj[j].dot(grandR), 'GU', robo.num[j])
     if robo.sigma[j] == 2:
@@ -502,8 +503,8 @@ def compute_A_triangle(robo, symo, j, k, ka, antRj, antPj, f, n, A, AJE1):
 
 #TODO:Finish base parameters computation
 def base_paremeters(robo_orig):
-    """Computes grouped inertia parameters. New parametrization contains
-    less parameters but generates the same dynamic model
+    """Computes grouped inertia parameters. New parametrization
+    contains less parameters but generates the same dynamic model
 
     Parameters
     ==========
@@ -516,13 +517,13 @@ def base_paremeters(robo_orig):
         Dictionary with the information of all the sybstitution
     """
     robo = copy(robo_orig)
-    lam = [0 for i in range(robo.NL)]
+    lam = [0 for i in xrange(robo.NL)]
     symo = Symoro()
     symo.file_open(robo, 'regp')
     symo.write_dynam_param(robo, 'Base parameters computation')
     #init transformation
-    antRj, antPj = rotatrions_translations(robo, symo)
-    for j in reversed(range(robo.NL)):
+    antRj, antPj = compute_rot_trans(robo, symo)
+    for j in reversed(xrange(robo.NL)):
         if robo.sigma[j] == 0:
             #general grouping
             compute_lambda(robo, symo, j, antRj, antPj, lam)
@@ -588,7 +589,8 @@ def vec_mut_M(P):
     return  Matrix([U[0, 0], U[0, 1], U[0, 2], U[1, 1], U[1, 2], U[2, 2]])
 
 def compute_lambda(robo, symo, j, antRj, antPj, lam):
-    """Internal function. Computes the inertia parameters transformation matrix
+    """Internal function. Computes the inertia parameters
+    transformation matrix
 
     Notes
     =====
@@ -596,13 +598,13 @@ def compute_lambda(robo, symo, j, antRj, antPj, lam):
     """
     lamJJ_list = []
     lamJMS_list = []
-    for e1 in range(3):
-        for e2 in range(e1, 3):
+    for e1 in xrange(3):
+        for e2 in xrange(e1, 3):
             u = vec_mut_J(antRj[j][:, e1], antRj[j][:, e2])
             if e1 != e2:
                 u += vec_mut_J(antRj[j][:, e2], antRj[j][:, e1])
             lamJJ_list.append(u.T)
-    for e1 in range(3):
+    for e1 in xrange(3):
         v = vec_mut_MS(antRj[j][:, e1], antPj[j])
         lamJMS_list.append(v.T)
     lamJJ = Matrix(lamJJ_list).T #, 'LamJ', robo.num[j])
@@ -625,7 +627,7 @@ def group_param_rot(robo, symo, j, lam):
     Kj = robo.get_dynam_param(j)
 
     lam03 = lam[j][:, 0] + lam[j][:, 3]
-    symo.mat_C2S2_simp(lam03)
+    lam03 = lam03.applyfunc(symo.C2S2_simp)
     for i in (3, 8, 9):
         Kj[i] = symo.replace(Kj[i], inert_names[i], robo.num[j])
     if robo.ant[j] != -1:
@@ -647,17 +649,18 @@ def group_param_rot_spec(robo, symo, j, lam, antRj):
     robo is the output paramete
     """
     chainj = robo.chain(j)
-    r1, r2, orthog = find_r12(robo, chainj, antRj, j)
-    kRj, all_paral = get_kRj(robo, antRj, r1, chainj)
+    r1, r2, orthog = Transform.find_r12(robo, chainj, antRj, j)
+    kRj, all_paral = Transform.kRj(robo, antRj, r1, chainj)
     Kj = robo.get_dynam_param(j)
     to_replace = {0, 1, 2, 4, 5, 6, 7}
-    if z_paral(kRj):
+    if Transform.z_paral(kRj):
         Kj[0] = 0   #XX
         Kj[1] = 0   #XY
         Kj[2] = 0   #XZ
         Kj[4] = 0   #YZ
         to_replace -= {0, 1, 2, 4}
-    if all_paral and robo.G.norm() == sympy.Abs(antRj[chainj[-1]].col(2).dot(robo.G)):
+    joint_axis = antRj[chainj[-1]].col(2)
+    if all_paral and robo.G.norm() == sympy.Abs(joint_axis.dot(robo.G)):
         Kj[6] = 0   #MX
         Kj[7] = 0   #MY
         to_replace -= {6, 7}
@@ -679,7 +682,7 @@ def group_param_fix(robo, symo, j, lam):
     robo is the output paramete
     """
     Kj = robo.get_dynam_param(j)
-    for i in range(10):
+    for i in xrange(10):
         Kj[i] = symo.replace(Kj[i], inert_names[i], robo.num[j])
     if robo.ant[j] != -1:
         Kant = robo.get_dynam_param(robo.ant[j])
@@ -696,7 +699,7 @@ def group_param_prism(robo, symo, j, antRj):
     robo is the output paramete
     """
     Kj = robo.get_dynam_param(j)
-    for i in range(6):
+    for i in xrange(6):
         Kj[i] = symo.replace(Kj[i], inert_names[i], robo.num[j])
     robo.put_dynam_param(Kj, j)
     if robo.ant[j] != -1:
@@ -713,12 +716,12 @@ def group_param_prism_spec(robo, symo, j, antRj, antPj):
     robo is the output paramete
     """
     chainj = robo.chain(j)
-    r1, r2, orthog = find_r12(robo, chainj, antRj, j)
+    r1, r2, orthog = Transform.find_r12(robo, chainj, antRj, j)
     Kj = robo.get_dynam_param(j)
-    kRj, all_paral = get_kRj(robo, antRj, r1, chainj)
+    kRj, all_paral = Transform.kRj(robo, antRj, r1, chainj)
     to_replace = {6, 7, 8, 9}
     if r1 < j and j < r2:
-        if z_paral(kRj):
+        if Transform.z_paral(kRj):
             Kj[8] = 0   #MZ
             for i in (6, 7):
                 Kj[i] = symo.replace(Kj[i], inert_names[i], robo.num[j])
@@ -775,3 +778,6 @@ pseudo_force_NE(robo)
 
 print 'Base parameters computation'
 base_paremeters(robo)
+
+#import profile
+#profile.run('direct_dynamic_NE(robo)', sort = 'cumtime')
