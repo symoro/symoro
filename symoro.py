@@ -16,6 +16,8 @@ from sympy import Mul, Add, factor, zeros, var, sympify
 ZERO = Integer(0)
 ONE = Integer(1)
 
+#TODO: __init__ (NJ,NF,NL,is_mobile)
+# Initilize Z by 0 4x4
 class Robot:
     """Container of the robot parametric description.
     Responsible for low-level geometric transformation
@@ -24,73 +26,76 @@ class Robot:
 
     # member variables:
     name = 'Empty'
-    """  name of the robot : string"""
+    """  name of the robot: string"""
+    is_mobile = False
+    """ whethere the base frame is floating: bool"""
     NL = 0
-    """  number of links : int"""
+    """  number of links: int"""
     NJ = 0
-    """  number of joints : int"""
+    """  number of joints: int"""
     NF = 0
-    """  number of frames : int"""
+    """  number of frames: int"""
     sigma = None
-    """  joint type : list of int"""
+    """  joint type: list of int"""
     ant = None
-    """  index of antecedent joint : list of int"""
-    num = None
-    """order numbers of joints (for display purposes) : list of int.
-                The last number corresponds to the base frame -1 """
+    """  index of antecedent joint: list of int"""
+#    num = None
+#    """order numbers of joints (for display purposes): list of int"""
     mu = None
     """motorization, if 1, then the joint im motorized"""
     theta = None
-    """  geometrical parameter : list of var"""
+    """  geometrical parameter: list of var"""
     r = None
-    """  geometrical parameter  : list of var"""
+    """  geometrical parameter: list of var"""
     alpha = None
-    """  geometrical parameter  : list of var"""
+    """  geometrical parameter: list of var"""
     d = None
-    """  geometrical parameter : list of var"""
+    """  geometrical parameter: list of var"""
     gamma = None
-    """  geometrical parameter : list of var"""
+    """  geometrical parameter: list of var"""
     b = None
-    """  geometrical parameter : list of var"""
+    """  geometrical parameter: list of var"""
+    Z = None
+    """ transformation from reference frame to zero frame"""
     J = None
-    """  inertia tensor of link : list of 3x3 matrix"""
+    """  inertia tensor of link: list of 3x3 matrix"""
     MS = None
-    """  first momentum of link : list of 3x1 matrix"""
+    """  first momentum of link: list of 3x1 matrix"""
     M = None
-    """  mass of link : list of var"""
+    """  mass of link: list of var"""
     G = (0, 0, 0)
-    """  gravity vector : 3x1 matrix"""
+    """  gravity vector: 3x1 matrix"""
     GAM = None
-    """  joint torques : list of var"""
+    """  joint torques: list of var"""
     w0 = (0, 0, 0)
-    """  base angular velocity : 3x1 matrix"""
+    """  base angular velocity: 3x1 matrix"""
     wdot0 = (0, 0, 0)
-    """  base angular acceleration : 3x1 matrix"""
+    """  base angular acceleration: 3x1 matrix"""
     v0 = (0, 0, 0)
-    """  base linear velocity : 3x1 matrix"""
+    """  base linear velocity: 3x1 matrix"""
     vdot0 = (0, 0, 0)
-    """  base linear acceleration : 3x1 matrix"""
+    """  base linear acceleration: 3x1 matrix"""
     qdot = None
-    """  joint speed : list of var"""
+    """  joint speed: list of var"""
     qddot = None
-    """  joint acceleration : list of var"""
+    """  joint acceleration: list of var"""
     Nex = None
-    """  external moment of link : list of 3x1 matrix"""
+    """  external moment of link: list of 3x1 matrix"""
     Fex = None
-    """  external force of link : list of 3x1 matrix"""
+    """  external force of link: list of 3x1 matrix"""
     FS = None
-    """  dry friction coefficient : list of ver"""
+    """  dry friction coefficient: list of ver"""
     FV = None
-    """  fluid friction coefficient : list of var"""
+    """  fluid friction coefficient: list of var"""
     IA = None
-    """  joint actuator inertia : list of var"""
+    """  joint actuator inertia: list of var"""
 
     # member methods:
     def get_q_vec(self):
         """Generates vector of joint variables
         """
         q = list()
-        for i in xrange(self.NF):
+        for i in xrange(1, self.NF):
             if self.sigma[i] == 0:
                 q.append(self.theta[i])
             elif self.sigma[i] == 1:
@@ -103,7 +108,7 @@ class Robot:
         """Generates vector of passive joint variables
         """
         q = list()
-        for i in xrange(self.NJ):
+        for i in xrange(1, self.NJ):
             if self.mu[i] == 0:
                 if self.sigma[i] == 0:
                     q.append(self.theta[i])
@@ -115,7 +120,7 @@ class Robot:
         """Generates vector of active joint variables
         """
         q = list()
-        for i in xrange(self.NJ):
+        for i in xrange(1, self.NJ):
             if self.mu[i] == 1:
                 if self.sigma[i] == 0:
                     q.append(self.theta[i])
@@ -128,12 +133,12 @@ class Robot:
 
         Parameters
         ==========
-        j : int
+        j: int
             Joint index.
 
         Returns
         =======
-        fric_v : sympy expression
+        fric_v: sympy expression
             Expression for fluid friction torque of joint j
         """
         return self.FV[j] * self.qdot[j]
@@ -143,12 +148,12 @@ class Robot:
 
         Parameters
         ==========
-        j : int
+        j: int
             Joint index.
 
         Returns
         =======
-        fric_s : sympy expression
+        fric_s: sympy expression
             Expression for dry friction torque of joint j
         """
         return self.FS[j] * sign(self.qdot[j])
@@ -174,12 +179,12 @@ class Robot:
 
         Parameters
         ==========
-        j : int
+        j: int
             Joint index.
 
         Returns
         =======
-        fric_v : sympy expression
+        fric_v: sympy expression
             Expression for actuator inertia torque of joint j
         """
         return self.IA[j] * self.qddot[j]
@@ -189,12 +194,12 @@ class Robot:
 
         Parameters
         ==========
-        j : int
+        j: int
             Frame index.
 
         Returns
         =======
-        get_angles : list of touples (var, name)
+        get_angles: list of touples (var, name)
             Returns list of touples, where:
             var - the angle symbol,
             name - brief name for cos and sin abbreviation
@@ -202,13 +207,12 @@ class Robot:
         angs = []
         if j not in xrange(self.NF):
             return angs
-        index = str(self.num[j])
         if type(self.theta[j]) != int and not self.theta[j].is_number:
-            angs.append((self.theta[j], index))
+            angs.append((self.theta[j], j))
         if type(self.alpha[j]) != int and not self.alpha[j].is_number:
-            angs.append((self.alpha[j], 'A' + index))
+            angs.append((self.alpha[j], 'A%s' % j))
         if type(self.gamma[j]) != int and not self.gamma[j].is_number:
-            angs.append((self.gamma[j], 'G' + index))
+            angs.append((self.gamma[j], 'G%s' % j))
         return angs
 
     def chain(self, j, k=-1):
@@ -216,14 +220,14 @@ class Robot:
 
         Parameters
         ==========
-        j : int
+        j: int
             Start frame index.
-        k : int
+        k: int
             Final frame index.
 
         Returns
         =======
-        u : list of ints
+        u: list of ints
             List of antecedent frames. j is the first index in the list.
             k is not included
         """
@@ -246,14 +250,14 @@ class Robot:
 
         Parameters
         ==========
-        j : int
+        j: int
             Frame index.
-        i : int
+        i: int
             Frame index.
 
         Returns
         =======
-        common_root : int
+        common_root: int
             The highest index of the common frame in chains for i and j.
             If they don't have common root, -1
         """
@@ -264,16 +268,34 @@ class Robot:
             j = self.ant[j]
         return  - 1
 
-    def put_dynam_param(self, K, j):
+    def get_inert_param(self, j):
+        """Returns 10-vector of inertia paremeters of link j.
+
+        Parameters
+        ==========
+        j: int
+            Link index.
+
+        Returns
+        =======
+        get_dynam_param: Matrix 10x1
+        """
+        K = [self.J[j][0], self.J[j][1], self.J[j][2], self.J[j][4],
+                    self.J[j][5], self.J[j][8], self.MS[j][0], self.MS[j][1],
+                    self.MS[j][2], self.M[j]]
+        return Matrix(K)
+
+    def put_inert_param(self, K, j):
         """Write the inertia parameters of link j from 10-vector K.
 
         Parameters
         ==========
-        K : Matrix 10x1
+        K: Matrix 10x1
             Vector of inertia parameters
-        j : int
+        j: int
             Link index.
         """
+        K = [sympify(k) for k in K]
         self.J[j] = Matrix([[K[0], K[1], K[2]],
                     [K[1], K[3], K[4]],
                     [K[2], K[4], K[5]]])
@@ -287,18 +309,18 @@ class Robot:
 
         Returns
         =======
-        get_ext_dynam_head : list of strings
+        get_ext_dynam_head: list of strings
         """
         return ['j', 'FX', 'FY', 'FZ', 'CX', 'CY', 'CZ',
                 'FS', 'FV', 'QP', 'QDP', 'GAM']
 
-    def get_inert_head(self):
+    def get_dynam_head(self):
         """Returns header for inertia parameters.
         Used for output generation.
 
         Returns
         =======
-        get_inert_head : list of strings
+        get_dynam_head: list of strings
         """
         return ['j', 'XX', 'XY', 'XZ', 'YY', 'YZ', 'ZZ',
                 'MX', 'MY', 'MZ', 'M', 'IA']
@@ -309,7 +331,7 @@ class Robot:
 
         Returns
         =======
-        get_geom_head : list of strings
+        get_geom_head: list of strings
         """
         return ['j', 'ant', 'sigma', 'gamma', 'b', 'alpha', 'd', 'theta', 'r']
 
@@ -319,7 +341,7 @@ class Robot:
 
         Returns
         =======
-        get_base_vel_head : list of strings
+        get_base_vel_head: list of strings
         """
         return ['j', 'W0', 'WP0', 'V0', 'VP0', 'G']
 
@@ -329,15 +351,15 @@ class Robot:
 
         Parameters
         ==========
-        j : int
+        j: int
             Frame index.
 
         Returns
         =======
-        params : list
+        params: list
         """
-        params = [self.num[j], self.num[self.ant[j]], self.sigma[j],
-                  self.gamma[j], self.b[j], self.alpha[j], self.d[j],
+        params = [j, self.ant[j], self.sigma[j], self.gamma[j],
+                  self.b[j], self.alpha[j], self.d[j],
                   self.theta[j], self.r[j]]
         return params
 
@@ -348,14 +370,14 @@ class Robot:
 
         Parameters
         ==========
-        j : int
+        j: int
             Link index.
 
         Returns
         =======
-        params : list
+        params: list
         """
-        params = [self.num[j], self.Fex[j][0], self.Fex[j][1], self.Fex[j][2],
+        params = [j, self.Fex[j][0], self.Fex[j][1], self.Fex[j][2],
                   self.Nex[j][0], self.Nex[j][1], self.Nex[j][2],
                   self.FS[j], self.FV[j], self.qdot[j],
                   self.qddot[j], self.GAM[j]]
@@ -368,57 +390,41 @@ class Robot:
 
         Parameters
         ==========
-        j : int
+        j: int
             Link index.
 
         Returns
         =======
-        params : list
+        params: list
         """
         params = [j + 1, self.w0[j], self.wdot0[j], self.v0[j],
                   self.vdot0[j], self.G[j]]
         return params
 
-    def get_inert_param(self, j):
+    def get_dynam_param(self, j):
         """Returns vector of inertia paremeters of link j.
         Used for output generation.
 
         Parameters
         ==========
-        j : int
+        j: int
             Link index.
 
         Returns
         =======
-        params : list
+        params: list
         """
-        params = [self.num[j], self.J[j][0], self.J[j][1], self.J[j][2],
-                  self.J[j][4], self.J[j][5], self.J[j][8], self.MS[j][0],
-                  self.MS[j][1], self.MS[j][2], self.M[j], self.IA[j]]
+        params = [j] + self.get_inert_param(j) + [self.IA[j]]
         return params
 
-    def get_dynam_param(self, j):
-        """Returns 10-vector of inertia paremeters of link j.
 
-        Parameters
-        ==========
-        j : int
-            Link index.
-
-        Returns
-        =======
-        get_dynam_param : Matrix 10x1
-        """
-        K = [self.J[j][0], self.J[j][1], self.J[j][2], self.J[j][4],
-                    self.J[j][5], self.J[j][8], self.MS[j][0], self.MS[j][1],
-                    self.MS[j][2], self.M[j]]
-        return Matrix(K)
 
     @classmethod
     def CartPole(cls):
         """Generates Robot instance of classical
         CartPole dynamic system.
         """
+        #TODO: bring it to the new notation with 0-frame
         robo = Robot()
         robo.name = 'CartPole'
         robo.ant = ( - 1, 0)
@@ -455,9 +461,11 @@ class Robot:
         robo.num.append(0)
         return robo
 
+
     @classmethod
     def SR400(cls):
-        """Generates Robot instance of RX90"""
+        #TODO: bring it to the new notation with 0-frame
+        """Generates Robot instance of SR400"""
         robo = Robot()
         # table of geometric parameters RX90
         robo.name = 'SR400'
@@ -506,39 +514,40 @@ class Robot:
         robo = Robot()
         # table of geometric parameters RX90
         robo.name = 'RX90'
-        robo.NJ = 6
-        robo.NL = 6
-        robo.NF = 6
-        robo.num = range(1, robo.NJ + 1)
-        robo.ant = range( - 1, robo.NJ - 1)
-        robo.sigma = (0, 0, 0, 0, 0, 0)
-        robo.alpha = (0, pi/2, 0, - pi/2, pi/2, - pi/2)
-        robo.d = (0, 0, var('D3'), 0, 0, 0)
-        robo.theta = list(var('th1:7'))
-        robo.r = (0, 0, 0, var('RL4'), 0, 0)
-        robo.b = (0, 0, 0, 0, 0, 0)
-        robo.gamma = (0, 0, 0, 0, 0, 0)
+        robo.NJ = 7
+        robo.NL = 7
+        robo.NF = 7
+        num = range(robo.NL + 1)
+        robo.ant = range( - 1, robo.NJ-1)
+        robo.sigma = (2, 0, 0, 0, 0, 0, 0, 0)
+        robo.alpha = (0, 0, pi/2, 0, - pi/2, pi/2, - pi/2)
+        robo.d = (0, 0, 0, var('D3'), 0, 0, 0)
+        robo.theta = [0] + list(var('th1:7'))
+        robo.r = (0, 0, 0, 0, var('RL4'), 0, 0)
+        robo.b = (0, 0, 0, 0, 0, 0, 0)
+        robo.gamma = (0, 0, 0, 0, 0, 0, 0)
+        robo.mu = (0, 1, 1, 1, 1, 1, 1)
         robo.w0 = zeros(3, 1)
         robo.wdot0 = zeros(3, 1)
         robo.v0 = zeros(3, 1)
         robo.vdot0 = zeros(3, 1)
-        robo.qdot = [var('QP{0}'.format(i)) for i in robo.num]
-        robo.qddot = [var('QDP{0}'.format(i)) for i in robo.num]
-        robo.Nex= [zeros(3, 1) for i in robo.num]
-        robo.Nex[ - 1] = Matrix(var('CX{0}, CY{0}, CZ{0}'.format(robo.num[-1])))
-        robo.Fex = [zeros(3, 1) for i in robo.num]
-        robo.Fex[ - 1] = Matrix(var('FX{0}, FY{0}, FZ{0}'.format(robo.num[-1])))
-        robo.FS = [var('FS{0}'.format(i)) for i in robo.num]
-        robo.IA = [var('IA{0}'.format(i)) for i in robo.num]
-        robo.FV = [var('FV{0}'.format(i)) for i in robo.num]
-        robo.MS = [Matrix(var('MX{0}, MY{0}, MZ{0}'.format(i))) for i in robo.num]
-        robo.M = [var('M{0}'.format(i)) for i in robo.num]
-        robo.GAM = [var('GAM{0}'.format(i)) for i in robo.num]
+        robo.qdot = [var('QP{0}'.format(i)) for i in num]
+        robo.qddot = [var('QDP{0}'.format(i)) for i in num]
+        robo.Nex= [zeros(3, 1) for i in num]
+        robo.Nex[ - 1] = Matrix(var('CX{0}, CY{0}, CZ{0}'.format(robo.NJ)))
+        robo.Fex = [zeros(3, 1) for i in num]
+        robo.Fex[ - 1] = Matrix(var('FX{0}, FY{0}, FZ{0}'.format(robo.NJ)))
+        robo.FS = [var('FS{0}'.format(i)) for i in num]
+        robo.IA = [var('IA{0}'.format(i)) for i in num]
+        robo.FV = [var('FV{0}'.format(i)) for i in num]
+        robo.MS = [Matrix(var('MX{0}, MY{0}, MZ{0}'.format(i))) for i in num]
+        robo.M = [var('M{0}'.format(i)) for i in num]
+        robo.GAM = [var('GAM{0}'.format(i)) for i in num]
         robo.J = [Matrix(3, 3, var(('XX{0}, XY{0}, XZ{0}, '
                             'XY{0}, YY{0}, YZ{0}, '
-                            'XZ{0}, YZ{0}, ZZ{0}').format(i))) for i in robo.num]
+                            'XZ{0}, YZ{0}, ZZ{0}').format(i))) for i in num]
         robo.G = Matrix([0, 0, var('G3')])
-        robo.num.append(0)
+#        robo.num.append(0)
         return robo
 
 class Init:
@@ -551,7 +560,7 @@ class Init:
         =======
         Jplus: list of Matrices 3x3
         MSplus: list of Matrices 3x1
-        Mplus : list of var
+        Mplus: list of var
         """
         Jplus = copy(robo.J)
         Jplus.append(zeros(3, 3))
@@ -568,9 +577,9 @@ class Init:
 
         Parameters
         ==========
-        robo : Robot
+        robo: Robot
             Instance of robot description container
-        N : int, optional
+        N: int, optional
             size of the matries, default is 3
 
         Returns
@@ -586,11 +595,11 @@ class Init:
 
         Parameters
         ==========
-        robo : Robot
+        robo: Robot
             Instance of robot description container
-        N : int, optional
+        N: int, optional
             size of the vectors, default is 3
-        ext : int, optional
+        ext: int, optional
             additional vector instances over number of links
 
         Returns
@@ -625,8 +634,8 @@ class Init:
 
         Returns
         =======
-        vdot : list of Matrices 3x1
-        wdot : list of Matrices 3x1
+        vdot: list of Matrices 3x1
+        wdot: list of Matrices 3x1
         """
         wdot = cls.init_vec(robo)
         wdot.append(robo.wdot0)
@@ -649,12 +658,12 @@ class Init:
 
         Parameters
         ==========
-        v : Matrix 3x1
+        v: Matrix 3x1
             vector
 
         Returns
         =======
-        product_combinations : Matrix 6x1
+        product_combinations: Matrix 6x1
         """
         return Matrix([v[0]*v[0], v[0]*v[1], v[0]*v[2],
                      v[1]*v[1], v[1]*v[2], v[2]*v[2]])
@@ -664,12 +673,12 @@ def hat(v):
 
     Parameters
     ==========
-    v : Matrix 3x1
+    v: Matrix 3x1
         vector
 
     Returns
     =======
-    hat : Matrix 3x3
+    hat: Matrix 3x3
     """
     return Matrix([[0, - v[2], v[1]],
                    [v[2], 0, - v[0]],
@@ -681,14 +690,14 @@ def l2str(list_var, spacing=7):
 
     Parameters
     ==========
-    list_var : list
+    list_var: list
         List to be converted
-    spacing : int, optional
+    spacing: int, optional
         Defines the size of one cell of the table
 
     Returns
     =======
-    s : string
+    s: string
         String representation
 
     Notes
@@ -703,7 +712,7 @@ def l2str(list_var, spacing=7):
 def get_trig_couple_names(sym):
     names_s = find_trig_names(sym, r'S', 1)
     names_c = find_trig_names(sym, r'C', 1)
-    return  names_c, names_s
+    return  names_c & names_s
 
 
 def find_trig_names(sym, pref=r'', pref_len=0, post=r'', post_len=0):
@@ -713,11 +722,11 @@ def find_trig_names(sym, pref=r'', pref_len=0, post=r'', post_len=0):
     else:
         return set([s[pref_len:-post_len] for s in search_res])
 
-def get_trig_pow_names(sym, min_pow=2):
-    post = r'\*\*[{0}-9]'.format(min_pow)
-    names_s = find_trig_names(sym, r'S', 1, post, 3 )
-    names_c = find_trig_names(sym, r'C', 1, post, 3 )
-    return names_c & names_s
+#def get_trig_pow_names(sym, min_pow=2):
+#    post = r'\*\*[{0}-9]'.format(min_pow)
+#    names_s = find_trig_names(sym, r'S', 1, post, 3 )
+#    names_c = find_trig_names(sym, r'C', 1, post, 3 )
+#    return names_c & names_s
 
 def get_max_coef_list(sym, x):
     return [get_max_coef_mul(s, x) for s in Add.make_args(sym)]
@@ -753,16 +762,29 @@ def ang_sum(np1, np2, nm1, nm2):
 
 def get_pos_neg(s):
     if s.find('m') != -1:
-        return s.split('m')[0], s.split('m')[1]
+        s_split = s.split('m')
+        return s_split[0], s_split[1]
     else:
         return s, ''
 
 def reduce_str(s1, s2):
-    for j, char in enumerate(s1):
-        i = s2.find(char)
-        if s2.find(char) != -1:
-            s2 = s2[:i] + s2[i+1:]
-            s1 = s1[:j] + s1[j+1:]
+    while True:
+        for j, char in enumerate(s1):
+            if char in 'AG':
+                i = s2.find(s1[j:j+2])
+                k = 2
+            else:
+                i = s2.find(char)
+                k = 1
+            if i != -1:
+                if i+k < len(s2): s2_tail = s2[i+k:]
+                else: s2_tail = ''
+                if j+k < len(s1): s1_tail = s1[j+k:]
+                else: s1_tail = ''
+                s2 = s2[:i] + s2_tail
+                s1 = s1[:j] + s1_tail
+                break
+        else: break
     return s1, s2
 
 def CS_syms(name):
@@ -797,8 +819,7 @@ def cancel_terms(sym, X, coef):
 def trigonometric_info(sym):
     if not sym.has(sin) and not sym.has(cos):
         short_form = True
-        c_names, s_names = get_trig_couple_names(sym)
-        names = c_names & s_names
+        names = get_trig_couple_names(sym)
     else:
         short_form = False
         names = get_angles(sym)
@@ -936,11 +957,11 @@ class Symoro:
 
         Parameters
         ==========
-        M : var or Matrix
+        M: var or Matrix
             Object of substitution
-        angle : var
+        angle: var
             symbol that stands for the angle value
-        name : int or string
+        name: int or string
             brief name X for the angle
 
         Notes
@@ -966,14 +987,14 @@ class Symoro:
 
         Parameters
         ==========
-        old_sym : var
+        old_sym: var
             Symbolic expression to be substituted
-        name : string or var
+        name: string or var
             denotion of the expression
-        index : int or string, optional
+        index: int or string, optional
             will be attached to the name. Usualy used for link or joint number.
             Parameter exists for usage convenience
-        forced : bool, optional
+        forced: bool, optional
             If True, the new symbol will be created even if old symbol
             is a simple expression
 
@@ -1000,20 +1021,20 @@ class Symoro:
 
         Parameters
         ==========
-        M : Matrix
+        M: Matrix
             Object of substitution
-        name : string
+        name: string
             denotion of the expression
-        index : int or string, optional
+        index: int or string, optional
             will be attached to the name. Usualy used for link or joint number.
             Parameter exists for usage convenience
-        forced : bool, optional
+        forced: bool, optional
             If True, the new symbol will be created even if old symbol
             is a simple expression
-        skip : int, optional
+        skip: int, optional
             Number of bottom rows of the matrix, which will be skipped.
             Used in case of Transformation matrix and forced = True.
-        symmet : bool, optional
+        symmet: bool, optional
             If true, only for upper triangle part of the matrix
             symbols will be created. The bottom triangle part the
             same symbols will be used
@@ -1021,7 +1042,7 @@ class Symoro:
 
         Returns
         =======
-        M : Matrix
+        M: Matrix
             Matrix with all the elements replaced
 
         Notes
@@ -1051,12 +1072,12 @@ class Symoro:
 
         Parameters
         ==========
-        expr : symbolic expression
+        expr: symbolic expression
             Symbolic expression to be unfolded
 
         Returns
         =======
-        expr : symbolic expression
+        expr: symbolic expression
             Unfolded expression
         """
         while self.sydi.keys() & expr.atoms():
@@ -1068,14 +1089,14 @@ class Symoro:
 
         Parameters
         ==========
-        name : string
+        name: string
             the name of the table
-        header : list
+        header: list
             the table header
-        param : callable (int) : list
+        param: callable (int): list
             returns the list of parameters for
             the particular row of the table
-        N : int
+        N: int
             number of lines in the table
         """
         self.write_line(name)
@@ -1089,9 +1110,9 @@ class Symoro:
 
         Parameters
         ==========
-        robo : Robot
+        robo: Robot
             Instance of the parameter container
-        title : string, optional
+        title: string, optional
             The document title. Not used in case of internal using
         """
         if title != '':
@@ -1105,22 +1126,22 @@ class Symoro:
 
         Parameters
         ==========
-        robo : Robot
+        robo: Robot
             Instance of the parameter container
-        name : string, optional
+        name: string, optional
             The table name. Not used in case of internal using.
         """
-        self.write_param(name, robo.get_inert_head(),
-                 robo.get_inert_param, robo.NL)
+        self.write_param(name, robo.get_dynam_head(),
+                 robo.get_dynam_param, robo.NL)
 
     def write_dynam_param(self, robo, title):
         """Writes the geometric parameters table
 
         Parameters
         ==========
-        robo : Robot
+        robo: Robot
             Instance of the parameter container.
-        title : string
+        title: string
             The document title.
 
         Notes
@@ -1160,9 +1181,9 @@ class Symoro:
 
         Parameters
         ==========
-        A : expression or var
+        A: expression or var
             left-hand side of the equation.
-        B : expression or var
+        B: expression or var
             right-hand side of the equation
         """
         self.write_line(str(A) + ' = ' + str(B))
@@ -1172,7 +1193,7 @@ class Symoro:
 
         Parameters
         ==========
-        line : string, optional
+        line: string, optional
             Data to be written. If empty, it adds an empty line
         """
         if self.file_out == 'disp':
@@ -1186,9 +1207,9 @@ class Symoro:
 
         Parameters
         ==========
-        robo : Robot instance
+        robo: Robot instance
             provides the robot's name
-        ext : string
+        ext: string
             provides the file name extention
         """
         self.file_out = open('models\\' + robo.name + '_' + ext + '.txt', 'w')
@@ -1313,10 +1334,10 @@ class Symoro:
 
          Parameters
         ==========
-        name : string
+        name: string
             Future function's name, must be different for
             different fucntions
-        to_return : list, Matrix or tuple of them
+        to_return: list, Matrix or tuple of them
             Determins the shape of the output and symbols inside it
         *args: any number of lists, Matrices or tuples of them
             Determins the shape of the input and symbols
@@ -1366,9 +1387,9 @@ class Symoro:
 
 # print div_cancel(sympify("-C23*RL4**2*S23*S5"), sympify("-RL4*S23"))
 # print ex
-#ex = sympify("C23*RL4**2*S23*S5*(d-f)**5")
-#ex2 = sympify("-RL4*S23*(-d+f)**4")
-#print get_max_coef(ex, ex2)
+ex = sympify("C23*RL4**2*S23*S5*(d-f)**5")
+ex2 = sympify("-RL4*S23*(-d+f)**4")
+print get_max_coef(ex, ex2)
 #print get_max_coef(ex, ex2)
 #def a():
 #    get_max_coef(ex, ex2)
@@ -1393,5 +1414,5 @@ class Symoro:
 #print Symoro().C2S2_simp(d)
 #print Symoro().CS12_simp(sympify("C2*D3*S3m78 - C2m7*D8*S3 - C3*D8*S2m7 - C3m78*D3*S2 + D2*S3"))
 #def a():
-#    Symoro().CS12_simp(sympify("-a1*sin(th2+th1)*sin(th3)*cos(th1) - a1*cos(th1)*cos(th2+th1)*cos(th3)"))
+#print Symoro().CS12_simp(sympify("-a1*sin(th2+th1)*sin(th3)*cos(th1) - a1*cos(th1)*cos(th2+th1)*cos(th3)"))
 #print timeit(a, number = 10)
