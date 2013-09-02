@@ -11,86 +11,126 @@ from copy import copy
 from itertools import combinations
 from sympy import sin, cos, sign, pi
 from sympy import Symbol, Matrix, Expr, Integer
-from sympy import Mul, Add, factor, zeros, var, sympify
+from sympy import Mul, Add, factor, zeros, var, sympify, eye
 
 ZERO = Integer(0)
 ONE = Integer(1)
 
-#TODO: __init__ (NJ,NF,NL,is_mobile)
-# Initilize Z by 0 4x4
+#TODO: write consistency check
 class Robot:
     """Container of the robot parametric description.
     Responsible for low-level geometric transformation
     and direct geometric model generation.
     Also provides different representations of parameters."""
-
-    # member variables:
-    name = 'Empty'
-    """  name of the robot: string"""
-    is_mobile = False
-    """ whethere the base frame is floating: bool"""
-    NL = 0
-    """  number of links: int"""
-    NJ = 0
-    """  number of joints: int"""
-    NF = 0
-    """  number of frames: int"""
-    sigma = None
-    """  joint type: list of int"""
-    ant = None
-    """  index of antecedent joint: list of int"""
-#    num = None
-#    """order numbers of joints (for display purposes): list of int"""
-    mu = None
-    """motorization, if 1, then the joint im motorized"""
-    theta = None
-    """  geometrical parameter: list of var"""
-    r = None
-    """  geometrical parameter: list of var"""
-    alpha = None
-    """  geometrical parameter: list of var"""
-    d = None
-    """  geometrical parameter: list of var"""
-    gamma = None
-    """  geometrical parameter: list of var"""
-    b = None
-    """  geometrical parameter: list of var"""
-    Z = None
-    """ transformation from reference frame to zero frame"""
-    J = None
-    """  inertia tensor of link: list of 3x3 matrix"""
-    MS = None
-    """  first momentum of link: list of 3x1 matrix"""
-    M = None
-    """  mass of link: list of var"""
-    G = (0, 0, 0)
-    """  gravity vector: 3x1 matrix"""
-    GAM = None
-    """  joint torques: list of var"""
-    w0 = (0, 0, 0)
-    """  base angular velocity: 3x1 matrix"""
-    wdot0 = (0, 0, 0)
-    """  base angular acceleration: 3x1 matrix"""
-    v0 = (0, 0, 0)
-    """  base linear velocity: 3x1 matrix"""
-    vdot0 = (0, 0, 0)
-    """  base linear acceleration: 3x1 matrix"""
-    qdot = None
-    """  joint speed: list of var"""
-    qddot = None
-    """  joint acceleration: list of var"""
-    Nex = None
-    """  external moment of link: list of 3x1 matrix"""
-    Fex = None
-    """  external force of link: list of 3x1 matrix"""
-    FS = None
-    """  dry friction coefficient: list of ver"""
-    FV = None
-    """  fluid friction coefficient: list of var"""
-    IA = None
-    """  joint actuator inertia: list of var"""
+    def __init__(self, name, NL = 0, NJ = 0, NF = 0, is_mobile = False):
+        # member variables:
+        self.name = name
+        """  name of the robot: string"""
+        self.is_mobile = is_mobile
+        """ whethere the base frame is floating: bool"""
+        self.NL = NL + 1
+        """  number of links: int"""
+        self.NJ = NJ + 1
+        """  number of joints: int"""
+        self.NF = NF + 1
+        """  number of frames: int"""
+        self.sigma = zeros(1, NF)
+        """  joint type: list of int"""
+        self.ant = range( - 1, self.NJ-1)
+        """  index of antecedent joint: list of int"""
+        self.mu = zeros(1, NF)
+        """motorization, if 1, then the joint im motorized"""
+        self.theta = zeros(1, NF)
+        """  geometrical parameter: list of var"""
+        self.r = zeros(1, NF)
+        """  geometrical parameter: list of var"""
+        self.alpha = zeros(1, NF)
+        """  geometrical parameter: list of var"""
+        self.d = zeros(1, NF)
+        """  geometrical parameter: list of var"""
+        self.gamma = zeros(1, NF)
+        """  geometrical parameter: list of var"""
+        self.b = zeros(1, NF)
+        """  geometrical parameter: list of var"""
+        self.Z = eye(4)
+        """ transformation from reference frame to zero frame"""
+        num = range(self.NL)
+        self.w0 = zeros(3, 1)
+        """  base angular velocity: 3x1 matrix"""
+        self.wdot0 = zeros(3, 1)
+        """  base angular acceleration: 3x1 matrix"""
+        self.v0 = zeros(3, 1)
+        """  base linear velocity: 3x1 matrix"""
+        self.vdot0 = zeros(3, 1)
+        """  base linear acceleration: 3x1 matrix"""
+        self.QP = [var('QP{0}'.format(i)) for i in num]
+        """  joint speed: list of var"""
+        self.QDP = [var('QDP{0}'.format(i)) for i in num]
+        """  joint acceleration: list of var"""
+        self.Nex= [zeros(3, 1) for i in num]
+        """  external moment of link: list of 3x1 matrix"""
+        self.Nex[ - 1] = Matrix(var('CX{0}, CY{0}, CZ{0}'.format(self.NJ)))
+        self.Fex = [zeros(3, 1) for i in num]
+        """  external force of link: list of 3x1 matrix"""
+        self.Fex[ - 1] = Matrix(var('FX{0}, FY{0}, FZ{0}'.format(self.NJ)))
+        self.FS = [var('FS{0}'.format(i)) for i in num]
+        """  dry friction coefficient: list of ver"""
+        self.IA = [var('IA{0}'.format(i)) for i in num]
+        """  joint actuator inertia: list of var"""
+        self.FV = [var('FV{0}'.format(i)) for i in num]
+        """  viscous friction coefficient: list of var"""
+        self.MS = [Matrix(var('MX{0}, MY{0}, MZ{0}'.format(i))) for i in num]
+        """  first momentum of link: list of 3x1 matrix"""
+        self.M = [var('M{0}'.format(i)) for i in num]
+        """  mass of link: list of var"""
+        self.GAM = [var('GAM{0}'.format(i)) for i in num]
+        """  joint torques: list of var"""
+        self.J = [Matrix(3, 3, var(('XX{0}, XY{0}, XZ{0}, '
+                            'XY{0}, YY{0}, YZ{0}, '
+                            'XZ{0}, YZ{0}, ZZ{0}').format(i))) for i in num]
+        """  inertia tensor of link: list of 3x3 matrix"""
+        self.G = Matrix([0, 0, var('G3')])
+        """  gravity vector: 3x1 matrix"""
 
     # member methods:
+    def put_val(self, j, name, val_str):
+        val = sympify(val_str)
+        geom_head = self.get_geom_head()
+        base_vel_head = self.get_base_vel_head()
+        ext_dynam_head = self.get_ext_dynam_head()
+        ext_head = ext_dynam_head[6:]
+        f_ex_head = ext_dynam_head[:3]
+        n_ex_head = ext_dynam_head[3:6]
+        if name in ext_head + geom_head + base_vel_head:
+            X = getattr(self, name)
+            X[j] = val
+        elif name in f_ex_head:
+            self.Fex[j][f_ex_head.index(name)] = val
+        elif name in n_ex_head:
+            self.Nex[j][f_ex_head.index(name)] = val
+        elif name in self.get_dynam_head():
+            params = self.get_inert_param(j)
+            params[j-1] = val
+            self.put_inert_param(j,params)
+
+    def get_val(self, j, name):
+        geom_head = self.get_geom_head()
+        base_vel_head = self.get_base_vel_head()
+        ext_dynam_head = self.get_ext_dynam_head()
+        ext_head = ext_dynam_head[6:]
+        f_ex_head = ext_dynam_head[:3]
+        n_ex_head = ext_dynam_head[3:6]
+        if name in ext_head + geom_head + base_vel_head:
+            X = getattr(self, name)
+            return X[j]
+        elif name in f_ex_head:
+            return self.Fex[j][f_ex_head.index(name)]
+        elif name in n_ex_head:
+            return self.Nex[j][f_ex_head.index(name)]
+        elif name in self.get_dynam_head():
+            params = self.get_inert_param(j)
+            return params[j-1]
+
     def get_q_vec(self):
         """Generates vector of joint variables
         """
@@ -466,87 +506,54 @@ class Robot:
     def SR400(cls):
         #TODO: bring it to the new notation with 0-frame
         """Generates Robot instance of SR400"""
+        robo = Robot('SR400', 8, 9, 10, False)
         robo = Robot()
-        # table of geometric parameters RX90
-        robo.name = 'SR400'
-        robo.NJ = 9
-        robo.NL = 8
-        robo.NF = 10
-        robo.num = range(1, robo.NF + 1)
-        numL = range(1, robo.NL + 1)
-        robo.ant = (-1, 0, 1, 2, 3, 4, 0, 6, 7, 2)
-        robo.sigma = (0, 0, 0, 0, 0, 0, 0, 0, 0, 2)
-        robo.mu = (1, 1, 0, 1, 1, 1, 1, 0, 0, 0)
-        robo.alpha = (0, -pi/2, 0, - pi/2, pi/2, - pi/2, - pi/2, 0, 0, 0)
+        robo.ant = [-1, 0, 1, 2, 3, 4, 5, 1, 7, 8, 3]
+        robo.sigma = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
+        robo.mu = [0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0]
+        robo.alpha = [0, 0, -pi/2, 0, - pi/2, pi/2, - pi/2, - pi/2, 0, 0, 0]
         d_var = var('D:9')
-        robo.d = (0, d_var[2], d_var[2], d_var[2], 0, 0,
-                  d_var[2], d_var[8], d_var[3], d_var[8])
+        robo.d = [0, 0, d_var[2], d_var[3], d_var[4], 0, 0,
+                  d_var[2], d_var[8], d_var[3], -d_var[8]]
         robo.theta = list(var('th1:10'))+[0]
-        robo.r = (0, 0, 0, var('RL4'), 0, 0, 0, 0, 0, 0)
-        robo.b = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-        robo.gamma = (0, 0, 0, 0, 0, 0, 0, 0, 0, pi/2)
-        robo.w0 = zeros(3, 1)
-        robo.wdot0 = zeros(3, 1)
-        robo.v0 = zeros(3, 1)
-        robo.vdot0 = zeros(3, 1)
-        robo.qdot = [var('QP{0}'.format(i)) for i in numL]
-        robo.qddot = [var('QDP{0}'.format(i)) for i in numL]
-        robo.Nex= [zeros(3, 1) for i in numL]
-        robo.Nex[ - 1] = Matrix(var('CX{0}, CY{0}, CZ{0}'.format(robo.NL)))
-        robo.Fex = [zeros(3, 1) for i in numL]
-        robo.Fex[ - 1] = Matrix(var('FX{0}, FY{0}, FZ{0}'.format(robo.NL)))
-        robo.FS = [var('FS{0}'.format(i)) for i in numL]
-        robo.IA = [var('IA{0}'.format(i)) for i in numL]
-        robo.FV = [var('FV{0}'.format(i)) for i in numL]
-        robo.MS = [Matrix(var('MX{0}, MY{0}, MZ{0}'.format(i))) for i in numL]
-        robo.M = [var('M{0}'.format(i)) for i in numL]
-        robo.GAM = [var('GAM{0}'.format(i)) for i in numL]
-        robo.J = [Matrix(3, 3, var(('XX{0}, XY{0}, XZ{0}, '
-                            'XY{0}, YY{0}, YZ{0}, '
-                            'XZ{0}, YZ{0}, ZZ{0}').format(i))) for i in numL]
-        robo.G = Matrix([0, 0, var('G3')])
-        robo.num.append(0)
+        robo.r = [0, 0, 0, 0, var('RL4'), 0, 0, 0, 0, 0, 0]
+        robo.b = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        robo.gamma = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, pi/2]
         return robo
 
     @classmethod
     def RX90(cls):
         """Generates Robot instance of RX90"""
-        robo = Robot()
+        robo = Robot('RX90', 6, 6, 6, False)
         # table of geometric parameters RX90
-        robo.name = 'RX90'
-        robo.NJ = 7
-        robo.NL = 7
-        robo.NF = 7
-        num = range(robo.NL + 1)
-        robo.ant = range( - 1, robo.NJ-1)
-        robo.sigma = (2, 0, 0, 0, 0, 0, 0, 0)
-        robo.alpha = (0, 0, pi/2, 0, - pi/2, pi/2, - pi/2)
-        robo.d = (0, 0, 0, var('D3'), 0, 0, 0)
+        robo.sigma = [2, 0, 0, 0, 0, 0, 0, 0]
+        robo.alpha = [0, 0, pi/2, 0, - pi/2, pi/2, - pi/2]
+        robo.d = [0, 0, 0, var('D3'), 0, 0, 0]
         robo.theta = [0] + list(var('th1:7'))
-        robo.r = (0, 0, 0, 0, var('RL4'), 0, 0)
-        robo.b = (0, 0, 0, 0, 0, 0, 0)
-        robo.gamma = (0, 0, 0, 0, 0, 0, 0)
-        robo.mu = (0, 1, 1, 1, 1, 1, 1)
-        robo.w0 = zeros(3, 1)
-        robo.wdot0 = zeros(3, 1)
-        robo.v0 = zeros(3, 1)
-        robo.vdot0 = zeros(3, 1)
-        robo.qdot = [var('QP{0}'.format(i)) for i in num]
-        robo.qddot = [var('QDP{0}'.format(i)) for i in num]
-        robo.Nex= [zeros(3, 1) for i in num]
-        robo.Nex[ - 1] = Matrix(var('CX{0}, CY{0}, CZ{0}'.format(robo.NJ)))
-        robo.Fex = [zeros(3, 1) for i in num]
-        robo.Fex[ - 1] = Matrix(var('FX{0}, FY{0}, FZ{0}'.format(robo.NJ)))
-        robo.FS = [var('FS{0}'.format(i)) for i in num]
-        robo.IA = [var('IA{0}'.format(i)) for i in num]
-        robo.FV = [var('FV{0}'.format(i)) for i in num]
-        robo.MS = [Matrix(var('MX{0}, MY{0}, MZ{0}'.format(i))) for i in num]
-        robo.M = [var('M{0}'.format(i)) for i in num]
-        robo.GAM = [var('GAM{0}'.format(i)) for i in num]
-        robo.J = [Matrix(3, 3, var(('XX{0}, XY{0}, XZ{0}, '
-                            'XY{0}, YY{0}, YZ{0}, '
-                            'XZ{0}, YZ{0}, ZZ{0}').format(i))) for i in num]
-        robo.G = Matrix([0, 0, var('G3')])
+        robo.r = [0, 0, 0, 0, var('RL4'), 0, 0]
+        robo.b = [0, 0, 0, 0, 0, 0, 0]
+        robo.gamma = [0, 0, 0, 0, 0, 0, 0]
+        robo.mu = [0, 1, 1, 1, 1, 1, 1]
+#        robo.w0 = zeros(3, 1)
+#        robo.wdot0 = zeros(3, 1)
+#        robo.v0 = zeros(3, 1)
+#        robo.vdot0 = zeros(3, 1)
+#        robo.qdot = [var('QP{0}'.format(i)) for i in num]
+#        robo.qddot = [var('QDP{0}'.format(i)) for i in num]
+#        robo.Nex= [zeros(3, 1) for i in num]
+#        robo.Nex[ - 1] = Matrix(var('CX{0}, CY{0}, CZ{0}'.format(robo.NJ)))
+#        robo.Fex = [zeros(3, 1) for i in num]
+#        robo.Fex[ - 1] = Matrix(var('FX{0}, FY{0}, FZ{0}'.format(robo.NJ)))
+#        robo.FS = [var('FS{0}'.format(i)) for i in num]
+#        robo.IA = [var('IA{0}'.format(i)) for i in num]
+#        robo.FV = [var('FV{0}'.format(i)) for i in num]
+#        robo.MS = [Matrix(var('MX{0}, MY{0}, MZ{0}'.format(i))) for i in num]
+#        robo.M = [var('M{0}'.format(i)) for i in num]
+#        robo.GAM = [var('GAM{0}'.format(i)) for i in num]
+#        robo.J = [Matrix(3, 3, var(('XX{0}, XY{0}, XZ{0}, '
+#                            'XY{0}, YY{0}, YZ{0}, '
+#                            'XZ{0}, YZ{0}, ZZ{0}').format(i))) for i in num]
+#        robo.G = Matrix([0, 0, var('G3')])
 #        robo.num.append(0)
         return robo
 
@@ -873,7 +880,8 @@ class Symoro:
                 C, S = CS_syms(name)
             else:
                 C, S = cos(name), sin(name)
-        return self.try_opt(ONE, None, S**2, C**2, sym)
+            sym = self.try_opt(ONE, None, S**2, C**2, sym)
+        return sym
 
     def CS12_simp(self, sym):
         """
@@ -918,23 +926,34 @@ class Symoro:
         """Replaces B + C by A or B - C by Am.
         Chooses the best option.
         """
-        Bc = get_max_coef_list(old_sym, B)
-        Cc = get_max_coef_list(old_sym, C)
-        if Bc != 0 and Cc != 0:
-            coefs = [term for term in Bc if term in Cc]
-            if Am != None:
-                coefs_n = [term for term in Bc if -term in Cc]
-                if len(coefs_n) > len(coefs):
-                    C = -C
-                    A = Am
-                    coefs = coefs_n
+        Bcfs = get_max_coef_list(old_sym, B)
+        Ccfs = get_max_coef_list(old_sym, C)
+        if Bcfs != [] and Ccfs != []:
             Res = old_sym
-            for coef in coefs:
-                Res += A*coef - B*coef - C*coef
-            if sym_less(Res, old_sym):
+            Res_tmp = Res
+            for coef in Bcfs:
+                Res_tmp += A*coef - B*coef - C*coef
+                if sym_less(Res_tmp, Res):
+                    Res = Res_tmp
+            if sym_less(Res, old_sym) and Am == None:
                 if not A.is_number:
                     self.add_to_dict(A, B + C)
                 return Res
+            elif Am != None:
+                Res2 = old_sym
+                Res_tmp = Res2
+                for coef in Bcfs:
+                    Res_tmp += Am*coef - B*coef + C*coef
+                    if sym_less(Res_tmp, Res2):
+                        Res2 = Res_tmp
+                if sym_less(Res2, Res) and sym_less(Res2, old_sym):
+                    if not Am.is_number:
+                        self.add_to_dict(Am, B - C)
+                    return Res2
+                elif sym_less(Res, old_sym):
+                    if not A.is_number:
+                        self.add_to_dict(A, B + C)
+                    return Res
         return old_sym
 
     def add_to_dict(self, new_sym, old_sym):
@@ -1026,8 +1045,8 @@ class Symoro:
         name: string
             denotion of the expression
         index: int or string, optional
-            will be attached to the name. Usualy used for link or joint number.
-            Parameter exists for usage convenience
+            will be attached to the name. Usualy used for link
+            or joint number. Parameter exists for usage convenience
         forced: bool, optional
             If True, the new symbol will be created even if old symbol
             is a simple expression
@@ -1047,7 +1066,8 @@ class Symoro:
 
         Notes
         =====
-        -Each element M_ij will be replaced by symbol name + i + j + index
+        -Each element M_ij will be replaced by
+            symbol name + i + j + index
         -There are two ways to use this function (examples):
             1)  >>> A = B+C+...
                 >>> symo.mat_replace(A, 'A')
@@ -1217,7 +1237,7 @@ class Symoro:
     def gen_fheader(self, name, *args):
         fun_head = []
         fun_head.append('def %s_func(*args):\n' % name)
-        imp_s = 'from numpy import sin, cos, sign, array, arctan2 as atan2, sqrt\n'
+        imp_s = 'from numpy import pi, sin, cos, sign, array, arctan2 as atan2, sqrt\n'
         fun_head.append('    %s' % imp_s)
         for i, var_list in enumerate(args):
             v_str_list = self.convert_syms(args[i], True)
@@ -1235,53 +1255,47 @@ class Symoro:
             It is done to evoid expression like [x, 0] = args[1]
             Because it will cause exception of assigning to literal
         """
-        if isinstance(syms, tuple):
+        if isinstance(syms, tuple) or isinstance(syms, list):
             syms = [self.convert_syms(item, rpl_liter) for item in syms]
-            res = ''
+            res = '['
             for i, s in enumerate(syms):
                 res += s
                 if i < len(syms) - 1:
-                    res += ', '
+                    res += ','
+            res += ']'
             return res
         elif isinstance(syms, Matrix):
             res = '['
             for i in xrange(syms.shape[0]):
                 res += self.convert_syms(list(syms[i, :]), rpl_liter)
                 if i < syms.shape[0] - 1:
-                    res += ', '
+                    res += ','
             res += ']'
             return res
-        elif isinstance(syms, list):
-            row = '['
-            for j, s in enumerate(syms):
-                if rpl_liter and sympify(s).is_number:
-                    row += 'NUL%s' % j
-                else:
-                    row += str(s)
-                if j < len(syms) - 1:
-                    row += ', '
-            row += ']'
-            return row
+        elif isinstance(syms, Expr):
+            if rpl_liter and sympify(syms).is_number:
+                return 'NUL'
+            else:
+                return str(syms)
 
     def extract_syms(self, syms):
         """ returns set of all symbols from list or matrix
         or tuple of them
         """
-        if isinstance(syms, tuple):
+        if isinstance(syms, tuple) or isinstance(syms, list):
             atoms = (self.extract_syms(item) for item in syms)
             return reduce(set.__or__, atoms, set())
         elif isinstance(syms, Matrix):
             return self.extract_syms(list(syms))
-        elif isinstance(syms, list):
-            atoms = (s.atoms(Symbol) for s in syms if isinstance(s, Expr))
-            return reduce(set.__or__, atoms, set())
+        elif isinstance(syms, Expr):
+            return syms.atoms(Symbol)
 
     def sift_syms(self, rq_syms, wr_syms):
         """Returns ordered list of variables to be compute
         """
         order_list = []   # vars that are defined in sydi
         for s in reversed(self.order_list):
-            if s in rq_syms:
+            if s in rq_syms and not s in wr_syms:
                 order_list.insert(0, s)
                 s_val = self.sydi[s]
                 if isinstance(s_val, Expr):
@@ -1353,66 +1367,7 @@ class Symoro:
         wr_syms = self.extract_syms(args) # set of defined symbols
         fun_body = self.gen_fbody(name, to_return, wr_syms)
         fun_string = "".join(fun_head + fun_body)
-        print fun_string
         exec fun_string
+        print fun_string
         return eval('%s_func'%name)
 
-#################################################################
-#testing and debug section
-#to be removed later
-
-#symo = Symoro()
-
-# d = sympify("C2*C3*C4**2*C5**2*C6**4*D3**2*RL4*S5 + 2*C2*C3*C4**2*C5**2*C6**2*D3**2*RL4*S5*S6**2 + C2*C3*C4**2*C5**2*D3**2*RL4*S5*S6**4 + C2*C3*C4**2*C6**4*D3**2*RL4*S5**3 + 2*C2*C3*C4**2*C6**2*D3**2*RL4*S5**3*S6**2 + C2*C3*C4**2*D3**2*RL4*S5**3*S6**4 + C2*C3*C5**2*C6**4*D3**2*RL4*S4**2*S5 + 2*C2*C3*C5**2*C6**2*D3**2*RL4*S4**2*S5*S6**2 + C2*C3*C5**2*D3**2*RL4*S4**2*S5*S6**4 + C2*C3*C6**4*D3**2*RL4*S4**2*S5**3 + 2*C2*C3*C6**2*D3**2*RL4*S4**2*S5**3*S6**2 + C2*C3*D3**2*RL4*S4**2*S5**3*S6**4 - C3*C4**2*C5**2*C6**4*D3*RL4**2*S23*S5 - 2*C3*C4**2*C5**2*C6**2*D3*RL4**2*S23*S5*S6**2 - C3*C4**2*C5**2*D3*RL4**2*S23*S5*S6**4 - C3*C4**2*C6**4*D3*RL4**2*S23*S5**3 - 2*C3*C4**2*C6**2*D3*RL4**2*S23*S5**3*S6**2 - C3*C4**2*D3*RL4**2*S23*S5**3*S6**4 - C3*C5**2*C6**4*D3*RL4**2*S23*S4**2*S5 - 2*C3*C5**2*C6**2*D3*RL4**2*S23*S4**2*S5*S6**2 - C3*C5**2*D3*RL4**2*S23*S4**2*S5*S6**4 - C3*C6**4*D3*RL4**2*S23*S4**2*S5**3 - 2*C3*C6**2*D3*RL4**2*S23*S4**2*S5**3*S6**2 - C3*D3*RL4**2*S23*S4**2*S5**3*S6**4")
-# d = sympify("C2**5*C3**3*C4**2*D3**2*RL4*S5 - C2**5*C3**3*C4**2*D3*RL4**2*S3*S5 + C2**5*C3**3*D3**2*RL4*S4**2*S5 - C2**5*C3**3*D3*RL4**2*S3*S4**2*S5 + C2**5*C3*C4**2*D3**2*RL4*S3**2*S5 - C2**5*C3*C4**2*D3*RL4**2*S3**3*S5 + C2**5*C3*D3**2*RL4*S3**2*S4**2*S5 - C2**5*C3*D3*RL4**2*S3**3*S4**2*S5 - C2**4*C3**4*C4**2*D3*RL4**2*S2*S5 - C2**4*C3**4*D3*RL4**2*S2*S4**2*S5 - C2**4*C3**2*C4**2*D3*RL4**2*S2*S3**2*S5 - C2**4*C3**2*D3*RL4**2*S2*S3**2*S4**2*S5 + 2*C2**3*C3**3*C4**2*D3**2*RL4*S2**2*S5 - 2*C2**3*C3**3*C4**2*D3*RL4**2*S2**2*S3*S5 + 2*C2**3*C3**3*D3**2*RL4*S2**2*S4**2*S5 - 2*C2**3*C3**3*D3*RL4**2*S2**2*S3*S4**2*S5 + 2*C2**3*C3*C4**2*D3**2*RL4*S2**2*S3**2*S5 - 2*C2**3*C3*C4**2*D3*RL4**2*S2**2*S3**3*S5 + 2*C2**3*C3*D3**2*RL4*S2**2*S3**2*S4**2*S5 - 2*C2**3*C3*D3*RL4**2*S2**2*S3**3*S4**2*S5 - 2*C2**2*C3**4*C4**2*D3*RL4**2*S2**3*S5 - 2*C2**2*C3**4*D3*RL4**2*S2**3*S4**2*S5 - 2*C2**2*C3**2*C4**2*D3*RL4**2*S2**3*S3**2*S5 - 2*C2**2*C3**2*D3*RL4**2*S2**3*S3**2*S4**2*S5 + C2*C3**3*C4**2*D3**2*RL4*S2**4*S5 - C2*C3**3*C4**2*D3*RL4**2*S2**4*S3*S5 + C2*C3**3*D3**2*RL4*S2**4*S4**2*S5 - C2*C3**3*D3*RL4**2*S2**4*S3*S4**2*S5 + C2*C3*C4**2*D3**2*RL4*S2**4*S3**2*S5 - C2*C3*C4**2*D3*RL4**2*S2**4*S3**3*S5 + C2*C3*D3**2*RL4*S2**4*S3**2*S4**2*S5 - C2*C3*D3*RL4**2*S2**4*S3**3*S4**2*S5 - C3**4*C4**2*D3*RL4**2*S2**5*S5 - C3**4*D3*RL4**2*S2**5*S4**2*S5 - C3**2*C4**2*D3*RL4**2*S2**5*S3**2*S5 - C3**2*D3*RL4**2*S2**5*S3**2*S4**2*S5")
-# print 'det\n', d
-# d = symo.C4S4_simp(d)
-# print 'C4S4\n', d
-# d = symo.C2S2_simp(d)
-# print 'C2S2\n', d
-# d = symo.CS12_simp(d)
-# print 'CS12\n', d
-# d = symo.poly_simp(d)
-# print 'poly\n', d.factor()
-
-# E = sympify("C3*D3*RL4*S5*(C5**2*(C2*D3*(C4**2*(C6**4 + S6**4) + C6**2*(2*C4**2*S6**2 + S4**2*(C6**2 + 2*S6**2))) - C4**2*RL4*S23*S6**4) + C6**4*(-C4**2 - S4**2)*(C5**2*RL4*S23 - S5**2*(C2*D3 - RL4*S23)) + S6**2*(-2*C6**2*(RL4*S23*(C4**2*C5**2 + C4**2*S5**2 + C5**2*S4**2) - S5**2*(C2*C4**2*D3 + S4**2*(C2*D3 - RL4*S23))) - S6**2*(C2*D3 - RL4*S23)*(-C4**2*S5**2 + S4**2*(-C5**2 - S5**2))))")
-# print E
-# print E.expand()
-# E2 = Symoro().C4S4_simp(E)
-# print E2
-# E3 = Symoro().C2S2_simp(E2)
-# print E3
-
-
-
-# print div_cancel(sympify("-C23*RL4**2*S23*S5"), sympify("-RL4*S23"))
-# print ex
-ex = sympify("C23*RL4**2*S23*S5*(d-f)**5")
-ex2 = sympify("-RL4*S23*(-d+f)**4")
-print get_max_coef(ex, ex2)
-#print get_max_coef(ex, ex2)
-#def a():
-#    get_max_coef(ex, ex2)
-#def b():
-#    for i in xrange(100):
-#        get_max_coef(ex, ex2)
-#
-#from timeit import timeit
-# timeit(a, number = 1)
-#print timeit(a, number = 1000)
-#print timeit(b, number = 1000)
-
-
-#print Symoro().CS12_simp(sympify("C2*S3*R + S2*C3*R"))
-# # #
-#import profile
-# #
-#profile.run('a()', sort = 'cumtime')
-#profile.run('b()', sort = 'cumtime')
-# from timeit import timeit
-#d = sympify("S1**2 + S1**2*C1 + C1**2 + C1**3 + C1**4")
-#print Symoro().C2S2_simp(d)
-#print Symoro().CS12_simp(sympify("C2*D3*S3m78 - C2m7*D8*S3 - C3*D8*S2m7 - C3m78*D3*S2 + D2*S3"))
-#def a():
-#print Symoro().CS12_simp(sympify("-a1*sin(th2+th1)*sin(th3)*cos(th1) - a1*cos(th1)*cos(th2+th1)*cos(th3)"))
-#print timeit(a, number = 10)
