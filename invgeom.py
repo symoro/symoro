@@ -8,25 +8,20 @@ Needed modules : symoro.py, geometry.py
 ECN - ARIA1 2013
 """
 
-from sympy import Matrix, var, Symbol, sin, cos, eye, atan2, sqrt, pi
-from symoro import Symoro, Robot, ZERO, ONE, get_max_coef
-from geometry import dgm
 from heapq import heapify, heappop
+from sympy import Matrix, var, Symbol, sin, cos, eye, atan2, sqrt, pi
+from symoro import ZERO, ONE, get_max_coef
+from geometry import dgm
 
 EMPTY = var("EMPTY")
 
+T_GENERAL = Matrix([var("s1,n1,a1,p1"),var("s2,n2,a2,p2"),
+                    var("s3,n3,a3,p3"),[0,0,0,1]])
 #dictionary for equation type classification
 eq_dict = {(1, 0, 0):0, (0, 1, 0):1, (1, 1, 0):2,
                   (0, 2, 0):3, (0, 2, 1):4}
-name_dict = ("type 1", "type 2, 3", "type 4, 5", "type 6, 7", "type 8")
 
-#def print_eq(symo, A, B):
-#    if isinstance(B, Expr):
-#        B = symo.CS12_simp(B)
-#    print "    " + str(A) + " = " + str(B)
-#    return B
-
-def paul_solve(robo, symo, nTm, n, m, known = set()):
+def _paul_solve(robo, symo, nTm, n, m, known = set()):
     chain = robo.loop_chain(m,n)
     iTn = dgm(robo, symo, m, n, key = 'left', trig_subs = False)
     iTm = dgm(robo, symo, n, m, key = 'left', trig_subs = False)
@@ -56,11 +51,11 @@ def paul_solve(robo, symo, nTm, n, m, known = set()):
                             eq_key = eq_dict[eq_features]
                             eq_pack = (eq, list(r_vars), list(th_vars))
                             eq_candidates[eq_key].append(eq_pack)
-                cont_search |= try_solve_0(symo, eq_candidates[0], known)
-                cont_search |= try_solve_1(symo, eq_candidates[1], known)
-                cont_search |= try_solve_2(symo, eq_candidates[2] + eq_candidates[1], known)
-                cont_search |= try_solve_3(symo, eq_candidates[3], known)
-                cont_search |= try_solve_4(symo, eq_candidates[4], known)
+                cont_search |= _try_solve_0(symo, eq_candidates[0], known)
+                cont_search |= _try_solve_1(symo, eq_candidates[1], known)
+                cont_search |= _try_solve_2(symo, eq_candidates[2] + eq_candidates[1], known)
+                cont_search |= _try_solve_3(symo, eq_candidates[3], known)
+                cont_search |= _try_solve_4(symo, eq_candidates[4], known)
                 repeat_search |= cont_search
                 if not cont_search or th_all | r_all <= known:
                     break
@@ -72,7 +67,7 @@ def paul_solve(robo, symo, nTm, n, m, known = set()):
 
 def loop_solve(robo, symo, knowns = None):
     #TODO: rewrite
-    q_vec = robo.get_q_vec()
+    q_vec = robo.get_q_vec(True)
     loops = []
     if knowns == None:
         knowns = set(q for i, q in enumerate(q_vec) if robo.mu[i] == 1)
@@ -84,20 +79,18 @@ def loop_solve(robo, symo, knowns = None):
     while loops:
         heapify(loops)
         loop = heappop(loops)
-        res_knowns = paul_solve(robo, symo, eye(4), *loop[1:4])
+        print loop
+        res_knowns = _paul_solve(robo, symo, eye(4), *loop[1:4])
         for l in loops:
             found = l[4] & res_knowns
             l[3] |= found
             l[4] -= found
             l[0] = len(l[4])
 
-def igm_Paul(robo, symo, T_ref):
-    terminal = set(range(robo.NL))-set(robo.ant)
-    for n in terminal:   #terminal:
-        print "#solution for the frame", robo.num[n]
-        paul_solve(robo, symo, T_ref, -1, n)
+def igm_Paul(robo, symo, T_ref, n):
+    _paul_solve(robo, symo, T_ref, 0, n)
 
-def try_solve_0(symo, eq_sys, known):
+def _try_solve_0(symo, eq_sys, known):
     res = False
     for eq, [r], th_names in eq_sys:
         X = get_max_coef(eq, r)
@@ -111,13 +104,13 @@ def try_solve_0(symo, eq_sys, known):
             res = True
     return res
 
-def try_solve_1(symo, eq_sys, known):
+def _try_solve_1(symo, eq_sys, known):
     res = False
     for i in xrange(len(eq_sys)):
         eqi, r_vari, [th_i ] = eq_sys[i]
         if th_i  in known:
             continue
-        Xi, Yi, Zi, i_ok = get_coefs(eqi, sin(th_i ), cos(th_i ))
+        Xi, Yi, Zi, i_ok = _get_coefs(eqi, sin(th_i ), cos(th_i ))
         i_ok &= sum([Xi == ZERO, Yi == ZERO, Zi == ZERO]) <= 1
         if not i_ok:
             continue
@@ -125,21 +118,21 @@ def try_solve_1(symo, eq_sys, known):
         for j in xrange(i+1, len(eq_sys)):
             eqj, r_varj, [th_j] = eq_sys[j]
             if th_i  == th_j:
-                Xj, Yj, Zj, j_ok = get_coefs(eqj, sin(th_j), cos(th_j))
+                Xj, Yj, Zj, j_ok = _get_coefs(eqj, sin(th_j), cos(th_j))
                 j_ok &= (Xi*Yj != Xj*Yi)
                 if j_ok:
                     break
         if j_ok:
             print "#Solving type 3"
-            solve_type_3(symo, Xi, Yi, -Zi, Xj, Yj, -Zj, th_i)
+            _solve_type_3(symo, Xi, Yi, -Zi, Xj, Yj, -Zj, th_i)
         else:
             print "#Solving type 2"
-            solve_type_2(symo, Xi, Yi, -Zi, th_i)
+            _solve_type_2(symo, Xi, Yi, -Zi, th_i)
         known.add(th_i )
         res = True
     return res
 
-def try_solve_2(symo, eq_sys, known):
+def _try_solve_2(symo, eq_sys, known):
     if all(len(r_var) == 0 for eq, r_var, ths in eq_sys):
         return False
     for i in xrange(len(eq_sys)):
@@ -152,14 +145,14 @@ def try_solve_2(symo, eq_sys, known):
             th = ths_i[0]
             C, S = cos(th), sin(th)
             r = r_vari[0]
-            X1, Y1, Z1, i_ok = get_coefs(eqi, S, r)
-            X2, Y2, Z2, j_ok = get_coefs(eqj, C, r)
+            X1, Y1, Z1, i_ok = _get_coefs(eqi, S, r)
+            X2, Y2, Z2, j_ok = _get_coefs(eqj, C, r)
             all_ok = j_ok and i_ok and not eqi.has(C) and not eqj.has(S)
             if all_ok:
                 eq_type = 5
                 break
-            X1, Y1, Z1, i_ok = get_coefs(eqi, S, C)
-            X2, Y2, Z2, j_ok = get_coefs(eqj, C, S)
+            X1, Y1, Z1, i_ok = _get_coefs(eqi, S, C)
+            X2, Y2, Z2, j_ok = _get_coefs(eqj, C, S)
             i_ok &= X1.has(r) and not Z1.has(r) and Y1 == ZERO
             j_ok &= X2.has(r) and not Z2.has(r) and Y2 == ZERO
             all_ok = j_ok and i_ok
@@ -174,17 +167,17 @@ def try_solve_2(symo, eq_sys, known):
             continue
         print "#Solving type", eq_type
         if eq_type == 4:
-            solve_type_4(symo, X1, Y1, X2, Y2, th, r)
+            _solve_type_4(symo, X1, Y1, X2, Y2, th, r)
         else:
-            solve_type_5(symo, X1, Y1, Z1, X2, Y2, Z2, th, r)
+            _solve_type_5(symo, X1, Y1, Z1, X2, Y2, Z2, th, r)
         known |= {th, r}
         return True
     return False
 
-def match_coef(A1,A2,B1,B2):
+def _match_coef(A1,A2,B1,B2):
     return A1 == A2 and B1 == B2 or A1 == -A2 and B1 == -B2
 
-def try_solve_3(symo, eq_sys, known):
+def _try_solve_3(symo, eq_sys, known):
     for i in xrange(len(eq_sys)):
         all_ok = False
         for j in xrange(len(eq_sys)):
@@ -196,18 +189,18 @@ def try_solve_3(symo, eq_sys, known):
             th2 = ths_i[1]
             C1, S1 = cos(th1), sin(th1)
             C2, S2 = cos(th2), sin(th2)
-            X1, Y1, ZW1, i_ok = get_coefs(eqi, C1, S1)
-            X2, Y2, ZW2, j_ok = get_coefs(eqj, S1, C1)
+            X1, Y1, ZW1, i_ok = _get_coefs(eqi, C1, S1)
+            X2, Y2, ZW2, j_ok = _get_coefs(eqj, S1, C1)
             Y2 = -Y2
-            V1, W1, Z1, iw_ok = get_coefs(ZW1, C2, S2)
-            V2, W2, Z2, jw_ok = get_coefs(ZW2, S2, C2)
+            V1, W1, Z1, iw_ok = _get_coefs(ZW1, C2, S2)
+            V2, W2, Z2, jw_ok = _get_coefs(ZW2, S2, C2)
             W2 = -W2
             all_ok = j_ok and i_ok and jw_ok and iw_ok
             if X1 == 0 or Y1 == 0:
                 X1, Y1, V1, W1 = V1, W1, X1, Y1
                 X2, Y2, V2, W2 = V2, W2, X2, Y2
                 th1, th2 = th2, th1
-            all_ok &= match_coef(X1,X2,Y1,Y2) and match_coef(V1,V2,W1,W2)
+            all_ok &= _match_coef(X1,X2,Y1,Y2) and _match_coef(V1,V2,W1,W2)
             if W1 == W2 and Y1 == -Y2:
                 eps = -1
             else:
@@ -220,12 +213,12 @@ def try_solve_3(symo, eq_sys, known):
         if not all_ok:
             continue
         print "#Solving type 6, 7"
-        solve_type_7(symo, V1, W1, -X1, -Y1, -Z1, -Z2, eps, th1, th2 )
+        _solve_type_7(symo, V1, W1, -X1, -Y1, -Z1, -Z2, eps, th1, th2 )
         known |= {th1, th2}
         return True
     return False
 
-def try_solve_4(symo, eq_sys, known):
+def _try_solve_4(symo, eq_sys, known):
     res = False
     for i in xrange(len(eq_sys)):
         all_ok = False
@@ -243,8 +236,8 @@ def try_solve_4(symo, eq_sys, known):
                 th2 = ths_i[0]
             C1, S1 = cos(th1), sin(th1)
             C12, S12 = cos(th12), sin(th12)
-            X1, Y1, Z1, i_ok = get_coefs(eqi, C1, C12)
-            X2, Y2, Z2, j_ok = get_coefs(eqj, S1, S12)
+            X1, Y1, Z1, i_ok = _get_coefs(eqi, C1, C12)
+            X2, Y2, Z2, j_ok = _get_coefs(eqj, S1, S12)
             all_ok = (X1*Y2 == Y1*X2 and i_ok and j_ok)
             all_ok &= not eqi.has(S1) and not eqi.has(S12)
             all_ok &= not eqj.has(C1) and not eqj.has(C12)
@@ -253,12 +246,12 @@ def try_solve_4(symo, eq_sys, known):
         if not all_ok:
             continue
         print "#Solving type 8"
-        solve_type_8(symo, X1, Y1, Z1, Z2, th1, th2)
+        _solve_type_8(symo, X1, Y1, Z1, Z2, th1, th2)
         known |= {th1, th2}
         res = True
     return res
 
-def solve_type_2(symo, X, Y, Z, th):
+def _solve_type_2(symo, X, Y, Z, th):
     """Solution for the equation:
     X*S + Y*C = Z
     """
@@ -286,7 +279,7 @@ def solve_type_2(symo, X, Y, Z, th):
         C = symo.replace((Y*Z - YPS * X * sqrt(D))/B, 'C', th)
         symo.add_to_dict(th, atan2(S, C))
 
-def solve_type_3(symo, X1, Y1, Z1, X2, Y2, Z2, th):
+def _solve_type_3(symo, X1, Y1, Z1, X2, Y2, Z2, th):
     """Solution for the system:
     X1*S + Y1*C = Z1
     X2*S + Y2*C = Z2
@@ -309,7 +302,7 @@ def solve_type_3(symo, X1, Y1, Z1, X2, Y2, Z2, th):
         S = symo.replace((Z1*Y2 - Z2*Y1)/D, 'S', th)
         symo.add_to_dict(th, atan2(S, C))
 
-def solve_type_4(symo, X1, Y1, X2, Y2, th, r):
+def _solve_type_4(symo, X1, Y1, X2, Y2, th, r):
     """Solution for the system:
     X1*S*r = Y1
     X2*C*r = Y2
@@ -325,7 +318,7 @@ def solve_type_4(symo, X1, Y1, X2, Y2, th, r):
     symo.add_to_dict(r, YPS*sqrt((Y1/X1)**2 + (Y2/X2)**2))
     symo.add_to_dict(th, atan2(Y1/(X1*r), Y2/(X2*r)))
 
-def solve_type_5(symo, X1, Y1, Z1, X2, Y2, Z2, th, r):
+def _solve_type_5(symo, X1, Y1, Z1, X2, Y2, Z2, th, r):
     """Solution for the system:
     X1*S = Y1 + Z1*r
     X2*C = Y2 + Z2*r
@@ -342,10 +335,10 @@ def solve_type_5(symo, X1, Y1, Z1, X2, Y2, Z2, th, r):
     W1 = symo.replace(Z1/X1, 'W1', r)
     V2 = symo.replace(Y2/X2, 'V2', r)
     W2 = symo.replace(Z2/X2, 'W2', r)
-    solve_square(W1**2 + W2**2, 2*(V1*W1 + V2*W2), V1**2 + V2**2, r)
-    solve_type_3(X1, ZERO, Y1 + Z1*r, ZERO, X2, Y2 + Z2*r)
+    _solve_square(W1**2 + W2**2, 2*(V1*W1 + V2*W2), V1**2 + V2**2, r)
+    _solve_type_3(X1, ZERO, Y1 + Z1*r, ZERO, X2, Y2 + Z2*r)
 
-def solve_type_7(symo, V, W, X, Y, Z1, Z2, eps, th_i, th_j):
+def _solve_type_7(symo, V, W, X, Y, Z1, Z2, eps, th_i, th_j):
     """Solution for the system:
     V1*Cj + W1*Sj = X*Ci + Y*Si + Z1
     eps*(V2*Sj - W2*Cj) = X*Si - Y*Ci + Z2
@@ -361,17 +354,17 @@ def solve_type_7(symo, V, W, X, Y, Z1, Z2, eps, th_i, th_j):
     B1 = symo.replace(2*(Z1*Y + Z2*X), 'B1', th_i)
     B2 = symo.replace(2*(Z1*X - Z2*Y), 'B2', th_i)
     B3 = symo.replace(V**2 + W**2 - X**2 - Y**2 - Z1**2 - Z2**2, 'B3', th_i)
-    solve_type_2(symo, B1, B2, B3, th_i)
+    _solve_type_2(symo, B1, B2, B3, th_i)
     Zi1 = symo.replace(X*cos(th_i) + Y*sin(th_i) + Z1, 'Zi1', th_j)
     Zi2 = symo.replace(X*sin(th_i) - Y*cos(th_i) + Z2, 'Zi2', th_j)
-    solve_type_3(symo, W, V, Zi1, eps*V, -eps*W, Zi2, th_j)
+    _solve_type_3(symo, W, V, Zi1, eps*V, -eps*W, Zi2, th_j)
 #    print_eq(symo, "V1", "X*sin({0}) + Y*cos({0}) + Z1".format(th_i))
 #    print_eq(symo, "V2", "X*cos({0}) - Y*sin({0}) + Z2".format(th_i))
 #    print_eq(symo, "C", "(V1 - V2)/(2*W2)")
 #    print_eq(symo, "S", "(V1 + V2)/(2*W1)")
 #    print_eq(symo, th_j, "atan2(S, C)")
 
-def solve_type_8(symo, X, Y, Z1, Z2, th_i, th_j):
+def _solve_type_8(symo, X, Y, Z1, Z2, th_i, th_j):
     """Solution for the system:
     X*Ci + Y*Cij = Z1
     X*Si + Y*Sij = Z2
@@ -393,7 +386,7 @@ def solve_type_8(symo, X, Y, Z1, Z2, th_i, th_j):
     Ci = symo.replace((Q1*Z1 + Q2*Z2)/Den, 'C', th_i)
     symo.add_to_dict(th_i, atan2(Si,Ci))
 
-def solve_square(symo, A, B, C, x):
+def _solve_square(symo, A, B, C, x):
     """ solution for the equation:
     A*x**2 + B*x + C = 0
     """
@@ -405,16 +398,7 @@ def solve_square(symo, A, B, C, x):
     symo.add_to_dict(YPS, (ONE, - ONE))
     symo.add_to_dict(x, (-B + YPS*sqrt(Delta))/(2*A))
 
-def check_coefs(*args):
-    res = True
-    for a in args:
-        res &= not a.has(sin) and not a.has(cos)
-    return res
-
-def match_coefs(X1, X2, Y1, Y2):
-    return Y1 == Y2 and X1 == -X2 or Y1 == -Y2 and X1 == X2
-
-def get_coefs(eq, A1, A2):
+def _get_coefs(eq, A1, A2):
     eqe = eq.expand()
     X = get_max_coef(eqe, A1)
     eqe = eqe.xreplace({A1:0})
@@ -422,27 +406,4 @@ def get_coefs(eq, A1, A2):
     Z = eqe.xreplace({A2:0})
     is_ok = not X.has(A2) and not X.has(A1) and not Y.has(A2)
     return X, Y, Z, is_ok
-
-
-print "Inverse geometric model using Paul method"
-T = Matrix([var("s1:4"), var("n1:4"), var("a1:4"), var("p1:4")]).row_join(Matrix([0, 0, 0, 1]))
-print T.T
-#for i in xrange(3):
-#    for j in xrange(3):
-#        T[i,j] = EMPTY
-f2 = None
-def a():
-#    robo = Robot.RX90()
-    robo = Robot.SR400()
-    symo = Symoro()
-    loop_solve(Robot.SR400(), symo)
-#    igm_Paul(robo, symo, T.T)
-    f2 = symo.gen_func('IGM_generated',robo.get_q_vec(),robo.get_q_active())
-
-import profile
-from timeit import timeit
-#print timeit(a,number = 1)
-a()
-#print timeit(f2,number = 1)
-#profile.run('a()', sort = 'cumtime')
 

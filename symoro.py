@@ -69,10 +69,10 @@ class Robot:
         """  joint acceleration: list of var"""
         self.Nex= [zeros(3, 1) for i in num]
         """  external moment of link: list of 3x1 matrix"""
-        self.Nex[ - 1] = Matrix(var('CX{0}, CY{0}, CZ{0}'.format(self.NJ)))
+        self.Nex[-1] = Matrix(var('CX{0}, CY{0}, CZ{0}'.format(self.NL - 1)))
         self.Fex = [zeros(3, 1) for i in num]
         """  external force of link: list of 3x1 matrix"""
-        self.Fex[ - 1] = Matrix(var('FX{0}, FY{0}, FZ{0}'.format(self.NJ)))
+        self.Fex[-1] = Matrix(var('FX{0}, FY{0}, FZ{0}'.format(self.NL - 1)))
         self.FS = [var('FS{0}'.format(i)) for i in num]
         """  dry friction coefficient: list of ver"""
         self.IA = [var('IA{0}'.format(i)) for i in num]
@@ -98,43 +98,50 @@ class Robot:
         geom_head = self.get_geom_head()
         base_vel_head = self.get_base_vel_head()
         ext_dynam_head = self.get_ext_dynam_head()
-        ext_head = ext_dynam_head[6:]
-        f_ex_head = ext_dynam_head[:3]
-        n_ex_head = ext_dynam_head[3:6]
+        dynam_head = self.get_dynam_head()
+        ext_head = ext_dynam_head[7:] + ['IA']
+        f_ex_head = ext_dynam_head[1:4]
+        n_ex_head = ext_dynam_head[4:7]
         if name in ext_head + geom_head + base_vel_head:
             X = getattr(self, name)
             X[j] = val
         elif name in f_ex_head:
             self.Fex[j][f_ex_head.index(name)] = val
         elif name in n_ex_head:
-            self.Nex[j][f_ex_head.index(name)] = val
-        elif name in self.get_dynam_head():
+            self.Nex[j][n_ex_head.index(name)] = val
+        elif name in dynam_head:
             params = self.get_inert_param(j)
-            params[j-1] = val
-            self.put_inert_param(j,params)
+            i = dynam_head.index(name)
+            params[i-1] = val
+            self.put_inert_param(params, j)
 
     def get_val(self, j, name):
         geom_head = self.get_geom_head()
         base_vel_head = self.get_base_vel_head()
         ext_dynam_head = self.get_ext_dynam_head()
-        ext_head = ext_dynam_head[6:]
-        f_ex_head = ext_dynam_head[:3]
-        n_ex_head = ext_dynam_head[3:6]
+        dynam_head = self.get_dynam_head()
+        ext_head = ext_dynam_head[7:] + ['IA']
+        f_ex_head = ext_dynam_head[1:4]
+        n_ex_head = ext_dynam_head[4:7]
         if name in ext_head + geom_head + base_vel_head:
             X = getattr(self, name)
             return X[j]
         elif name in f_ex_head:
             return self.Fex[j][f_ex_head.index(name)]
         elif name in n_ex_head:
-            return self.Nex[j][f_ex_head.index(name)]
+            return self.Nex[j][n_ex_head.index(name)]
         elif name in self.get_dynam_head():
             params = self.get_inert_param(j)
-            return params[j-1]
+            i = dynam_head.index(name)
+            return params[i-1]
 
-    def get_q_vec(self):
+    def get_q_vec(self, ext = False):
         """Generates vector of joint variables
         """
-        q = list()
+        if ext:
+            q = [0]
+        else:
+            q = []
         for i in xrange(1, self.NF):
             if self.sigma[i] == 0:
                 q.append(self.theta[i])
@@ -255,7 +262,7 @@ class Robot:
             angs.append((self.gamma[j], 'G%s' % j))
         return angs
 
-    def chain(self, j, k=-1):
+    def chain(self, j, k=0):
         """Chain of antecedent frames between j-th and k-th frames
 
         Parameters
@@ -272,7 +279,7 @@ class Robot:
             k is not included
         """
         u = []
-        while j != k and j != -1:
+        while j != k and j != 0:
             u.append(j)
             j = self.ant[j]
         return u
@@ -302,11 +309,10 @@ class Robot:
             If they don't have common root, -1
         """
         u = self.chain(i)
-        while j != - 1:
-            if j in u:
+        while True:
+            if j in u or j == 0:
                 return j
             j = self.ant[j]
-        return  - 1
 
     def get_inert_param(self, j):
         """Returns 10-vector of inertia paremeters of link j.
@@ -335,7 +341,6 @@ class Robot:
         j: int
             Link index.
         """
-        K = [sympify(k) for k in K]
         self.J[j] = Matrix([[K[0], K[1], K[2]],
                     [K[1], K[3], K[4]],
                     [K[2], K[4], K[5]]])
@@ -490,7 +495,7 @@ class Robot:
         robo.GAM = [var('GAM{0}'.format(i)) for i in robo.num]
         robo.J = [zeros(3) for i in robo.num]
         robo.J[1][2, 2] = var('ZZ2')
-        robo.G = Matrix([0, 0, - var('G3')])
+        robo.G = Matrix([0, 0, -var('G3')])
         robo.w0 = zeros(3, 1)
         robo.wdot0 = zeros(3, 1)
         robo.v0 = zeros(3, 1)
@@ -507,15 +512,14 @@ class Robot:
         #TODO: bring it to the new notation with 0-frame
         """Generates Robot instance of SR400"""
         robo = Robot('SR400', 8, 9, 10, False)
-        robo = Robot()
         robo.ant = [-1, 0, 1, 2, 3, 4, 5, 1, 7, 8, 3]
         robo.sigma = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2]
         robo.mu = [0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0]
-        robo.alpha = [0, 0, -pi/2, 0, - pi/2, pi/2, - pi/2, - pi/2, 0, 0, 0]
+        robo.alpha = [0, 0, -pi/2, 0, -pi/2, pi/2, -pi/2, -pi/2, 0, 0, 0]
         d_var = var('D:9')
         robo.d = [0, 0, d_var[2], d_var[3], d_var[4], 0, 0,
                   d_var[2], d_var[8], d_var[3], -d_var[8]]
-        robo.theta = list(var('th1:10'))+[0]
+        robo.theta = [0] + list(var('th1:10')) + [0]
         robo.r = [0, 0, 0, 0, var('RL4'), 0, 0, 0, 0, 0, 0]
         robo.b = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         robo.gamma = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, pi/2]
@@ -527,7 +531,7 @@ class Robot:
         robo = Robot('RX90', 6, 6, 6, False)
         # table of geometric parameters RX90
         robo.sigma = [2, 0, 0, 0, 0, 0, 0, 0]
-        robo.alpha = [0, 0, pi/2, 0, - pi/2, pi/2, - pi/2]
+        robo.alpha = [0, 0, pi/2, 0, -pi/2, pi/2, -pi/2]
         robo.d = [0, 0, 0, var('D3'), 0, 0, 0]
         robo.theta = [0] + list(var('th1:7'))
         robo.r = [0, 0, 0, 0, var('RL4'), 0, 0]
@@ -541,9 +545,9 @@ class Robot:
 #        robo.qdot = [var('QP{0}'.format(i)) for i in num]
 #        robo.qddot = [var('QDP{0}'.format(i)) for i in num]
 #        robo.Nex= [zeros(3, 1) for i in num]
-#        robo.Nex[ - 1] = Matrix(var('CX{0}, CY{0}, CZ{0}'.format(robo.NJ)))
+#        robo.Nex[-1] = Matrix(var('CX{0}, CY{0}, CZ{0}'.format(robo.NJ)))
 #        robo.Fex = [zeros(3, 1) for i in num]
-#        robo.Fex[ - 1] = Matrix(var('FX{0}, FY{0}, FZ{0}'.format(robo.NJ)))
+#        robo.Fex[-1] = Matrix(var('FX{0}, FY{0}, FZ{0}'.format(robo.NJ)))
 #        robo.FS = [var('FS{0}'.format(i)) for i in num]
 #        robo.IA = [var('IA{0}'.format(i)) for i in num]
 #        robo.FV = [var('FV{0}'.format(i)) for i in num]
@@ -687,9 +691,9 @@ def hat(v):
     =======
     hat: Matrix 3x3
     """
-    return Matrix([[0, - v[2], v[1]],
-                   [v[2], 0, - v[0]],
-                   [ - v[1], v[0], 0]])
+    return Matrix([[0, -v[2], v[1]],
+                   [v[2], 0, -v[0]],
+                   [-v[1], v[0], 0]])
 
 def l2str(list_var, spacing=7):
     """Converts a list into string, that will be
@@ -1027,7 +1031,7 @@ class Symoro:
         if is_simple and not forced:
             return old_sym
         elif not forced:
-            for i in (1, - 1):
+            for i in (1, -1):
                 if i * old_sym in self.revdi:
                     return i * self.revdi[i * old_sym]
         new_sym = var(str(name) + str(index))
@@ -1237,8 +1241,10 @@ class Symoro:
     def gen_fheader(self, name, *args):
         fun_head = []
         fun_head.append('def %s_func(*args):\n' % name)
-        imp_s = 'from numpy import pi, sin, cos, sign, array, arctan2 as atan2, sqrt\n'
-        fun_head.append('    %s' % imp_s)
+        imp_s_1 = 'from numpy import pi, sin, cos, sign\n'
+        imp_s_2 = 'from numpy import array, arctan2 as atan2, sqrt\n'
+        fun_head.append('    %s' % imp_s_1)
+        fun_head.append('    %s' % imp_s_2)
         for i, var_list in enumerate(args):
             v_str_list = self.convert_syms(args[i], True)
             fun_head.append('    %s=args[%s]\n' % (v_str_list, i))
@@ -1272,7 +1278,7 @@ class Symoro:
                     res += ','
             res += ']'
             return res
-        elif isinstance(syms, Expr):
+        else:
             if rpl_liter and sympify(syms).is_number:
                 return 'NUL'
             else:
@@ -1289,6 +1295,8 @@ class Symoro:
             return self.extract_syms(list(syms))
         elif isinstance(syms, Expr):
             return syms.atoms(Symbol)
+        else:
+            return set()
 
     def sift_syms(self, rq_syms, wr_syms):
         """Returns ordered list of variables to be compute
@@ -1311,17 +1319,17 @@ class Symoro:
         computes symbolf from to_return.  wr_syms are considered to
         be known
         """
+        # final symbols to be compute
         syms = self.extract_syms(to_return)
-            # final symbols to be compute
+        # defines order of computation
         order_list = self.sift_syms(syms, wr_syms)
-            # defines order of computation
+        # list of instructions in final function
         fun_body = []
-            # list of instructions in final function
+        # will be switched to true when branching detected
         multival = False
-            # will be switched to true when branching detected
         space = '    '
-        folded = 1
-            # size of indentation; = 1 + number of 'for' statements
+        folded = 1 # indentation = 1 + number of 'for' statements
+
         for s in order_list:
             if s not in self.sydi:
                 item = '%s%s=1.\n' % (space * folded, s)
@@ -1361,7 +1369,7 @@ class Symoro:
         =====
         -All unassigned used symbols will be set to '1.0'.
         -This function must be called only after the model that
-        computes symbols in to_compute have been generated.
+            computes symbols in to_return have been generated.
         """
         fun_head = self.gen_fheader(name, *args)
         wr_syms = self.extract_syms(args) # set of defined symbols

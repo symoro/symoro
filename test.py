@@ -119,16 +119,16 @@ class testGeometry(unittest.TestCase):
         self.symo = symoro.Symoro()
         self.robo = symoro.Robot.RX90()
 
-    def test_dgm(self):
+    def test_dgm_RX90(self):
         T = geometry.dgm(self.robo, self.symo, 0, 6, fast_form=True, trig_subs=True)
         f06 = self.symo.gen_func('DGM_generated1', T, self.robo.get_q_vec())
         T = geometry.dgm(self.robo, self.symo, 6, 0, fast_form=True, trig_subs=True)
         f60 = self.symo.gen_func('DGM_generated2', T, self.robo.get_q_vec())
-        for x in xrange(5):
+        for x in xrange(10):
             arg = random.normal(size = 6)
-            self.assertTrue(amax(matrix(f06(arg))*matrix(f60(arg))-eye(4)) < 1e-12)
+            self.assertLess(amax(matrix(f06(arg))*matrix(f60(arg))-eye(4)), 1e-12)
         t06 = matrix([[1,0,0,1],[0,1,0,0],[0,0,1,1],[0,0,0,1]])
-        self.assertTrue(amax(matrix(f06(zeros(6)))-t06) < 1e-12)
+        self.assertLess(amax(matrix(f06(zeros(6)))-t06), 1e-12)
         T46 = geometry.dgm(self.robo, self.symo, 4, 6, fast_form=False, trig_subs=True)
         C4,S4,C5,C6,S5,S6,RL4 = var("C4,S4,C5,C6,S5,S6,RL4")
         T_true46 = Matrix([[C5*C6,-C5*S6,-S5,0],[S6,C6,0,0],
@@ -140,19 +140,68 @@ class testGeometry(unittest.TestCase):
                          [-S4*C5*C6-C4*S6,S4*C5*S6-C4*C6,S4*S5,0],[0,0,0,1]])
         self.assertEqual(T36, T_true36)
 
+    def test_dgm_SR400(self):
+        self.robo = symoro.Robot.SR400()
+        T = geometry.dgm(self.robo, self.symo, 0, 6, fast_form=True, trig_subs=True)
+        f06 = self.symo.gen_func('DGM_generated1', T, self.robo.get_q_vec())
+        T = geometry.dgm(self.robo, self.symo, 6, 0, fast_form=True, trig_subs=True)
+        f60 = self.symo.gen_func('DGM_generated2', T, self.robo.get_q_vec())
+        for x in xrange(10):
+            arg = random.normal(size = 10)
+            self.assertLess(amax(matrix(f06(arg))*matrix(f60(arg))-eye(4)), 1e-12)
+        t06 = matrix([[1,0,0,3],[0,-1,0,0],[0,0,-1,-1],[0,0,0,1]])
+        self.assertLess(amax(matrix(f06(zeros(10))) - t06), 1e-12)
+
+    def test_robo_misc(self):
+        self.robo = symoro.Robot.SR400()
+        self.assertEqual(self.robo.chain(6), [6,5,4,3,2,1])
+        self.assertEqual(self.robo.chain(6, 3), [6, 5, 4])
+        self.assertEqual(self.robo.loop_chain(8, 9), [8, 9])
+        self.assertEqual(self.robo.loop_chain(0, 6), [0,1,2,3,4,5,6])
+        self.assertEqual(self.robo.loop_chain(6, 0), [6,5,4,3,2,1,0])
+        self.assertEqual(self.robo.loop_chain(9, 10), [9,8,7,1,2,3,10])
+        self.assertEqual(self.robo.get_loop_terminals(), [(9,10)])
+        l1 = self.robo.get_geom_head()
+        l2 = self.robo.get_dynam_head()
+        l3 = self.robo.get_ext_dynam_head()
+        for Name in l1[1:]+l2[1:]+l3[1:]:
+            for i in xrange(self.robo.NL):
+                self.robo.put_val(i, Name, var(Name + str(i)))
+        for Name in l3[1:]+l2[1:]+l1[1:]:
+            for i in xrange(self.robo.NL):
+                v = var(Name + str(i))
+                self.assertEqual(self.robo.get_val(i, Name), v)
+
     def test_igm(self):
-        invgeom.igm_Paul(self.robo, self.symo, invgeom.T_GENERAL)
+        invgeom.igm_Paul(self.robo, self.symo, invgeom.T_GENERAL, 6)
         igm_f = self.symo.gen_func('IGM_gen', self.robo.get_q_vec(),
                                    invgeom.T_GENERAL)
         T = geometry.dgm(self.robo, self.symo, 0, 6,
                          fast_form=True, trig_subs=True)
         f06 = self.symo.gen_func('DGM_generated1', T, self.robo.get_q_vec())
-        for x in xrange(2):
+        for x in xrange(10):
             arg = random.normal(size = 6)
             Ttest = f06(arg)
             solution = igm_f(Ttest)
             for q in solution:
-                self.assertTrue(amax(matrix(f06(q))-Ttest) < 1e-12)
+                self.assertLess(amax(matrix(f06(q))-Ttest), 1e-12)
+
+    def test_loop(self):
+        self.robo = symoro.Robot.SR400()
+        invgeom.loop_solve(self.robo, self.symo)
+        l_solver = self.symo.gen_func('IGM_gen', self.robo.get_q_vec(),
+                                      self.robo.get_q_active())
+        T = geometry.dgm(self.robo, self.symo, 9, 10,
+                         fast_form=True, trig_subs=True)
+        t_loop = self.symo.gen_func('DGM_generated1', T, self.robo.get_q_vec())
+        for x in xrange(10):
+            arg = random.normal(size = 6)
+            solution = l_solver(arg)
+            for q in solution:
+                self.assertLess(amax(matrix(t_loop(q))-eye(4)), 1e-12)
 
 if __name__ == '__main__':
     unittest.main()
+#    suite = unittest.TestSuite()
+#    suite.addTest(testGeometry('test_robo_misc'))
+#    unittest.TextTestRunner().run(suite)
