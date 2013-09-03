@@ -405,7 +405,8 @@ class Robot:
         =======
         get_geom_head: list of strings
         """
-        return ['j', 'ant', 'sigma', 'gamma', 'b', 'alpha', 'd', 'theta', 'r']
+        return ['j', 'ant', 'sigma', 'mu', 'gamma', 'b',
+                'alpha', 'd', 'theta', 'r']
 
     def get_base_vel_head(self):
         """Returns header for base velocities and gravity vector.
@@ -417,6 +418,9 @@ class Robot:
         """
         return ['j', 'W0', 'WP0', 'V0', 'VP0', 'G']
 
+#    def get_param_vec(self, head, j):
+#        params = [j]
+#        for
     def get_geom_param(self, j):
         """Returns vector of geometric parameters of frame j.
         Used for output generation.
@@ -430,8 +434,8 @@ class Robot:
         =======
         params: list
         """
-        params = [j, self.ant[j], self.sigma[j], self.gamma[j],
-                  self.b[j], self.alpha[j], self.d[j],
+        params = [j, self.ant[j], self.sigma[j], self.mu[j],
+                  self.gamma[j], self.b[j], self.alpha[j], self.d[j],
                   self.theta[j], self.r[j]]
         return params
 
