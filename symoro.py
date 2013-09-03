@@ -17,6 +17,8 @@ ZERO = Integer(0)
 ONE = Integer(1)
 
 #TODO: write consistency check
+#TODO: Ask about QP QDP file writing. Number of joints is different
+#from number of links
 class Robot:
     """Container of the robot parametric description.
     Responsible for low-level geometric transformation
@@ -63,9 +65,9 @@ class Robot:
         """  base linear velocity: 3x1 matrix"""
         self.vdot0 = zeros(3, 1)
         """  base linear acceleration: 3x1 matrix"""
-        self.QP = [var('QP{0}'.format(i)) for i in num]
+        self.qdot = [var('QP{0}'.format(i)) for i in num]
         """  joint speed: list of var"""
-        self.QDP = [var('QDP{0}'.format(i)) for i in num]
+        self.qddot = [var('QDP{0}'.format(i)) for i in num]
         """  joint acceleration: list of var"""
         self.Nex= [zeros(3, 1) for i in num]
         """  external moment of link: list of 3x1 matrix"""
@@ -94,7 +96,10 @@ class Robot:
 
     # member methods:
     def put_val(self, j, name, val_str):
-        val = sympify(val_str)
+        try:
+            val = sympify(val_str)
+        except:
+            val = var(val_str)
         geom_head = self.get_geom_head()
         base_vel_head = self.get_base_vel_head()
         ext_dynam_head = self.get_ext_dynam_head()
@@ -204,6 +209,24 @@ class Robot:
             Expression for dry friction torque of joint j
         """
         return self.FS[j] * sign(self.qdot[j])
+
+    @property
+    def W0(self): return self.w0
+
+    @property
+    def WP0(self): return self.wdot0
+
+    @property
+    def V0(self): return self.w0
+
+    @property
+    def VP0(self): return self.wdot0
+
+    @property
+    def QP(self): return self.qdot
+
+    @property
+    def QDP(self): return self.qddot
 
     @property
     def NJ(self):
@@ -416,82 +439,91 @@ class Robot:
         =======
         get_base_vel_head: list of strings
         """
-        return ['j', 'W0', 'WP0', 'V0', 'VP0', 'G']
+        return ['axis', 'W0', 'WP0', 'V0', 'VP0', 'G']
 
-#    def get_param_vec(self, head, j):
-#        params = [j]
-#        for
-    def get_geom_param(self, j):
-        """Returns vector of geometric parameters of frame j.
-        Used for output generation.
-
-        Parameters
-        ==========
-        j: int
-            Frame index.
-
-        Returns
-        =======
-        params: list
-        """
-        params = [j, self.ant[j], self.sigma[j], self.mu[j],
-                  self.gamma[j], self.b[j], self.alpha[j], self.d[j],
-                  self.theta[j], self.r[j]]
+    def get_param_vec(self, head, j):
+        params = list()
+        axis_dict = {0:'X', 1:'Y', 2:'Z'}
+        for h in head:
+            if h == 'j':
+                params.append(j)
+            elif h == 'axis':
+                params.append(axis_dict[j])
+            else:
+                params.append(self.get_val(j, h))
         return params
 
-    def get_ext_dynam_param(self, j):
-        """Returns vector of external forces and torques,
-        friction parameters and joint speeds, accelerations of link j.
-        Used for output generation.
-
-        Parameters
-        ==========
-        j: int
-            Link index.
-
-        Returns
-        =======
-        params: list
-        """
-        params = [j, self.Fex[j][0], self.Fex[j][1], self.Fex[j][2],
-                  self.Nex[j][0], self.Nex[j][1], self.Nex[j][2],
-                  self.FS[j], self.FV[j], self.qdot[j],
-                  self.qddot[j], self.GAM[j]]
-        return params
-
-    def get_base_vel(self, j):
-        """Returns vector of j-th components of base
-        velocities and gravity vector.
-        Used for output generation.
-
-        Parameters
-        ==========
-        j: int
-            Link index.
-
-        Returns
-        =======
-        params: list
-        """
-        params = [j + 1, self.w0[j], self.wdot0[j], self.v0[j],
-                  self.vdot0[j], self.G[j]]
-        return params
-
-    def get_dynam_param(self, j):
-        """Returns vector of inertia paremeters of link j.
-        Used for output generation.
-
-        Parameters
-        ==========
-        j: int
-            Link index.
-
-        Returns
-        =======
-        params: list
-        """
-        params = [j] + self.get_inert_param(j) + [self.IA[j]]
-        return params
+#    def get_geom_param(self, j):
+#        """Returns vector of geometric parameters of frame j.
+#        Used for output generation.
+#
+#        Parameters
+#        ==========
+#        j: int
+#            Frame index.
+#
+#        Returns
+#        =======
+#        params: list
+#        """
+#        params = [j, self.ant[j], self.sigma[j], self.mu[j],
+#                  self.gamma[j], self.b[j], self.alpha[j], self.d[j],
+#                  self.theta[j], self.r[j]]
+#        return params
+#
+#    def get_ext_dynam_param(self, j):
+#        """Returns vector of external forces and torques,
+#        friction parameters and joint speeds, accelerations of link j.
+#        Used for output generation.
+#
+#        Parameters
+#        ==========
+#        j: int
+#            Link index.
+#
+#        Returns
+#        =======
+#        params: list
+#        """
+#        params = [j, self.Fex[j][0], self.Fex[j][1], self.Fex[j][2],
+#                  self.Nex[j][0], self.Nex[j][1], self.Nex[j][2],
+#                  self.FS[j], self.FV[j], self.qdot[j],
+#                  self.qddot[j], self.GAM[j]]
+#        return params
+#
+#    def get_base_vel(self, j):
+#        """Returns vector of j-th components of base
+#        velocities and gravity vector.
+#        Used for output generation.
+#
+#        Parameters
+#        ==========
+#        j: int
+#            Link index.
+#
+#        Returns
+#        =======
+#        params: list
+#        """
+#        params = [j + 1, self.w0[j], self.wdot0[j], self.v0[j],
+#                  self.vdot0[j], self.G[j]]
+#        return params
+#
+#    def get_dynam_param(self, j):
+#        """Returns vector of inertia paremeters of link j.
+#        Used for output generation.
+#
+#        Parameters
+#        ==========
+#        j: int
+#            Link index.
+#
+#        Returns
+#        =======
+#        params: list
+#        """
+#        params = [j] + self.get_inert_param(j) + [self.IA[j]]
+#        return params
 
 
 
@@ -1139,7 +1171,7 @@ class Symoro:
             expr = expr.subs(self.sydi)
         return expr
 
-    def write_param(self, name, header, param, N):
+    def write_param(self, name, header, robo, N):
         """Low-level function for writing the parameters table
 
         Parameters
@@ -1148,16 +1180,16 @@ class Symoro:
             the name of the table
         header: list
             the table header
-        param: callable (int): list
-            returns the list of parameters for
-            the particular row of the table
-        N: int
-            number of lines in the table
+        robo: Robot
+            Instance of parameter container
+        N: list of int
+            Indices for which parameter rows will be written
         """
         self.write_line(name)
         self.write_line(l2str(header))
-        for j in xrange(N):
-            self.write_line(l2str(param(j)))
+        for j in N:
+            params = robo.get_param_vec(header, j)
+            self.write_line(l2str(params))
         self.write_line()
 
     def write_geom_param(self, robo, title=''):
@@ -1174,7 +1206,7 @@ class Symoro:
             self.write_line(title)
             self.write_line()
         self.write_param('Geometric parameters', robo.get_geom_head(),
-                         robo.get_geom_param, robo.NF)
+                         robo, range(1,robo.NF))
 
     def write_inert_param(self, robo, name='Dynamic inertia parameters'):
         """Writes the inertia parameters table
@@ -1186,8 +1218,12 @@ class Symoro:
         name: string, optional
             The table name. Not used in case of internal using.
         """
+        if robo.is_mobile:
+            start_frame = 0
+        else:
+            start_frame = 1
         self.write_param(name, robo.get_dynam_head(),
-                 robo.get_dynam_param, robo.NL)
+                 robo, range(start_frame, robo.NL))
 
     def write_dynam_param(self, robo, title):
         """Writes the geometric parameters table
@@ -1209,9 +1245,9 @@ class Symoro:
         self.write_inert_param(robo)
         self.write_param('External forces and joint parameters',
                          robo.get_ext_dynam_head(),
-                         robo.get_ext_dynam_param, robo.NL)
+                         robo, range(1, robo.NL))
         self.write_param('Base velicities parameters', robo.get_base_vel_head(),
-                         robo.get_base_vel, 3)
+                         robo, [0, 1, 2])
 
     def unknown_sep(self, eq, known):
         """If there is a sum inside trigonometric function and
@@ -1408,5 +1444,6 @@ class Symoro:
         fun_string = "".join(fun_head + fun_body)
         exec fun_string
         print fun_string
+#         print is for debug pupuses, to be removed
         return eval('%s_func'%name)
 
