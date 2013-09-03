@@ -70,7 +70,7 @@ class Transform():
         for i in chainj:
             if i > k:
                 T = antRj[i]*T
-            if antRj[i].col(2) != Z_AXIS and robo.ant[i] != -1:
+            if antRj[i].col(2) != Z_AXIS and robo.ant[i] != 0:
                 all_paral = False
         return T, all_paral
 
@@ -470,7 +470,7 @@ def compute_rot_trans(robo, symo):
     return antRj, antPj
 
 #TODO: validate for different structures
-def direct_geometric(robo, i, j, fast_form=True):
+def direct_geometric_fast(robo, i, j):
     """Computes trensformation matrix iTj.
 
     Parameters
@@ -492,8 +492,35 @@ def direct_geometric(robo, i, j, fast_form=True):
     symo = Symoro()
     symo.file_open(robo, 'dgm')
     symo.write_geom_param(robo, 'Direct Geometrix model')
-    dgm(robo, symo, i - 1, j - 1, fast_form, write_res=True)
+    dgm(robo, symo, i, j, fast_form = True, write_res=True)
     symo.file_out.close()
     return symo
 
+def direct_geometric(robo, frames):
+    """Computes trensformation matrix iTj.
 
+    Parameters
+    ==========
+    robo: Robot
+        Instance of robot description container
+    i: int
+        the to-frame
+    j: int
+        the from-frame
+    fast: bool
+        if false, then the expressions will be unfolded
+
+    Returns
+    =======
+    symo.sydi: dictionary
+        Dictionary with the information of all the sybstitution
+    """
+    symo = Symoro()
+    symo.file_open(robo, 'dgm')
+    symo.write_geom_param(robo, 'Direct Geometrix model')
+    for i,j in frames:
+        symo.write_line('Tramsformation matrix %s T %s' % (i, j))
+        dgm(robo, symo, i, j, fast_form = True, write_res=True)
+        symo.write_line()
+    symo.file_out.close()
+    return symo

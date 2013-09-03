@@ -28,11 +28,11 @@ class Robot:
         """  name of the robot: string"""
         self.is_mobile = is_mobile
         """ whethere the base frame is floating: bool"""
-        self.NL = NL + 1
+        self.nl = NL
         """  number of links: int"""
-        self.NJ = NJ + 1
+        self.nj = NJ
         """  number of joints: int"""
-        self.NF = NF + 1
+        self.nf = NF
         """  number of frames: int"""
         self.sigma = zeros(1, NF)
         """  joint type: list of int"""
@@ -204,6 +204,33 @@ class Robot:
             Expression for dry friction torque of joint j
         """
         return self.FS[j] * sign(self.qdot[j])
+
+    @property
+    def NJ(self):
+        """ Actual number of joints counting 0
+        """
+        return self.nj + 1
+
+    @property
+    def NL(self):
+        """ Actual number of links counting 0
+        """
+        return self.nl + 1
+
+    @property
+    def NF(self):
+        """ Actual number of frames counting 0
+        """
+        return self.nf + 1
+
+    @property
+    def type_of_structure(self):
+        if len(set(range(self.NJ)) - set(self.ant)) == 1:
+            return 'Simple'
+        elif self.NJ == self.NL:
+            return 'Tree'
+        else:
+            return 'Closed-loop'
 
     def get_loop_terminals(self):
         B = self.NJ - self.NL
