@@ -166,8 +166,8 @@ def compute_transform(robo, symo, j, antRj, antPj):
     antTj = _transform(robo, j)
     for angle, name in robo.get_angles(j):
         antTj = symo.trig_replace(antTj, angle, name)
-    antRj[j] = symo.mat_replace(Transform.R(antTj), 'A', robo.num[j])
-    antPj[j] = symo.mat_replace(Transform.P(antTj), 'L', robo.num[j])
+    antRj[j] = symo.mat_replace(Transform.R(antTj), 'A', j)
+    antPj[j] = symo.mat_replace(Transform.P(antTj), 'L', j)
 
 def compute_screw_transform(robo, symo, j, antRj, antPj, jTant):
     """Internal function. Computes the screw transformation matrix
@@ -178,7 +178,7 @@ def compute_screw_transform(robo, symo, j, antRj, antPj, jTant):
     jTant is an output parameter
     """
     jRant = antRj[j].T
-    ET = symo.mat_replace( -jRant*hat(antPj[j]), 'JPR', robo.num[j])
+    ET = symo.mat_replace( -jRant*hat(antPj[j]), 'JPR', j)
     jTant[j] = (Matrix([jRant.row_join(ET),
                         zeros(3, 3).row_join(jRant)]))
 
@@ -481,18 +481,16 @@ def direct_geometric_fast(robo, i, j):
         the to-frame
     j: int
         the from-frame
-    fast: bool
-        if false, then the expressions will be unfolded
 
     Returns
     =======
-    symo.sydi: dictionary
-        Dictionary with the information of all the sybstitution
+    symo: Symoro
+        Instance that contains all the relations of the computed model
     """
     symo = Symoro()
     symo.file_open(robo, 'dgm')
     symo.write_geom_param(robo, 'Direct Geometrix model')
-    dgm(robo, symo, i, j, fast_form = True, write_res=True)
+    dgm(robo, symo, i, j, fast_form = True)
     symo.file_out.close()
     return symo
 
@@ -503,24 +501,20 @@ def direct_geometric(robo, frames):
     ==========
     robo: Robot
         Instance of robot description container
-    i: int
-        the to-frame
-    j: int
-        the from-frame
-    fast: bool
-        if false, then the expressions will be unfolded
+    frames: list of tuples of type (i,j)
+        Defines list of required transformation matrices iTj
 
     Returns
     =======
-    symo.sydi: dictionary
-        Dictionary with the information of all the sybstitution
+    symo: Symoro
+        Instance that contains all the relations of the computed model
     """
     symo = Symoro()
     symo.file_open(robo, 'dgm')
     symo.write_geom_param(robo, 'Direct Geometrix model')
     for i,j in frames:
         symo.write_line('Tramsformation matrix %s T %s' % (i, j))
-        dgm(robo, symo, i, j, fast_form = True, write_res=True)
+        dgm(robo, symo, i, j, fast_form = False, trig_replace = False)
         symo.write_line()
     symo.file_out.close()
     return symo

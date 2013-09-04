@@ -27,8 +27,8 @@ def compute_omega(robo, symo, j, antRj, w, wi):
     wi[j], w[j] =  omega_ij(robo, symo, j, jRant, w, qdj)
 
 def omega_ij(robo, symo, j, jRant, w, qdj, forced = False):
-    wi = symo.mat_replace(jRant*w[robo.ant[j]], 'WI', robo.num[j])
-    wj = symo.mat_replace(wi + (1 - robo.sigma[j])*qdj, 'W', robo.num[j], forced)
+    wi = symo.mat_replace(jRant*w[robo.ant[j]], 'WI', j)
+    wj = symo.mat_replace(wi + (1 - robo.sigma[j])*qdj, 'W', j, forced)
     return wi, wj
 
 def compute_twist(robo, symo, j, antRj, antPj, w, wdot, U, vdot, forced = False):
@@ -44,18 +44,18 @@ def compute_twist(robo, symo, j, antRj, antPj, w, wdot, U, vdot, forced = False)
     qddj = Matrix([0, 0, robo.qddot[j]])
     wi, w[j] =  omega_ij(robo, symo, j, jRant, w, qdj, forced)
     wdot[j] = jRant*wdot[robo.ant[j]] + (1 - robo.sigma[j])*(qddj + hat(wi)*qdj)
-    symo.mat_replace(wdot[j], 'WP', robo.num[j], forced)
+    symo.mat_replace(wdot[j], 'WP', j, forced)
     DV = Init.product_combinations(w[j])
-    symo.mat_replace(DV, 'DV', robo.num[j])
+    symo.mat_replace(DV, 'DV', j)
     hatw_hatw = Matrix([[-DV[3]-DV[5], DV[1], DV[2]],
                         [DV[1], -DV[5]-DV[0], DV[4]],
                         [DV[2], DV[4], -DV[3]-DV[0]]])
     U[j] = hatw_hatw + hat(wdot[j])
-    symo.mat_replace(U[j], 'U', robo.num[j])
+    symo.mat_replace(U[j], 'U', j)
     vsp = vdot[robo.ant[j]] + U[robo.ant[j]]*antPj[j]
-    symo.mat_replace(vsp, 'VSP', robo.num[j])
+    symo.mat_replace(vsp, 'VSP', j)
     vdot[j] = jRant*vsp + robo.sigma[j]*(qddj + 2*hat(wi)*qdj)
-    symo.mat_replace(vdot[j], 'VP', robo.num[j], forced)
+    symo.mat_replace(vdot[j], 'VP', j, forced)
 
 def jac(robo, symo, i, j, n, chain = None):
     """
@@ -66,8 +66,8 @@ def jac(robo, symo, i, j, n, chain = None):
     if chain == None:
         chain = reversed(robo.chain(n))
     for k in chain:
-        kTj = dgm(robo, symo, k, j, False)
-        iTk = dgm(robo, symo, i, k, False)
+        kTj = dgm(robo, symo, k, j, fast_form = False)
+        iTk = dgm(robo, symo, i, k, fast_form = False)
         isk, ink, iak = Transform.sna(iTk)
         sigm = robo.sigma[k]
         if sigm == 1:
@@ -128,7 +128,7 @@ def kinematic_loop_constraints(robo, symo):
         return
     indx_c = range(robo.NL, robo.NJ + B)
     indx_a, indx_p = [], []
-    for i in range(robo.NL):
+    for i in xrange(1, robo.NL):
         if robo.mu[i] == 1:
             indx_a.append(i)
         else:
@@ -142,8 +142,8 @@ def kinematic_loop_constraints(robo, symo):
         Jj, L = jac(robo, symo, k, j, j, chj)
         chi.extend(chj)
         J = Ji.row_join(-Jj)
-        for row in range(6):
-            if all(J[row, col] == ZERO for col in range(len(chi))):
+        for row in xrange(6):
+            if all(J[row, col] == ZERO for col in xrange(len(chi))):
                 continue
             elif J[row, chi.index(j)] == ZERO:
                 extend_W(J, row, W_a, indx_a, chi)
@@ -179,30 +179,30 @@ def compute_speeds_accelerations(robo, symo, antRj = None, antPj = None):
     #init auxilary matrix
     U = Init.init_U(robo)
 
-    for j in range(robo.NL):
+    for j in xrange(1, robo.NL):
         compute_twist(robo, symo, j, antRj, antPj, w, wdot, U, vdot, forced)
     return w, wdot, vdot, U
 
-symo = Symoro()
-robo = Robot.RX90()
-#print jac(robo, symo, 2, 5, 5)
-#print jac_det(robo, symo, 5)
-#W = kinematic_loop_constraints(robo, symo)
-#print W[0]
-#print W[1]
-#speeds_accelerations(robo, symo)
-#print jac_inv(Robot.RX90(), symo, 2, 5, 5)
-
-def b():
-    symo = Symoro()
-    print jac_inv(Robot.RX90(), symo, 2,5,5)
-##from timeit import timeit
-###print timeit(a, number = 10)
-###print timeit(b, number = 10)
-##
-import profile
+#symo = Symoro()
+#robo = Robot.RX90()
+##print jac(robo, symo, 2, 5, 5)
+##print jac_det(robo, symo, 5)
+##W = kinematic_loop_constraints(robo, symo)
+##print W[0]
+##print W[1]
+##speeds_accelerations(robo, symo)
+##print jac_inv(Robot.RX90(), symo, 2, 5, 5)
 #
-#profile.run('b()', sort = 'cumtime')
-#profile.run('b()')
-from timeit import timeit
-print timeit(b, number = 1)
+#def b():
+#    symo = Symoro()
+#    print jac_inv(Robot.RX90(), symo, 2,5,5)
+###from timeit import timeit
+####print timeit(a, number = 10)
+####print timeit(b, number = 10)
+###
+#import profile
+##
+##profile.run('b()', sort = 'cumtime')
+##profile.run('b()')
+#from timeit import timeit
+#print timeit(b, number = 1)

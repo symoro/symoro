@@ -2,14 +2,16 @@
 Unit tests for SYMORO modules
 """
 import unittest
-import symoro
-import geometry
-#import kinematics
-import invgeom
-#import dynamics
 from sympy import sympify,var, Matrix
 from sympy.abc import A,B,C,X,Y,Z
 from numpy import random, amax, matrix, eye, zeros
+import symoro
+import geometry
+import kinematics
+import invgeom
+from geometry import Transform as trns
+#import dynamics
+
 
 class testSymoroTrig(unittest.TestCase):
 
@@ -179,7 +181,7 @@ class testGeometry(unittest.TestCase):
         T = geometry.dgm(self.robo, self.symo, 0, 6,
                          fast_form=True, trig_subs=True)
         f06 = self.symo.gen_func('DGM_generated1', T, self.robo.get_q_vec())
-        for x in xrange(10):
+        for x in xrange(100):
             arg = random.normal(size = 6)
             Ttest = f06(arg)
             solution = igm_f(Ttest)
@@ -200,8 +202,46 @@ class testGeometry(unittest.TestCase):
             for q in solution:
                 self.assertLess(amax(matrix(t_loop(q))-eye(4)), 1e-12)
 
+class testKinematics(unittest.TestCase):
+
+    def setUp(self):
+        self.symo = symoro.Symoro()
+        self.robo = symoro.Robot.RX90()
+
+    def test_jac(self):
+        for j in range(1,1):
+            #compute Jac
+            J,l = kinematics.jac(self.robo, self.symo, 0, j, j)
+            jacj = self.symo.gen_func('JacRX90', J, self.robo.get_q_vec())
+            #compute DGM
+            T = geometry.dgm(self.robo, self.symo, 0, j, fast_form=True, trig_subs=True)
+            T0j = self.symo.gen_func('DGM_generated1', T, self.robo.get_q_vec())
+            for i in xrange(10):
+                dq = random.normal(size = 6, scale = 1e-7)
+                q = random.normal(size = 6)
+                dX = matrix(jacj(q)) * matrix(dq[:j]).T
+                T = (matrix(T0j(q+dq)) - T0j(q))
+    #            print dX
+    #            print T
+                self.assertLess(amax(dX[:3] - trns.P(T)), 1e-12)
+
+    def test_jac2(self):
+        J,L = kinematics.jac(self.robo, self.symo, 3, 3, 6)
+        jac63 = self.symo.gen_func('Jac1RX90', J, self.robo.get_q_vec())
+        L63 = self.symo.gen_func('LRX90', L, self.robo.get_q_vec())
+        J,L = kinematics.jac(self.robo, self.symo, 3, 6, 6)
+        jac66 = self.symo.gen_func('Jac2RX90', J, self.robo.get_q_vec())
+        for i in xrange(10):
+            q = random.normal(size = 6)
+            j63 = matrix(jac63(q))
+            l63 = matrix(L63(q))
+            j66 = matrix(jac66(q))
+            X = eye(6)
+            X[:3,3:] = l63
+            self.assertLess(amax(j66 - X*j63), 1e-12)
+
 if __name__ == '__main__':
-    unittest.main()
-#    suite = unittest.TestSuite()
-#    suite.addTest(testGeometry('test_robo_misc'))
-#    unittest.TextTestRunner().run(suite)
+#    unittest.main()
+    suite = unittest.TestSuite()
+    suite.addTest(testKinematics('test_jac2'))
+    unittest.TextTestRunner().run(suite)
