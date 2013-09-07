@@ -95,11 +95,15 @@ class Robot:
         """  gravity vector: 3x1 matrix"""
 
     # member methods:
-    def put_val(self, j, name, val_str):
-        try:
-            val = sympify(val_str)
-        except:
-            val = var(val_str)
+    def put_val(self, j, name, val):
+        #TODO: write proper parser
+        if isinstance(val, str):
+            try:
+                val = sympify(val)
+                if val.is_Integer:
+                    val = int(val)
+            except:
+                return
         geom_head = self.get_geom_head()
         base_vel_head = self.get_base_vel_head()
         ext_dynam_head = self.get_ext_dynam_head()
@@ -119,6 +123,8 @@ class Robot:
             i = dynam_head.index(name)
             params[i-1] = val
             self.put_inert_param(params, j)
+        elif name == 'Z':
+            self.Z[i] = val
 
     def get_val(self, j, name):
         geom_head = self.get_geom_head()
@@ -139,11 +145,24 @@ class Robot:
             params = self.get_inert_param(j)
             i = dynam_head.index(name)
             return params[i-1]
+        elif name == 'Z':
+            return self.Z[i]
 
-    def get_q_vec(self, ext = False):
+    def get_q_chain(self, chain):
+        """Generates vector of joint variables in chain
+        """
+        q = []
+        for i in reversed(chain):
+            if self.sigma[i] == 0:
+                q.append(self.theta[i])
+            elif self.sigma[i] == 1:
+                q.append(self.r[i])
+        return q
+
+    def get_q_vec(self, ext = False, chain = None):
         """Generates vector of joint variables
         """
-        if ext:
+        if ext and not chain:
             q = [0]
         else:
             q = []
@@ -1142,8 +1161,8 @@ class Symoro:
             2)  >>> A = symo.mat_replace(B+C+..., 'A')
                 # for the case when B+C+... is small enough
         """
-        for i1 in xrange(M.shape[0] - skip):
-            for i2 in xrange(M.shape[1]):
+        for i2 in xrange(M.shape[0]):
+            for i1 in xrange(M.shape[1] - skip):
                 if symmet and i2 < i1:
                     M[i1, i2] = M[i2, i1]
                     continue
