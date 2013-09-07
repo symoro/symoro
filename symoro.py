@@ -36,23 +36,23 @@ class Robot:
         """  number of joints: int"""
         self.nf = NF
         """  number of frames: int"""
-        self.sigma = zeros(1, NF)
+        self.sigma = [0 for i in xrange(NF + 1)]
         """  joint type: list of int"""
-        self.ant = range( - 1, self.NJ-1)
+        self.ant = range( - 1, self.NJ)
         """  index of antecedent joint: list of int"""
-        self.mu = zeros(1, NF)
+        self.mu = [0 for i in xrange(NF + 1)]
         """motorization, if 1, then the joint im motorized"""
-        self.theta = zeros(1, NF)
+        self.theta = [0 for i in xrange(NF + 1)]
         """  geometrical parameter: list of var"""
-        self.r = zeros(1, NF)
+        self.r = [0 for i in xrange(NF + 1)]
         """  geometrical parameter: list of var"""
-        self.alpha = zeros(1, NF)
+        self.alpha = [0 for i in xrange(NF + 1)]
         """  geometrical parameter: list of var"""
-        self.d = zeros(1, NF)
+        self.d = [0 for i in xrange(NF + 1)]
         """  geometrical parameter: list of var"""
-        self.gamma = zeros(1, NF)
+        self.gamma = [0 for i in xrange(NF + 1)]
         """  geometrical parameter: list of var"""
-        self.b = zeros(1, NF)
+        self.b = [0 for i in xrange(NF + 1)]
         """  geometrical parameter: list of var"""
         self.Z = eye(4)
         """ transformation from reference frame to zero frame"""
