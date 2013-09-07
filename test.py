@@ -2,6 +2,7 @@
 Unit tests for SYMORO modules
 """
 import unittest
+import re
 from sympy import sympify,var, Matrix
 from sympy.abc import A,B,C,X,Y,Z
 from numpy import random, amax, matrix, eye, zeros
@@ -12,6 +13,25 @@ import invgeom
 from geometry import Transform as trns
 #import dynamics
 
+class reTest(unittest.TestCase):
+    def test_float_re(self):
+        s = r'[\+\-]?\d*[.eE]\d*([\+\-]?[eE]\d+)?'
+        self.assertNotEqual(re.match(s,'+1.'),None)
+        self.assertNotEqual(re.match(s,'1e5'),None)
+        self.assertNotEqual(re.match(s,'-1.0'),None)
+        self.assertNotEqual(re.match(s,'-.1'),None)
+        self.assertNotEqual(re.match(s,'.1e5'),None)
+        self.assertNotEqual(re.match(s,'1.0E5'),None)
+        self.assertNotEqual(re.match(s,'1.0E+5'),None)
+        self.assertNotEqual(re.match(s,'1.0E-5'),None)
+        self.assertNotEqual(re.match(s,'1.e5'),None)
+#        self.assertEqual(re.match(s,'.'),None)
+#        self.assertEqual(re.match(s,'.E'),None)
+#        self.assertEqual(re.match(s,'1'),None)
+#        self.assertEqual(re.match(s,''),None)
+#        self.assertEqual(re.match(s,'E'),None)
+#        self.assertEqual(re.match(s,'e5'),None)
+#        self.assertEqual(re.match(s,'1e'),None)
 
 class testSymoroTrig(unittest.TestCase):
 
@@ -80,6 +100,9 @@ class testSymoroTrig(unittest.TestCase):
         self.assertEqual(self.symo.C2S2_simp(e1),e1ans)
         e2 = sympify("C1*S2 - C2*S1")
         e2ans = sympify("-S1m2")
+        self.assertEqual(self.symo.CS12_simp(e2),e2ans)
+        e2 = sympify("(C1*S2 - C2*S1)*(C1*S2 + C2*S1)")
+        e2ans = sympify("-S1m2*S12")
         self.assertEqual(self.symo.CS12_simp(e2),e2ans)
         e2 = sympify("C2*D3*S3m78 - C2m7*D8*S3 - C3*D8*S2m7 - C3m78*D3*S2 + D2*S3")
         e2ans = sympify("D2*S3 - D3*S278m3 - D8*S23m7")
@@ -211,7 +234,7 @@ class testKinematics(unittest.TestCase):
     def test_jac(self):
         for j in range(1,1):
             #compute Jac
-            J,l = kinematics.jac(self.robo, self.symo, 0, j, j)
+            J,l = kinematics._jac(self.robo, self.symo, 0, j, j)
             jacj = self.symo.gen_func('JacRX90', J, self.robo.get_q_vec())
             #compute DGM
             T = geometry.dgm(self.robo, self.symo, 0, j, fast_form=True, trig_subs=True)
@@ -226,10 +249,10 @@ class testKinematics(unittest.TestCase):
                 self.assertLess(amax(dX[:3] - trns.P(T)), 1e-12)
 
     def test_jac2(self):
-        J,L = kinematics.jac(self.robo, self.symo, 3, 3, 6)
+        J,L = kinematics._jac(self.robo, self.symo, 3, 3, 6)
         jac63 = self.symo.gen_func('Jac1RX90', J, self.robo.get_q_vec())
         L63 = self.symo.gen_func('LRX90', L, self.robo.get_q_vec())
-        J,L = kinematics.jac(self.robo, self.symo, 3, 6, 6)
+        J,L = kinematics._jac(self.robo, self.symo, 3, 6, 6)
         jac66 = self.symo.gen_func('Jac2RX90', J, self.robo.get_q_vec())
         for i in xrange(10):
             q = random.normal(size = 6)
@@ -241,7 +264,7 @@ class testKinematics(unittest.TestCase):
             self.assertLess(amax(j66 - X*j63), 1e-12)
 
 if __name__ == '__main__':
-#    unittest.main()
-    suite = unittest.TestSuite()
-    suite.addTest(testKinematics('test_jac2'))
-    unittest.TextTestRunner().run(suite)
+    unittest.main()
+#    suite = unittest.TestSuite()
+#    suite.addTest(reTest('test_float_re'))
+#    unittest.TextTestRunner().run(suite)

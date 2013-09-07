@@ -185,7 +185,7 @@ def compute_screw_transform(robo, symo, j, antRj, antPj, jTant):
 def trans_name(robo, i, j, pattern='T{0}T{1}'):
     return 'T%sT%s' % (i,j)
 
-def _dgm_left_sep(robo, symo, i, j, trig_subs=True, sep_const = False):
+def _dgm_left_sep(robo, symo, i, j, trig_subs=True, sep_const=False):
     k = robo.common_root(i, j)
     chain1 = robo.chain(j, k)
     chain2 = robo.chain(i, k)
@@ -216,7 +216,7 @@ def _dgm_left_sep(robo, symo, i, j, trig_subs=True, sep_const = False):
         T = eye(4)
     return T_out
 
-def _dgm_right_sep(robo, symo, i, j, trig_subs=True, sep_const = False):
+def _dgm_right_sep(robo, symo, i, j, trig_subs=True, sep_const=False):
     k = robo.common_root(i, j)
     chain1 = robo.chain(i, k)
     chain2 = robo.chain(j, k)
@@ -243,7 +243,7 @@ def _dgm_right_sep(robo, symo, i, j, trig_subs=True, sep_const = False):
         T = eye(4)
     return T_out
 
-def _dgm_left(robo, symo, i, j, trig_subs=True, sep_const = False):
+def _dgm_left(robo, symo, i, j, trig_subs=True, sep_const=False):
     k = robo.common_root(i, j)
     chain1 = robo.chain(j, k)
     chain2 = robo.chain(i, k)
@@ -270,7 +270,7 @@ def _dgm_left(robo, symo, i, j, trig_subs=True, sep_const = False):
         T = eye(4)
     return T_out
 
-def _dgm_right(robo, symo, i, j, trig_subs=True, sep_const = False):
+def _dgm_right(robo, symo, i, j, trig_subs=True, sep_const=False):
     k = robo.common_root(i, j)
     chain1 = robo.chain(i, k)
     chain2 = robo.chain(j, k)
@@ -312,7 +312,8 @@ def _dgm_one(robo, symo, i, j, fast_form=True,
         if trig_subs:
             for ang, name in robo.get_angles(x):
                 symo.trig_replace(T, ang, name)
-        T = T.expand()
+        if fast_form:
+            T = T.expand()
         T = T.applyfunc(symo.CS12_simp)
         x_next = complete_chain[indx + 1]
         if robo.paral(x, x_next): #false if x_next is None
@@ -321,6 +322,8 @@ def _dgm_one(robo, symo, i, j, fast_form=True,
         T = eye(4)
         if fast_form:
             _dgm_rename(robo, symo, T_res, x, i, j, inverted, forced)
+    if not fast_form and forced:
+        _dgm_rename(robo, symo, T_res, x, i, j, inverted, forced)
     return T_res
 
 def _dgm_rename(robo, symo, T_res, x, i, j, inverted, forced):
@@ -330,7 +333,7 @@ def _dgm_rename(robo, symo, T_res, x, i, j, inverted, forced):
     else:
         name = trans_name(robo, robo.ant[x], j)
         forced_now = robo.ant[x] == i
-    symo.mat_replace(T_res, name, forced=forced and forced_now)
+    symo.mat_replace(T_res, name, forced=forced and forced_now, skip = 1)
 
 #TODO: implemet returning all the matrices
 #    sep_const: bool, optional
@@ -488,13 +491,13 @@ def direct_geometric_fast(robo, i, j):
         Instance that contains all the relations of the computed model
     """
     symo = Symoro()
-    symo.file_open(robo, 'dgm')
+    symo.file_open(robo, 'fgm')
     symo.write_geom_param(robo, 'Direct Geometrix model')
-    dgm(robo, symo, i, j, fast_form = True)
+    dgm(robo, symo, i, j, fast_form=True, forced=True)
     symo.file_out.close()
     return symo
 
-def direct_geometric(robo, frames):
+def direct_geometric(robo, frames, trig_subs):
     """Computes trensformation matrix iTj.
 
     Parameters
@@ -503,6 +506,9 @@ def direct_geometric(robo, frames):
         Instance of robot description container
     frames: list of tuples of type (i,j)
         Defines list of required transformation matrices iTj
+    trig_subs: bool, optional
+        If True, all the sin(x) and cos(x) will be replaced by symbols
+        SX and CX with adding them to the dictionary
 
     Returns
     =======
@@ -510,11 +516,12 @@ def direct_geometric(robo, frames):
         Instance that contains all the relations of the computed model
     """
     symo = Symoro()
-    symo.file_open(robo, 'dgm')
+    symo.file_open(robo, 'trm')
     symo.write_geom_param(robo, 'Direct Geometrix model')
     for i,j in frames:
         symo.write_line('Tramsformation matrix %s T %s' % (i, j))
-        dgm(robo, symo, i, j, fast_form = False, trig_replace = False)
+        print dgm(robo, symo, i, j, fast_form=False,
+            forced=True, trig_subs=trig_subs)
         symo.write_line()
     symo.file_out.close()
     return symo

@@ -8,8 +8,8 @@ Needed modules : symoro.py, geometry.py
 ECN - ARIA1 2013
 """
 from math import floor
-from sympy import Matrix
-from symoro import Symoro, Robot, Init, hat, ZERO
+from sympy import Matrix, zeros
+from symoro import Symoro, Init, hat, ZERO
 from geometry import dgm, Transform, compute_rot_trans
 
 
@@ -26,12 +26,12 @@ def compute_omega(robo, symo, j, antRj, w, wi):
     qdj = Matrix([0, 0, robo.qdot[j]])
     wi[j], w[j] =  omega_ij(robo, symo, j, jRant, w, qdj)
 
-def omega_ij(robo, symo, j, jRant, w, qdj, forced = False):
+def omega_ij(robo, symo, j, jRant, w, qdj, forced=False):
     wi = symo.mat_replace(jRant*w[robo.ant[j]], 'WI', j)
     wj = symo.mat_replace(wi + (1 - robo.sigma[j])*qdj, 'W', j, forced)
     return wi, wj
 
-def compute_twist(robo, symo, j, antRj, antPj, w, wdot, U, vdot, forced = False):
+def compute_twist(robo, symo, j, antRj, antPj, w, wdot, U, vdot, forced=False):
     """Internal function. Computes angular velocity, auxiliary U matrix and
     linear and angular accelerations.
 
@@ -57,7 +57,7 @@ def compute_twist(robo, symo, j, antRj, antPj, w, wdot, U, vdot, forced = False)
     vdot[j] = jRant*vsp + robo.sigma[j]*(qddj + 2*hat(wi)*qdj)
     symo.mat_replace(vdot[j], 'VP', j, forced)
 
-def jac(robo, symo, i, j, n, chain = None):
+def _jac(robo, symo, i, j, n, chain=None, forced=False, trig_subs=False):
     """
     Computes jacobian of frame n (with origin On in Oj) projected to frame i
     """
@@ -66,8 +66,8 @@ def jac(robo, symo, i, j, n, chain = None):
     if chain == None:
         chain = reversed(robo.chain(n))
     for k in chain:
-        kTj = dgm(robo, symo, k, j, fast_form = False)
-        iTk = dgm(robo, symo, i, k, fast_form = False)
+        kTj = dgm(robo, symo, k, j, fast_form=False, trig_subs=trig_subs)
+        iTk = dgm(robo, symo, i, k, fast_form=False, trig_subs=trig_subs)
         isk, ink, iak = Transform.sna(iTk)
         sigm = robo.sigma[k]
         if sigm == 1:
@@ -85,14 +85,14 @@ def jac(robo, symo, i, j, n, chain = None):
     jTn = dgm(robo, symo, j, n, False)
     iRj = Transform.R(iTj)
     jPn = Transform.P(jTn)
-    L = symo.mat_replace(-hat(iRj*jPn), 'L', '', False)
+    L = symo.mat_replace(-hat(iRj*jPn), 'L', '', forced)
     return Jac, L
 
-def jac_inv(robo, symo, i, j, n):
-    J, L = jac(robo, symo, i, j, n)
+def _jac_inv(robo, symo, i, j, n):
+    J, L = _jac(robo, symo, i, j, n)
     if not J.is_square:
         J = J*J.T
-    det = jac_det(robo, symo, n)
+    det = _jac_det(robo, symo, n)
     Jinv = J.adjugate()
     if det == ZERO:
         print 'Matrix is singular!'
@@ -102,10 +102,10 @@ def jac_inv(robo, symo, i, j, n):
     symo.mat_replace(Jinv, 'JI', '', False)
     return Jinv
 
-def jac_det(robo, symo, n, J = None):
+def _jac_det(robo, symo, n=1, J=None):
     if J == None:
         i = int(floor(n/2))
-        J, L = jac(robo, symo, i, i, n)
+        J, L = _jac(robo, symo, i, i, n, False)
     if not J.is_square:
         J = J*J.T
     det = J.det()
@@ -121,7 +121,7 @@ def extend_W(J, r, W, indx, chain):
             row.append(0)
     W.append(row)
 
-def kinematic_loop_constraints(robo, symo):
+def _kinematic_loop_constraints(robo, symo):
     B = robo.NJ - robo.NL
     if B == 0:
         print 'There are no loops'
@@ -138,8 +138,8 @@ def kinematic_loop_constraints(robo, symo):
         k = robo.common_root(i, j)
         chi = robo.chain(i, k)
         chj = robo.chain(j, k)
-        Ji, L = jac(robo, symo, k, i, i, chi)
-        Jj, L = jac(robo, symo, k, j, j, chj)
+        Ji, L = _jac(robo, symo, k, i, i, chi)
+        Jj, L = _jac(robo, symo, k, j, j, chj)
         chi.extend(chj)
         J = Ji.row_join(-Jj)
         for row in xrange(6):
@@ -156,7 +156,7 @@ def kinematic_loop_constraints(robo, symo):
     W_ac, W_pc, W_c = Matrix(W_ac), Matrix(W_pc), Matrix(W_c)
     return W_a, W_p, W_ac, W_pc, W_c
 
-def compute_speeds_accelerations(robo, symo, antRj = None, antPj = None):
+def compute_speeds_accelerations(robo, symo, antRj=None, antPj=None):
     """Internal function. Computes speeds and accelerations usitn
 
     Parameters
@@ -183,26 +183,51 @@ def compute_speeds_accelerations(robo, symo, antRj = None, antPj = None):
         compute_twist(robo, symo, j, antRj, antPj, w, wdot, U, vdot, forced)
     return w, wdot, vdot, U
 
+def jacobian(robo, n, i, j):
+    symo = Symoro()
+    symo.file_open(robo, 'jac')
+    symo.write_geom_param(robo, 'Jacobian matrix for frame %s' % n)
+    symo.write_line('Projection frame %s, intermediat frame %s' % (i, j))
+    symo.write_line()
+    _jac(robo, symo, i, j, n)
+    symo.file_out.close()
+    return symo
+
+def jacobian_determinant(robo, n, rows, cols):
+    symo = Symoro(None)
+    i = int(floor(n/2))
+    J, L = _jac(robo, symo, i, i, n, trig_subs=False)
+    J_reduced = zeros(len(rows), len(cols))
+    for i, i_old in enumerate(rows):
+        for j, j_old in enumerate(cols):
+            J_reduced[i, j] = J[i_old, j_old]
+    symo.file_open(robo, 'det')
+    symo.write_geom_param(robo, 'Jacobian determinant for frame %s' % n)
+    symo.write_line(_jac_det(robo, symo, J=J_reduced))
+    symo.file_out.close()
+    return symo
+
 #symo = Symoro()
 #robo = Robot.RX90()
-##print jac(robo, symo, 2, 5, 5)
-##print jac_det(robo, symo, 5)
+#jacobian_determinant(robo, 6, range(6), range(6))
+##print _jac(robo, symo, 2, 5, 5)
+##print _jac_det(robo, symo, 5)
 ##W = kinematic_loop_constraints(robo, symo)
 ##print W[0]
 ##print W[1]
 ##speeds_accelerations(robo, symo)
-##print jac_inv(Robot.RX90(), symo, 2, 5, 5)
+##print _jac_inv(Robot.RX90(), symo, 2, 5, 5)
 #
 #def b():
 #    symo = Symoro()
-#    print jac_inv(Robot.RX90(), symo, 2,5,5)
+#    print _jac_inv(Robot.RX90(), symo, 2,5,5)
 ###from timeit import timeit
-####print timeit(a, number = 10)
-####print timeit(b, number = 10)
+####print timeit(a, number=10)
+####print timeit(b, number=10)
 ###
 #import profile
 ##
 ##profile.run('b()', sort = 'cumtime')
 ##profile.run('b()')
 #from timeit import timeit
-#print timeit(b, number = 1)
+#print timeit(b, number=1)
