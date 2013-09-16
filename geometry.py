@@ -13,6 +13,7 @@ from symoro import Symoro, Init, hat
 
 Z_AXIS = Matrix([0, 0, 1])
 
+
 class Transform():
     @classmethod
     def sna(self, T):
@@ -124,6 +125,7 @@ def _transform(robo, j, invert=False):
         R3 = _rot_trans('z', -robo.theta[j], -robo.r[j])
         return R3*R2*R1
 
+
 #TODO: rewrite the description
 def _transform_const_sep(robo, j, invert=False):
     """Transform matrix between frames j and ant[j]
@@ -146,13 +148,14 @@ def _transform_const_sep(robo, j, invert=False):
         R2 = _rot_trans('x', robo.alpha[j], robo.d[j])
         R3 = _rot_trans('z', th=robo.theta[j])
         R4 = _rot_trans('z', p=robo.r[j])
-        return R1,R2,R3,R4
+        return R1, R2, R3, R4
     else:
         R1 = _rot_trans('z', -robo.gamma[j], -robo.b[j])
         R2 = _rot_trans('x', -robo.alpha[j], -robo.d[j])
         R3 = _rot_trans('z', th=-robo.theta[j])
         R4 = _rot_trans('z', p=-robo.r[j])
-        return R1,R2,R3,R4
+        return R1, R2, R3, R4
+
 
 def compute_transform(robo, symo, j, antRj, antPj):
     """Internal function. Computes rotation matrix and translation vector
@@ -169,6 +172,7 @@ def compute_transform(robo, symo, j, antRj, antPj):
     antRj[j] = symo.mat_replace(Transform.R(antTj), 'A', j)
     antPj[j] = symo.mat_replace(Transform.P(antTj), 'L', j)
 
+
 def compute_screw_transform(robo, symo, j, antRj, antPj, jTant):
     """Internal function. Computes the screw transformation matrix
     between ant[j] and j frames.
@@ -178,70 +182,14 @@ def compute_screw_transform(robo, symo, j, antRj, antPj, jTant):
     jTant is an output parameter
     """
     jRant = antRj[j].T
-    ET = symo.mat_replace( -jRant*hat(antPj[j]), 'JPR', j)
+    ET = symo.mat_replace(-jRant*hat(antPj[j]), 'JPR', j)
     jTant[j] = (Matrix([jRant.row_join(ET),
                         zeros(3, 3).row_join(jRant)]))
 
+
 def trans_name(robo, i, j, pattern='T{0}T{1}'):
-    return 'T%sT%s' % (i,j)
+    return 'T%sT%s' % (i, j)
 
-def _dgm_left_sep(robo, symo, i, j, trig_subs=True, sep_const=False):
-    k = robo.common_root(i, j)
-    chain1 = robo.chain(j, k)
-    chain2 = robo.chain(i, k)
-    chain2.reverse()
-    complete_chain = (chain1 + chain2 + [None])
-    T_out = {(j,j):(eye(4),eye(4),eye(4))}
-    T_res = eye(4)
-    Post = None
-    for indx, x in enumerate(complete_chain[:-1]):
-        inverted = indx >= len(chain1)
-        if Post == None:
-            Pref, T, Post = _transform_const_sep(robo,x, inverted)
-        else:
-            Pref, Tm, Tr= _transform_const_sep(robo,x, inverted)
-            T = Tm * Tr * Pref * T
-        if trig_subs:
-            for ang, name in robo.get_angles(x):
-                symo.trig_replace(T, ang, name)
-        T = T.expand()
-        T = T.applyfunc(symo.CS12_simp)
-        x_next = complete_chain[indx + 1]
-        if inverted: t_name = (x,j)
-        else: t_name = (robo.ant[x],j)
-        T_out[t_name] = (Pref, T * T_res, Post)
-        if robo.paral(x, x_next):
-            continue
-        T_res = T * T_res
-        T = eye(4)
-    return T_out
-
-def _dgm_right_sep(robo, symo, i, j, trig_subs=True, sep_const=False):
-    k = robo.common_root(i, j)
-    chain1 = robo.chain(i, k)
-    chain2 = robo.chain(j, k)
-    chain2.reverse()
-    complete_chain = (chain1 + chain2 + [None])
-    T_out = {(i,i):eye(4)}
-    T_res = eye(4)
-    T = eye(4)
-    for indx, x in enumerate(complete_chain[:-1]):
-        inverted = indx >= len(chain1)
-        T = T * _transform(robo, x, inverted)
-        if trig_subs:
-            for ang, name in robo.get_angles(x):
-                symo.trig_replace(T, ang, name)
-        T = T.expand()
-        T = T.applyfunc(symo.CS12_simp)
-        x_next = complete_chain[indx + 1]
-        if inverted: t_name = (i,x)
-        else: t_name = (i,robo.ant[x])
-        T_out[t_name] = T_res * T
-        if robo.paral(x, x_next):
-            continue
-        T_res = T_res * T
-        T = eye(4)
-    return T_out
 
 def _dgm_left(robo, symo, i, j, trig_subs=True, sep_const=False):
     k = robo.common_root(i, j)
@@ -249,7 +197,7 @@ def _dgm_left(robo, symo, i, j, trig_subs=True, sep_const=False):
     chain2 = robo.chain(i, k)
     chain2.reverse()
     complete_chain = (chain1 + chain2 + [None])
-    T_out = {(j,j):eye(4)}
+    T_out = {(j, j): eye(4)}
     T_res = eye(4)
     T = eye(4)
     for indx, x in enumerate(complete_chain[:-1]):
@@ -261,8 +209,10 @@ def _dgm_left(robo, symo, i, j, trig_subs=True, sep_const=False):
         T = T.expand()
         T = T.applyfunc(symo.CS12_simp)
         x_next = complete_chain[indx + 1]
-        if inverted: t_name = (x,j)
-        else: t_name = (robo.ant[x],j)
+        if inverted:
+            t_name = (x, j)
+        else:
+            t_name = (robo.ant[x], j)
         T_out[t_name] = T * T_res
         if robo.paral(x, x_next):
             continue
@@ -270,13 +220,14 @@ def _dgm_left(robo, symo, i, j, trig_subs=True, sep_const=False):
         T = eye(4)
     return T_out
 
+
 def _dgm_right(robo, symo, i, j, trig_subs=True, sep_const=False):
     k = robo.common_root(i, j)
     chain1 = robo.chain(i, k)
     chain2 = robo.chain(j, k)
     chain2.reverse()
     complete_chain = (chain1 + chain2 + [None])
-    T_out = {(i,i):eye(4)}
+    T_out = {(i, i): eye(4)}
     T_res = eye(4)
     T = eye(4)
     for indx, x in enumerate(complete_chain[:-1]):
@@ -288,8 +239,10 @@ def _dgm_right(robo, symo, i, j, trig_subs=True, sep_const=False):
         T = T.expand()
         T = T.applyfunc(symo.CS12_simp)
         x_next = complete_chain[indx + 1]
-        if inverted: t_name = (i,x)
-        else: t_name = (i,robo.ant[x])
+        if inverted:
+            t_name = (i, x)
+        else:
+            t_name = (i, robo.ant[x])
         T_out[t_name] = T_res * T
         if robo.paral(x, x_next):
             continue
@@ -297,8 +250,9 @@ def _dgm_right(robo, symo, i, j, trig_subs=True, sep_const=False):
         T = eye(4)
     return T_out
 
+
 def _dgm_one(robo, symo, i, j, fast_form=True,
-            forced=False, trig_subs=True):
+             forced=False, trig_subs=True):
     k = robo.common_root(i, j)
     chain1 = robo.chain(j, k)
     chain2 = robo.chain(i, k)
@@ -316,7 +270,7 @@ def _dgm_one(robo, symo, i, j, fast_form=True,
             T = T.expand()
         T = T.applyfunc(symo.CS12_simp)
         x_next = complete_chain[indx + 1]
-        if robo.paral(x, x_next): #false if x_next is None
+        if robo.paral(x, x_next):    # false if x_next is None
             continue
         T_res = T * T_res
         T = eye(4)
@@ -326,6 +280,7 @@ def _dgm_one(robo, symo, i, j, fast_form=True,
         _dgm_rename(robo, symo, T_res, x, i, j, inverted, forced)
     return T_res
 
+
 def _dgm_rename(robo, symo, T_res, x, i, j, inverted, forced):
     if inverted:
         name = trans_name(robo, x, j)
@@ -333,7 +288,8 @@ def _dgm_rename(robo, symo, T_res, x, i, j, inverted, forced):
     else:
         name = trans_name(robo, robo.ant[x], j)
         forced_now = robo.ant[x] == i
-    symo.mat_replace(T_res, name, forced=forced and forced_now, skip = 1)
+    symo.mat_replace(T_res, name, forced=forced and forced_now, skip=1)
+
 
 #TODO: implemet returning all the matrices
 #    sep_const: bool, optional
@@ -369,17 +325,13 @@ def dgm(robo, symo, i, j, key='one', fast_form=True, forced=False,
         SX and CX with adding them to the dictionary
 
     """
-#    if sep_const and key == 'left':
-#        return _dgm_left_sep(robo, symo, i, j, trig_subs, knowns)
-#    elif sep_const and key == 'right':
-#        return _dgm_right_sep(robo, symo, i, j, trig_subs, knowns)
-#    el
     if key == 'left':
         return _dgm_left(robo, symo, i, j, trig_subs)
     elif key == 'right':
         return _dgm_right(robo, symo, i, j, trig_subs)
     else:
         return _dgm_one(robo, symo, i, j, fast_form, forced, trig_subs)
+
 
 def _rot(axis='z', th=0):
     """Rotation matrix about axis
@@ -396,17 +348,18 @@ def _rot(axis='z', th=0):
     rot: Matrix 3x3
     """
     if axis == 'x':
-        return  Matrix([[1, 0, 0],
-                        [0, cos(th), - sin(th)],
-                        [0, sin(th), cos(th)]])
+        return Matrix([[1, 0, 0],
+                       [0, cos(th), - sin(th)],
+                       [0, sin(th), cos(th)]])
     elif axis == 'y':
-        return  Matrix([[cos(th), 0, sin(th)],
-                        [0, 1, 0],
-                        [ - sin(th), 0, cos(th)]])
+        return Matrix([[cos(th), 0, sin(th)],
+                       [0, 1, 0],
+                       [-sin(th), 0, cos(th)]])
     else:
-        return  Matrix([[cos(th), - sin(th), 0],
-                        [sin(th), cos(th), 0],
-                        [0, 0, 1]])
+        return Matrix([[cos(th), - sin(th), 0],
+                       [sin(th), cos(th), 0],
+                       [0, 0, 1]])
+
 
 def _trans_vect(axis='z', p=0):
     """Translation vector along axis
@@ -422,12 +375,13 @@ def _trans_vect(axis='z', p=0):
     =======
     v: Matrix 3x1
     """
-    axis_dict = {'x':0, 'y':1, 'z':2}
+    axis_dict = {'x': 0, 'y': 1, 'z': 2}
     v = zeros(3, 1)
     v[axis_dict[axis]] = p
     return v
 
-def _trans(axis ='z', p=0):
+
+def _trans(axis='z', p=0):
     """Translation matrix along axis
 
     Parameters
@@ -442,7 +396,8 @@ def _trans(axis ='z', p=0):
     trans: Matrix 4x4
     """
     return Matrix([eye(3).row_join(_trans_vect(axis, p)),
-                       [0, 0, 0, 1]])
+                   [0, 0, 0, 1]])
+
 
 def _rot_trans(axis='z', th=0, p=0):
     """Transformation matrix with rotation about and
@@ -462,7 +417,8 @@ def _rot_trans(axis='z', th=0, p=0):
     rot_trans: Matrix 4x4
     """
     return Matrix([_rot(axis, th).row_join(_trans_vect(axis, p)),
-                       [0, 0, 0, 1]])
+                   [0, 0, 0, 1]])
+
 
 def compute_rot_trans(robo, symo):
     #init transformation
@@ -471,6 +427,7 @@ def compute_rot_trans(robo, symo):
     for j in xrange(robo.NL):
         compute_transform(robo, symo, j, antRj, antPj)
     return antRj, antPj
+
 
 #TODO: validate for different structures
 def direct_geometric_fast(robo, i, j):
@@ -492,10 +449,11 @@ def direct_geometric_fast(robo, i, j):
     """
     symo = Symoro()
     symo.file_open(robo, 'fgm')
-    symo.write_geom_param(robo, 'Direct Geometrix model')
+    symo.write_params_table(robo, 'Direct Geometrix model')
     dgm(robo, symo, i, j, fast_form=True, forced=True)
-    symo.file_out.close()
+    symo.file_close()
     return symo
+
 
 def direct_geometric(robo, frames, trig_subs):
     """Computes trensformation matrix iTj.
@@ -517,11 +475,11 @@ def direct_geometric(robo, frames, trig_subs):
     """
     symo = Symoro()
     symo.file_open(robo, 'trm')
-    symo.write_geom_param(robo, 'Direct Geometrix model')
-    for i,j in frames:
+    symo.write_params_table(robo, 'Direct Geometrix model')
+    for i, j in frames:
         symo.write_line('Tramsformation matrix %s T %s' % (i, j))
         print dgm(robo, symo, i, j, fast_form=False,
-            forced=True, trig_subs=trig_subs)
+                  forced=True, trig_subs=trig_subs)
         symo.write_line()
-    symo.file_out.close()
+    symo.file_close()
     return symo
