@@ -7,7 +7,6 @@ Needed modules : symoro.py, geometry.py
 
 ECN - ARIA1 2013
 """
-from math import floor
 from sympy import Matrix, zeros
 from symoro import Symoro, Init, hat, ZERO
 from geometry import dgm, Transform, compute_rot_trans
@@ -98,11 +97,13 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
         L = symo.mat_replace(L, 'L', '', forced)
     return Jac, L
 
+
 def _make_square(J):
     if J.shape[0] > J.shape[1]:
         return J.T*J
     else:
         return J*J.T
+
 
 def _jac_inv(robo, symo, n, i, j):
     J, L = _jac(robo, symo, n, i, j)

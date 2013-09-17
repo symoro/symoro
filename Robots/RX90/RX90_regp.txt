@@ -1,0 +1,102 @@
+Base parameters computation
+
+Geometric parameters
+j       ant     sigma   mu      gamma   b       alpha   d       theta   r       
+1       0       0       1       0       0       0       0       th1     0       
+2       1       0       1       0       0       pi/2    0       th2     0       
+3       2       0       1       0       0       0       D3      th3     0       
+4       3       0       1       0       0       -pi/2   0       th4     RL4     
+5       4       0       1       0       0       pi/2    0       th5     0       
+6       5       0       1       0       0       -pi/2   0       th6     0       
+
+Dynamic inertia parameters
+j       XX      XY      XZ      YY      YZ      ZZ      MX      MY      MZ      M       IA      
+1       XX1     XY1     XZ1     YY1     YZ1     ZZ1     MX1     MY1     MZ1     M1      IA1     
+2       XX2     XY2     XZ2     YY2     YZ2     ZZ2     MX2     MY2     MZ2     M2      IA2     
+3       XX3     XY3     XZ3     YY3     YZ3     ZZ3     MX3     MY3     MZ3     M3      IA3     
+4       XX4     XY4     XZ4     YY4     YZ4     ZZ4     MX4     MY4     MZ4     M4      IA4     
+5       XX5     XY5     XZ5     YY5     YZ5     ZZ5     MX5     MY5     MZ5     M5      IA5     
+6       XX6     XY6     XZ6     YY6     YZ6     ZZ6     MX6     MY6     MZ6     M6      IA6     
+
+External forces and joint parameters
+j       FX      FY      FZ      CX      CY      CZ      FS      FV      QP      QDP     GAM     
+1       0       0       0       0       0       0       FS1     FV1     QP1     QDP1    GAM1    
+2       0       0       0       0       0       0       FS2     FV2     QP2     QDP2    GAM2    
+3       0       0       0       0       0       0       FS3     FV3     QP3     QDP3    GAM3    
+4       0       0       0       0       0       0       FS4     FV4     QP4     QDP4    GAM4    
+5       0       0       0       0       0       0       FS5     FV5     QP5     QDP5    GAM5    
+6       FX6     FY6     FZ6     CX6     CY6     CZ6     FS6     FV6     QP6     QDP6    GAM6    
+
+Base velicities parameters
+axis    W0      WP0     V0      VP0     G       
+X       0       0       0       0       0       
+Y       0       0       0       0       0       
+Z       0       0       0       0       G3      
+
+Equations:
+C1 = cos(th1)
+S1 = sin(th1)
+C2 = cos(th2)
+S2 = sin(th2)
+C3 = cos(th3)
+S3 = sin(th3)
+C4 = cos(th4)
+S4 = sin(th4)
+C5 = cos(th5)
+S5 = sin(th5)
+C6 = cos(th6)
+S6 = sin(th6)
+XXR6 = XX6 - YY6
+MR5 = M5 + M6
+XXR5 = XX5 - YY5 + YY6
+ZZR5 = YY6 + ZZ5
+MYR5 = MY5 + MZ6
+LamMS214 = -C4*RL4
+LamMS514 = RL4*S4
+LamMS134 = 2*RL4
+LamM14 = RL4**2
+MR4 = M4 + MR5
+XXR4 = XX4 - YY4 + YY5
+ZZR4 = YY5 + ZZ4
+MYR4 = MY4 - MZ5
+LamMS213 = -D3*S3
+LamMS413 = 2*C3*D3
+LamMS223 = -C3*D3
+LamMS423 = -2*D3*S3
+LamM43 = D3**2
+MR3 = M3 + MR4
+XXR3 = LamM14*MR4 + LamMS134*MZ4 + XX3 - YY3 + YY4
+ZZR3 = LamM14*MR4 + LamMS134*MZ4 + YY4 + ZZ3
+MYR3 = MR4*RL4 + MY3 + MZ4
+YYR2 = LamM43*MR3 + YY2 + YY3
+MZR2 = MZ2 + MZ3
+MR2 = M2 + MR3
+XXR2 = XX2 + YY3 - YYR2
+XZR2 = -D3*MZ3 + XZ2
+ZZR2 = IA2 + LamM43*MR3 + ZZ2
+MXR2 = D3*MR3 + MX2
+MR1 = M1 + MR2
+ZZR1 = IA1 + YYR2 + ZZ1
+*=*
+
+RX90 grouped inertia parameters
+
+Geometric parameters
+j       ant     sigma   mu      gamma   b       alpha   d       theta   r       
+1       0       0       1       0       0       0       0       th1     0       
+2       1       0       1       0       0       pi/2    0       th2     0       
+3       2       0       1       0       0       0       D3      th3     0       
+4       3       0       1       0       0       -pi/2   0       th4     RL4     
+5       4       0       1       0       0       pi/2    0       th5     0       
+6       5       0       1       0       0       -pi/2   0       th6     0       
+
+Dynamic inertia parameters
+j       XX      XY      XZ      YY      YZ      ZZ      MX      MY      MZ      M       IA      
+1       0       0       0       0       0       ZZR1    0       0       0       0       0       
+2       XXR2    XY2     XZR2    0       YZ2     ZZR2    MXR2    MY2     0       0       0       
+3       XXR3    XY3     XZ3     0       YZ3     ZZR3    MX3     MYR3    0       0       IA3     
+4       XXR4    XY4     XZ4     0       YZ4     ZZR4    MX4     MYR4    0       0       IA4     
+5       XXR5    XY5     XZ5     0       YZ5     ZZR5    MX5     MYR5    0       0       IA5     
+6       XXR6    XY6     XZ6     0       YZ6     ZZ6     MX6     MY6     0       0       IA6     
+
+*=*

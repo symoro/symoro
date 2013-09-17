@@ -54,7 +54,7 @@ def writepar(robo):
         f.write('NJ = %s\n' % robo.nj)
         f.write('NF = %s\n' % robo.nf)
         f.write('Type = %s\n' % symoro.TYPES.index(robo.structure))
-        f.write('is_mobile = %s\n' % robo.is_mobile)
+        f.write('is_mobile = %s\n' % int(robo.is_mobile))
         f.write('\n(* Geometric parameters *)\n')
         if robo.is_mobile:
             N0 = 0
@@ -91,11 +91,11 @@ def readpar(directory, robo_name):
         is_mobile = False
         for line in f.readlines():
             for s in ('NJ', 'NL', 'Type'):
-                match = re.match(r'^%s.*=(.*)' % s, line)
+                match = re.match(r'^%s.*=([\d\s]*)(\(\*.*)?' % s, line)
                 if match:
                     d[s] = int(match.group(1))
                     continue
-            match = re.match(r'^is_mobile.*=(.*)', line)
+            match = re.match(r'^is_mobile.*=([\d\s]*)(\(\*.*)?', line)
             if match:
                 is_mobile = _bool_dict[(match.group(1).strip())]
         if len(d) < 2:

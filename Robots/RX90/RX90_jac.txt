@@ -1,0 +1,63 @@
+Jacobian matrix for frame 6
+Projection frame 0, intermediat frame 0
+
+Geometric parameters
+j       ant     sigma   mu      gamma   b       alpha   d       theta   r       
+1       0       0       1       0       0       0       0       th1     0       
+2       1       0       1       0       0       pi/2    0       th2     0       
+3       2       0       1       0       0       0       D3      th3     0       
+4       3       0       1       0       0       -pi/2   0       th4     RL4     
+5       4       0       1       0       0       pi/2    0       th5     0       
+6       5       0       1       0       0       -pi/2   0       th6     0       
+
+Equations:
+cos(th2 + th3) = -sin(th2)*sin(th3) + cos(th2)*cos(th3)
+sin(th2 + th3) = sin(th2)*cos(th3) + sin(th3)*cos(th2)
+sin(th2) = -sin(th3)*cos(th2 + th3) + sin(th2 + th3)*cos(th3)
+cos(th2) = sin(th3)*sin(th2 + th3) + cos(th3)*cos(th2 + th3)
+J11 = 0
+J21 = 0
+J31 = 0
+J41 = 0
+J51 = 0
+J61 = 1
+J12 = 0
+J22 = 0
+J32 = 0
+J42 = sin(th1)
+J52 = -cos(th1)
+J62 = 0
+J13 = D3*sin(th2)*cos(th1)
+J23 = D3*sin(th1)*sin(th2)
+J33 = -D3*cos(th2)
+J43 = sin(th1)
+J53 = -cos(th1)
+J63 = 0
+J14 = D3*sin(th1)*cos(th3)
+J24 = -D3*cos(th1)*cos(th3)
+J34 = 0
+J44 = -sin(th2 + th3)*cos(th1)
+J54 = -sin(th1)*sin(th2 + th3)
+J64 = cos(th2 + th3)
+J15 = D3*sin(th1)*sin(th3)*sin(th4) + D3*sin(th2)*cos(th1)*cos(th4) - RL4*sin(th1)*sin(th4) + RL4*cos(th1)*cos(th4)*cos(th2 + th3)
+J25 = D3*sin(th1)*sin(th2)*cos(th4) - D3*sin(th3)*sin(th4)*cos(th1) + RL4*sin(th1)*cos(th4)*cos(th2 + th3) + RL4*sin(th4)*cos(th1)
+J35 = (-D3*cos(th2) + RL4*sin(th2 + th3))*cos(th4)
+J45 = sin(th1)*cos(th4) + sin(th4)*cos(th1)*cos(th2 + th3)
+J55 = sin(th1)*sin(th4)*cos(th2 + th3) - cos(th1)*cos(th4)
+J65 = sin(th4)*sin(th2 + th3)
+J16 = -D3*sin(th1)*sin(th3)*sin(th5)*cos(th4) + D3*sin(th1)*cos(th3)*cos(th5) + D3*sin(th2)*sin(th4)*sin(th5)*cos(th1) + RL4*sin(th1)*sin(th5)*cos(th4) + RL4*sin(th4)*sin(th5)*cos(th1)*cos(th2 + th3)
+J26 = D3*sin(th1)*sin(th2)*sin(th4)*sin(th5) + D3*sin(th3)*sin(th5)*cos(th1)*cos(th4) - D3*cos(th1)*cos(th3)*cos(th5) + RL4*sin(th1)*sin(th4)*sin(th5)*cos(th2 + th3) - RL4*sin(th5)*cos(th1)*cos(th4)
+J36 = (-D3*cos(th2) + RL4*sin(th2 + th3))*sin(th4)*sin(th5)
+J46 = sin(th1)*sin(th4)*sin(th5) - sin(th5)*cos(th1)*cos(th4)*cos(th2 + th3) - sin(th2 + th3)*cos(th1)*cos(th5)
+J56 = -sin(th1)*sin(th5)*cos(th4)*cos(th2 + th3) - sin(th1)*sin(th2 + th3)*cos(th5) - sin(th4)*sin(th5)*cos(th1)
+J66 = -sin(th5)*sin(th2 + th3)*cos(th4) + cos(th5)*cos(th2 + th3)
+L11 = 0
+L21 = -D3*sin(th2) - RL4*cos(th2 + th3)
+L31 = (D3*cos(th2) - RL4*sin(th2 + th3))*sin(th1)
+L12 = D3*sin(th2) + RL4*cos(th2 + th3)
+L22 = 0
+L32 = -(D3*cos(th2) - RL4*sin(th2 + th3))*cos(th1)
+L13 = -(D3*cos(th2) - RL4*sin(th2 + th3))*sin(th1)
+L23 = (D3*cos(th2) - RL4*sin(th2 + th3))*cos(th1)
+L33 = 0
+*=*

@@ -79,7 +79,8 @@ def loop_solve(robo, symo, knowns=None):
     q_vec = [0] + robo.q_vec
     loops = []
     if knowns is None:
-        knowns = robo.q_active  # set(q for i, q in enumerate(q_vec) if robo.mu[i] == 1)
+        knowns = robo.q_active
+        # set(q for i, q in enumerate(q_vec) if robo.mu[i] == 1)
     for i, j in robo.loop_terminals:
         chain = robo.loop_chain(i, j)
         print chain, q_vec

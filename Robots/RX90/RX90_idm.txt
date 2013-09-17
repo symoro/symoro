@@ -1,0 +1,273 @@
+Inverse dynamic model using Newton - Euler Algorith
+
+Geometric parameters
+j       ant     sigma   mu      gamma   b       alpha   d       theta   r       
+1       0       0       1       0       0       0       0       th1     0       
+2       1       0       1       0       0       pi/2    0       th2     0       
+3       2       0       1       0       0       0       D3      th3     0       
+4       3       0       1       0       0       -pi/2   0       th4     RL4     
+5       4       0       1       0       0       pi/2    0       th5     0       
+6       5       0       1       0       0       -pi/2   0       th6     0       
+
+Dynamic inertia parameters
+j       XX      XY      XZ      YY      YZ      ZZ      MX      MY      MZ      M       IA      
+1       XX1     XY1     XZ1     YY1     YZ1     ZZ1     MX1     MY1     MZ1     M1      IA1     
+2       XX2     XY2     XZ2     YY2     YZ2     ZZ2     MX2     MY2     MZ2     M2      IA2     
+3       XX3     XY3     XZ3     YY3     YZ3     ZZ3     MX3     MY3     MZ3     M3      IA3     
+4       XX4     XY4     XZ4     YY4     YZ4     ZZ4     MX4     MY4     MZ4     M4      IA4     
+5       XX5     XY5     XZ5     YY5     YZ5     ZZ5     MX5     MY5     MZ5     M5      IA5     
+6       XX6     XY6     XZ6     YY6     YZ6     ZZ6     MX6     MY6     MZ6     M6      IA6     
+
+External forces and joint parameters
+j       FX      FY      FZ      CX      CY      CZ      FS      FV      QP      QDP     GAM     
+1       0       0       0       0       0       0       FS1     FV1     QP1     QDP1    GAM1    
+2       0       0       0       0       0       0       FS2     FV2     QP2     QDP2    GAM2    
+3       0       0       0       0       0       0       FS3     FV3     QP3     QDP3    GAM3    
+4       0       0       0       0       0       0       FS4     FV4     QP4     QDP4    GAM4    
+5       0       0       0       0       0       0       FS5     FV5     QP5     QDP5    GAM5    
+6       FX6     FY6     FZ6     CX6     CY6     CZ6     FS6     FV6     QP6     QDP6    GAM6    
+
+Base velicities parameters
+axis    W0      WP0     V0      VP0     G       
+X       0       0       0       0       0       
+Y       0       0       0       0       0       
+Z       0       0       0       0       G3      
+
+Equations:
+C1 = cos(th1)
+S1 = sin(th1)
+C2 = cos(th2)
+S2 = sin(th2)
+C3 = cos(th3)
+S3 = sin(th3)
+C4 = cos(th4)
+S4 = sin(th4)
+C5 = cos(th5)
+S5 = sin(th5)
+C6 = cos(th6)
+S6 = sin(th6)
+DV61 = QP1**2
+WI12 = QP1*S2
+WI22 = C2*QP1
+WP12 = QDP1*S2 + QP2*WI22
+WP22 = C2*QDP1 - QP2*WI12
+DV12 = WI12**2
+DV22 = WI12*WI22
+DV32 = QP2*WI12
+DV42 = WI22**2
+DV52 = QP2*WI22
+DV62 = QP2**2
+U112 = -DV42 - DV62
+U212 = DV22 + QDP2
+U312 = DV32 - WP22
+U122 = DV22 - QDP2
+U222 = -DV12 - DV62
+U322 = DV52 + WP12
+U132 = DV32 + WP22
+U232 = DV52 - WP12
+U332 = -DV12 - DV42
+WI13 = C3*WI12 + S3*WI22
+WI23 = C3*WI22 - S3*WI12
+W33 = QP2 + QP3
+WP13 = C3*WP12 + QP3*WI23 + S3*WP22
+WP23 = C3*WP22 - QP3*WI13 - S3*WP12
+WP33 = QDP2 + QDP3
+DV13 = WI13**2
+DV23 = WI13*WI23
+DV33 = W33*WI13
+DV43 = WI23**2
+DV53 = W33*WI23
+DV63 = W33**2
+U113 = -DV43 - DV63
+U213 = DV23 + WP33
+U313 = DV33 - WP23
+U123 = DV23 - WP33
+U223 = -DV13 - DV63
+U323 = DV53 + WP13
+U133 = DV33 + WP23
+U233 = DV53 - WP13
+U333 = -DV13 - DV43
+VSP13 = D3*U112
+VSP23 = D3*U212
+VSP33 = D3*U312
+VP13 = C3*VSP13 + S3*VSP23
+VP23 = C3*VSP23 - S3*VSP13
+WI14 = C4*WI13 - S4*W33
+WI24 = -C4*W33 - S4*WI13
+W34 = QP4 + WI23
+WP14 = C4*WP13 + QP4*WI24 - S4*WP33
+WP24 = -C4*WP33 - QP4*WI14 - S4*WP13
+WP34 = QDP4 + WP23
+DV14 = WI14**2
+DV24 = WI14*WI24
+DV34 = W34*WI14
+DV44 = WI24**2
+DV54 = W34*WI24
+DV64 = W34**2
+U114 = -DV44 - DV64
+U214 = DV24 + WP34
+U314 = DV34 - WP24
+U124 = DV24 - WP34
+U224 = -DV14 - DV64
+U324 = DV54 + WP14
+U134 = DV34 + WP24
+U234 = DV54 - WP14
+U334 = -DV14 - DV44
+VSP14 = RL4*U123 + VP13
+VSP24 = RL4*U223 + VP23
+VSP34 = RL4*U323 + VSP33
+VP14 = C4*VSP14 - S4*VSP34
+VP24 = -C4*VSP34 - S4*VSP14
+WI15 = C5*WI14 + S5*W34
+WI25 = C5*W34 - S5*WI14
+W35 = QP5 - WI24
+WP15 = C5*WP14 + QP5*WI25 + S5*WP34
+WP25 = C5*WP34 - QP5*WI15 - S5*WP14
+WP35 = QDP5 - WP24
+DV15 = WI15**2
+DV25 = WI15*WI25
+DV35 = W35*WI15
+DV45 = WI25**2
+DV55 = W35*WI25
+DV65 = W35**2
+U115 = -DV45 - DV65
+U215 = DV25 + WP35
+U315 = DV35 - WP25
+U125 = DV25 - WP35
+U225 = -DV15 - DV65
+U325 = DV55 + WP15
+U135 = DV35 + WP25
+U235 = DV55 - WP15
+U335 = -DV15 - DV45
+VP15 = C5*VP14 + S5*VSP24
+VP25 = C5*VSP24 - S5*VP14
+WI16 = C6*WI15 - S6*W35
+WI26 = -C6*W35 - S6*WI15
+W36 = QP6 + WI25
+WP16 = C6*WP15 + QP6*WI26 - S6*WP35
+WP26 = -C6*WP35 - QP6*WI16 - S6*WP15
+WP36 = QDP6 + WP25
+DV16 = WI16**2
+DV26 = WI16*WI26
+DV36 = W36*WI16
+DV46 = WI26**2
+DV56 = W36*WI26
+DV66 = W36**2
+U116 = -DV46 - DV66
+U216 = DV26 + WP36
+U316 = DV36 - WP26
+U126 = DV26 - WP36
+U226 = -DV16 - DV66
+U326 = DV56 + WP16
+U136 = DV36 + WP26
+U236 = DV56 - WP16
+U336 = -DV16 - DV46
+VP16 = C6*VP15 + S6*VP24
+VP26 = C6*VP24 - S6*VP15
+F11 = -DV61*MX1 - MY1*QDP1
+F21 = -DV61*MY1 + MX1*QDP1
+PSI11 = QP1*XZ1
+PSI21 = QP1*YZ1
+PSI31 = QP1*ZZ1
+No11 = -PSI21*QP1 + QDP1*XZ1
+No21 = PSI11*QP1 + QDP1*YZ1
+No31 = QDP1*ZZ1
+F12 = MX2*U112 + MY2*U122 + MZ2*U132
+F22 = MX2*U212 + MY2*U222 + MZ2*U232
+F32 = MX2*U312 + MY2*U322 + MZ2*U332
+PSI12 = QP2*XZ2 + WI12*XX2 + WI22*XY2
+PSI22 = QP2*YZ2 + WI12*XY2 + WI22*YY2
+PSI32 = QP2*ZZ2 + WI12*XZ2 + WI22*YZ2
+No12 = -PSI22*QP2 + PSI32*WI22 + QDP2*XZ2 + WP12*XX2 + WP22*XY2
+No22 = PSI12*QP2 - PSI32*WI12 + QDP2*YZ2 + WP12*XY2 + WP22*YY2
+No32 = -PSI12*WI22 + PSI22*WI12 + QDP2*ZZ2 + WP12*XZ2 + WP22*YZ2
+F13 = M3*VP13 + MX3*U113 + MY3*U123 + MZ3*U133
+F23 = M3*VP23 + MX3*U213 + MY3*U223 + MZ3*U233
+F33 = M3*VSP33 + MX3*U313 + MY3*U323 + MZ3*U333
+PSI13 = W33*XZ3 + WI13*XX3 + WI23*XY3
+PSI23 = W33*YZ3 + WI13*XY3 + WI23*YY3
+PSI33 = W33*ZZ3 + WI13*XZ3 + WI23*YZ3
+No13 = -PSI23*W33 + PSI33*WI23 + WP13*XX3 + WP23*XY3 + WP33*XZ3
+No23 = PSI13*W33 - PSI33*WI13 + WP13*XY3 + WP23*YY3 + WP33*YZ3
+No33 = -PSI13*WI23 + PSI23*WI13 + WP13*XZ3 + WP23*YZ3 + WP33*ZZ3
+F14 = M4*VP14 + MX4*U114 + MY4*U124 + MZ4*U134
+F24 = M4*VP24 + MX4*U214 + MY4*U224 + MZ4*U234
+F34 = M4*VSP24 + MX4*U314 + MY4*U324 + MZ4*U334
+PSI14 = W34*XZ4 + WI14*XX4 + WI24*XY4
+PSI24 = W34*YZ4 + WI14*XY4 + WI24*YY4
+PSI34 = W34*ZZ4 + WI14*XZ4 + WI24*YZ4
+No14 = -PSI24*W34 + PSI34*WI24 + WP14*XX4 + WP24*XY4 + WP34*XZ4
+No24 = PSI14*W34 - PSI34*WI14 + WP14*XY4 + WP24*YY4 + WP34*YZ4
+No34 = -PSI14*WI24 + PSI24*WI14 + WP14*XZ4 + WP24*YZ4 + WP34*ZZ4
+F15 = M5*VP15 + MX5*U115 + MY5*U125 + MZ5*U135
+F25 = M5*VP25 + MX5*U215 + MY5*U225 + MZ5*U235
+F35 = -M5*VP24 + MX5*U315 + MY5*U325 + MZ5*U335
+PSI15 = W35*XZ5 + WI15*XX5 + WI25*XY5
+PSI25 = W35*YZ5 + WI15*XY5 + WI25*YY5
+PSI35 = W35*ZZ5 + WI15*XZ5 + WI25*YZ5
+No15 = -PSI25*W35 + PSI35*WI25 + WP15*XX5 + WP25*XY5 + WP35*XZ5
+No25 = PSI15*W35 - PSI35*WI15 + WP15*XY5 + WP25*YY5 + WP35*YZ5
+No35 = -PSI15*WI25 + PSI25*WI15 + WP15*XZ5 + WP25*YZ5 + WP35*ZZ5
+F16 = M6*VP16 + MX6*U116 + MY6*U126 + MZ6*U136
+F26 = M6*VP26 + MX6*U216 + MY6*U226 + MZ6*U236
+F36 = M6*VP25 + MX6*U316 + MY6*U326 + MZ6*U336
+PSI16 = W36*XZ6 + WI16*XX6 + WI26*XY6
+PSI26 = W36*YZ6 + WI16*XY6 + WI26*YY6
+PSI36 = W36*ZZ6 + WI16*XZ6 + WI26*YZ6
+No16 = -PSI26*W36 + PSI36*WI26 + WP16*XX6 + WP26*XY6 + WP36*XZ6
+No26 = PSI16*W36 - PSI36*WI16 + WP16*XY6 + WP26*YY6 + WP36*YZ6
+No36 = -PSI16*WI26 + PSI26*WI16 + WP16*XZ6 + WP26*YZ6 + WP36*ZZ6
+E16 = F16 + FX6
+E26 = F26 + FY6
+E36 = F36 + FZ6
+N16 = CX6 + MY6*VP25 - MZ6*VP26 + No16
+N26 = CY6 - MX6*VP25 + MZ6*VP16 + No26
+N36 = CZ6 + MX6*VP26 - MY6*VP16 + No36
+FDI16 = C6*E16 - E26*S6
+FDI36 = -C6*E26 - E16*S6
+E15 = F15 + FDI16
+E25 = E36 + F25
+E35 = F35 + FDI36
+N15 = C6*N16 - MY5*VP24 - MZ5*VP25 - N26*S6 + No15
+N25 = MX5*VP24 + MZ5*VP15 + N36 + No25
+N35 = -C6*N26 + MX5*VP25 - MY5*VP15 - N16*S6 + No35
+FDI15 = C5*E15 - E25*S5
+FDI35 = C5*E25 + E15*S5
+E14 = F14 + FDI15
+E24 = -E35 + F24
+E34 = F34 + FDI35
+N14 = C5*N15 + MY4*VSP24 - MZ4*VP24 - N25*S5 + No14
+N24 = -MX4*VSP24 + MZ4*VP14 - N35 + No24
+N34 = C5*N25 + MX4*VP24 - MY4*VP14 + N15*S5 + No34
+FDI14 = C4*E14 - E24*S4
+FDI34 = -C4*E24 - E14*S4
+E13 = F13 + FDI14
+E23 = E34 + F23
+E33 = F33 + FDI34
+N13 = C4*N14 + FDI34*RL4 + MY3*VSP33 - MZ3*VP23 - N24*S4 + No13
+N23 = -MX3*VSP33 + MZ3*VP13 + N34 + No23
+N33 = -C4*N24 - FDI14*RL4 + MX3*VP23 - MY3*VP13 - N14*S4 + No33
+FDI13 = C3*E13 - E23*S3
+FDI23 = C3*E23 + E13*S3
+E12 = F12 + FDI13
+E22 = F22 + FDI23
+E32 = E33 + F32
+N12 = C3*N13 - N23*S3 + No12
+N22 = C3*N23 - D3*E33 + N13*S3 + No22
+N32 = D3*FDI23 + N33 + No32
+FDI12 = C2*E12 - E22*S2
+FDI32 = C2*E22 + E12*S2
+E11 = F11 + FDI12
+E21 = -E32 + F21
+N11 = C2*N12 - N22*S2 + No11
+N21 = -N32 + No21
+N31 = C2*N22 + N12*S2 + No31
+FDI11 = C1*E11 - E21*S1
+FDI21 = C1*E21 + E11*S1
+GAM1 = FS1*sign(QP1) + FV1*QP1 + IA1*QDP1 + N31
+GAM2 = FS2*sign(QP2) + FV2*QP2 + IA2*QDP2 + N32
+GAM3 = FS3*sign(QP3) + FV3*QP3 + IA3*QDP3 + N33
+GAM4 = FS4*sign(QP4) + FV4*QP4 + IA4*QDP4 + N34
+GAM5 = FS5*sign(QP5) + FV5*QP5 + IA5*QDP5 + N35
+GAM6 = FS6*sign(QP6) + FV6*QP6 + IA6*QDP6 + N36
+*=*

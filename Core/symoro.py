@@ -34,7 +34,7 @@ class Robot:
     and direct geometric model generation.
     Also provides different representations of parameters."""
     def __init__(self, name, NL=0, NJ=0, NF=0, is_mobile=False,
-                 structure = TREE):
+                 structure=TREE):
         # member variables:
         self.name = name
         """  name of the robot: string"""
@@ -56,7 +56,7 @@ class Robot:
         """  index of antecedent joint: list of int"""
         self.mu = [0 for i in xrange(NF + 1)]
         """motorization, if 1, then the joint im motorized"""
-        self.theta = [0 for i in xrange(NF + 1)]
+        self.theta = [0] + [var('th%s' % (i+1)) for i in xrange(NF)]
         """  geometrical parameter: list of var"""
         self.r = [0 for i in xrange(NF + 1)]
         """  geometrical parameter: list of var"""
@@ -197,7 +197,7 @@ class Robot:
 
     @property
     def endeffectors(self):
-        return set(range(self.NJ)) - set(self.ant)
+        return set(range(1, self.NJ + 1)) - set(self.ant)
 
     @property
     def q_passive(self):
@@ -1231,7 +1231,6 @@ class Symoro:
         if equations:
             self.write_line('Equations:')
 
-
     def unknown_sep(self, eq, known):
         """If there is a sum inside trigonometric function and
         the atoms are not the subset of 'known',
@@ -1380,7 +1379,7 @@ class Symoro:
             # will be set to '1.'
         return rq_vals + order_list
 
-    def gen_fbody(self, name, to_return, wr_syms):
+    def gen_fbody(self, name, to_return, wr_syms, multival):
         """Generates list of string statements of the function that
         computes symbolf from to_return.  wr_syms are considered to
         be known
@@ -1392,7 +1391,6 @@ class Symoro:
         # list of instructions in final function
         fun_body = []
         # will be switched to true when branching detected
-        multival = False
         space = '    '
         folded = 1    # indentation = 1 + number of 'for' statements
 
@@ -1416,7 +1414,7 @@ class Symoro:
         fun_body.append('    return %s_result\n' % (name))
         return fun_body
 
-    def gen_func(self, name, to_return, *args):
+    def gen_func(self, name, to_return, args, multival=False):
         """ Returns function that computes what is in to_return
         using *args as arguments
 
@@ -1437,11 +1435,11 @@ class Symoro:
         -This function must be called only after the model that
             computes symbols in to_return have been generated.
         """
-        fun_head = self.gen_fheader(name, *args)
+        fun_head = self.gen_fheader(name, args)
         wr_syms = self.extract_syms(args)   # set of defined symbols
-        fun_body = self.gen_fbody(name, to_return, wr_syms)
+        fun_body = self.gen_fbody(name, to_return, wr_syms, multival)
         fun_string = "".join(fun_head + fun_body)
         exec fun_string
-        print fun_string
+#        print fun_string
 #  TODO:       print is for debug pupuses, to be removed
         return eval('%s_func' % name)
