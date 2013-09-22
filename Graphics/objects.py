@@ -11,7 +11,8 @@ class Frame(object):
         self.show_frame = show_frame
         self.index = index
         self.length = length
-        self.arr_vertices, self.arr_indices, self.arr_normals = Primitives.arr_array(self.length)
+        self.arr_vertices, self.arr_indices, self.arr_normals = \
+            Primitives.arr_array(self.length)
         # TODO: Change to variable
 
     def draw_frame(self):
@@ -27,7 +28,8 @@ class Frame(object):
     def draw_arrow(self):
         gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.arr_vertices)
         gl.glNormalPointer(gl.GL_FLOAT, 0, self.arr_normals)
-        gl.glDrawElements(gl.GL_TRIANGLES, len(self.arr_indices), gl.GL_UNSIGNED_INT, self.arr_indices)
+        gl.glDrawElements(gl.GL_TRIANGLES, len(self.arr_indices),
+                          gl.GL_UNSIGNED_INT, self.arr_indices)
 
     def set_show_frame(self, show=True):
         self.show_frame = show
@@ -56,7 +58,8 @@ class Frame(object):
 
 class JointObject(Frame):
 
-    def __init__(self, index, length, theta=0., r=0., alpha=0., d=0., gamma=0., b=0.):
+    def __init__(self, index, length,
+                 theta=0., r=0., alpha=0., d=0., gamma=0., b=0.):
         super(JointObject, self).__init__(index, length)
         self.theta = theta
         self.r = r
@@ -66,15 +69,18 @@ class JointObject(Frame):
         self.b = b
         self.shift = 0.
         self.length = length
-        self.rod_vertices, self.rod_indices, self.rod_normals = Primitives.rod_array(self.length)
+        self.rod_vertices, self.rod_indices, self.rod_normals = \
+            Primitives.rod_array(self.length)
 
     def draw_rod(self, length):
         gl.glPushMatrix()
-        gl.glMultMatrixf(array([[1., 0., 0., 0.], [0., 1., 0., 0.], [0., 0., length, 0.], [0., 0., 0., 1.]]))
+        gl.glMultMatrixf(array([[1., 0., 0., 0.], [0., 1., 0., 0.],
+                                [0., 0., length, 0.], [0., 0., 0., 1.]]))
         gl.glColor3f(0.8, 0.51, 0.25)
         gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.rod_vertices)
         gl.glNormalPointer(gl.GL_FLOAT, 0, self.rod_normals)
-        gl.glDrawElements(gl.GL_TRIANGLES, len(self.rod_indices), gl.GL_UNSIGNED_INT, self.rod_indices)
+        gl.glDrawElements(gl.GL_TRIANGLES, len(self.rod_indices),
+                          gl.GL_UNSIGNED_INT, self.rod_indices)
         gl.glPopMatrix()
 
     def set_shift(self, shift):
@@ -121,13 +127,15 @@ class RevoluteJoint(JointObject):
 
     def __init__(self, *args):
         super(RevoluteJoint, self).__init__(*args)
-        self.cyl_vertices, self.cyl_indices, self.cyl_normals = Primitives.cyl_array(self.length)
+        self.cyl_vertices, self.cyl_indices, self.cyl_normals = \
+            Primitives.cyl_array(self.length)
 
     def draw_joint(self):
         gl.glColor3f(1., 1., 0.)
         gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.cyl_vertices)
         gl.glNormalPointer(gl.GL_FLOAT, 0, self.cyl_normals)
-        gl.glDrawElements(gl.GL_TRIANGLES, len(self.cyl_indices), gl.GL_UNSIGNED_INT, self.cyl_indices)
+        gl.glDrawElements(gl.GL_TRIANGLES, len(self.cyl_indices),
+                          gl.GL_UNSIGNED_INT, self.cyl_indices)
 
     @property
     def q(self):
@@ -163,10 +171,12 @@ class FixedJoint(JointObject):
 
     def __init__(self, *args):
         super(FixedJoint, self).__init__(*args)
-        self.sph_vertices, self.sph_indices, self.sph_normals = Primitives.sph_array(self.length)
+        self.sph_vertices, self.sph_indices, self.sph_normals = \
+            Primitives.sph_array(self.length)
 
     def draw_joint(self):
         gl.glColor3f(1., 0., 1.)
         gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.sph_vertices)
         gl.glNormalPointer(gl.GL_FLOAT, 0, self.sph_normals)
-        gl.glDrawElements(gl.GL_TRIANGLES, len(self.sph_indices), gl.GL_UNSIGNED_INT, self.sph_indices)
+        gl.glDrawElements(gl.GL_TRIANGLES, len(self.sph_indices),
+                          gl.GL_UNSIGNED_INT, self.sph_indices)

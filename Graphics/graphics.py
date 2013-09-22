@@ -1,3 +1,4 @@
+__author__ = 'Izzat'
 import wx
 import wx.lib.agw.floatspin as FS
 import OpenGL.GL as gl
@@ -27,8 +28,8 @@ class myGLCanvas(GLCanvas):
         self.Bind(wx.EVT_MOTION, self.OnMouseMotion)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
         self.size = self.GetClientSize()
-        self.horizontal_angle = self.vertical_angle = 0
-        self.center_x = self.center_y = self.center_z = 0
+        self.hor_angle = self.ver_angle = 0
+        self.cen_x = self.cen_y = self.cen_z = 0
         self.robo = robo
         self.pars_num = params
         self.length = 0.5
@@ -47,9 +48,11 @@ class myGLCanvas(GLCanvas):
         pass
 
     def assign_mono_scale(self):
-        """ This function calculates coefficients which are used to draw the objects (Joints, links, end-effectors)
+        """ This function calculates coefficients which are used
+        to draw the objects (Joints, links, end-effectors)
         It computes the minimum and maximum r or d different from 0.
-        Then uses those sizes to determine the reference numbers which are used all over the class.
+        Then uses those sizes to determine the reference
+        numbers which are used all over the class.
         """
         minv = inf
         for jnt in self.jnt_objs[1:]:
@@ -92,7 +95,8 @@ class myGLCanvas(GLCanvas):
     def get_joints_dictionary(self):
         result = {}
         for jnt_i in range(self.robo.NF):
-            result[jnt_i] = [i for i, child in enumerate(self.robo.ant) if child == jnt_i]
+            result[jnt_i] = [i for i, child in enumerate(self.robo.ant)
+                             if child == jnt_i]
         return result
 
     def construct_hierarchy(self):
@@ -133,9 +137,10 @@ class myGLCanvas(GLCanvas):
             if evt.LeftIsDown():
                 dx, dy = x - self.lastx, y - self.lasty
                 self.lastx, self.lasty = x, y
-                self.horizontal_angle += dx * self.distance / self.length * sin(radians(self.fov/2.)) / self.size.width
-                self.vertical_angle += dy * self.distance / self.length * sin(radians(self.fov/2.)) / self.size.height
-                self.vertical_angle = max(min(pi/2, self.vertical_angle), -pi/2)
+                coef = self.distance/self.length*sin(radians(self.fov/2.))
+                self.hor_angle += dx*coef/self.size.width
+                self.ver_angle += dy*coef/self.size.height
+                self.ver_angle = max(min(pi/2, self.ver_angle), -pi/2)
             elif evt.RightIsDown():
                 dy = y - self.lasty
                 self.lasty = y
@@ -186,14 +191,15 @@ class myGLCanvas(GLCanvas):
             loop_solve(self.robo, symo)
             self.q_pas_sym = self.robo.q_passive
             self.q_act_sym = self.robo.q_active
-            self.l_solver = symo.gen_func('IGM_gen', self.q_pas_sym, self.q_act_sym, multival=True)
+            self.l_solver = symo.gen_func('IGM_gen', self.q_pas_sym,
+                                          self.q_act_sym, multival=True)
         else:
             self.l_solver = None
 
     def centralize_to_frame(self, index):
         q_vec = [jnt.q for jnt in self.jnt_objs[1:]]
         T = self.dgms[index](q_vec)
-        self.center_x, self.center_y, self.center_z = T[0][3], T[1][3], T[2][3]
+        self.cen_x, self.cen_y, self.cen_z = T[0][3], T[1][3], T[2][3]
         self.CameraTransformation()
         self.Refresh(False)
 
@@ -207,28 +213,29 @@ class myGLCanvas(GLCanvas):
 
     def CameraTransformation(self):
         gl.glLoadIdentity()
-        glu.gluLookAt(self.center_x - self.distance*cos(self.vertical_angle)*sin(self.horizontal_angle),
-                      self.center_y - self.distance*cos(self.vertical_angle)*cos(self.horizontal_angle),
-                      self.center_z + self.distance*sin(self.vertical_angle),
-                      self.center_x, self.center_y, self.center_z,
-                      0.0, 0.0, 1.0)
+        glu.gluLookAt(
+            self.cen_x-self.distance*cos(self.ver_angle)*sin(self.hor_angle),
+            self.cen_y-self.distance*cos(self.ver_angle)*cos(self.hor_angle),
+            self.cen_z+self.distance*sin(self.ver_angle),
+            self.cen_x, self.cen_y, self.cen_z,
+            0.0, 0.0, 1.0)
 
     # def SetCameraForLabels(self):
     #     gl.glLoadIdentity()
-    #     glu.gluLookAt(self.center_x, self.center_y - self.distance, self.center_z,
-    #               self.center_x, self.center_y, self.center_z,
-    #               0.0, 0.0, 1.0)
+    #     glu.gluLookAt(self.center_x,
+    #                   self.center_y - self.distance, self.center_z,
+    #                   self.center_x, self.center_y, self.center_z,
+    #                   0.0, 0.0, 1.0)
 
-    def direction(self, jnt):
-        """Returns 1 if the direction of previous r was positive otherwise 0
-        It is used to determine the direction of shifts in expanded view.
-        (Scientific Representation close to Wisama Khalil's representation in the books)
-        """
-        while jnt:
-            if jnt.r != 0:
-                return jnt.r/abs(jnt.r)
-            jnt = jnt.antc
-        return 1
+    # def direction(self, jnt):
+    #     """Returns 1 if the direction of previous r was positive otherwise 0
+    #     It is used to determine the direction of shifts in expanded view.
+    #     """
+    #     while jnt:
+    #         if jnt.r != 0:
+    #             return jnt.r/abs(jnt.r)
+    #         jnt = jnt.antc
+    #     return 1
 
     def get_child_obj(self, jnt_obj):
         for child in jnt_obj.children:
@@ -324,12 +331,13 @@ class myGLCanvas(GLCanvas):
 
 
 class MainWindow(wx.Frame):
-    def __init__(self, prefix, robo, params_dict=None, parent=None, identifier=-1):
-
-        wx.Frame.__init__(self, parent, identifier, prefix + ': Robot representation',
-                          style=wx.DEFAULT_FRAME_STYLE | wx.FULL_REPAINT_ON_RESIZE)
+    def __init__(self, prefix, robo, params=None, parent=None, identifier=-1):
+        wx.Frame.__init__(
+            self, parent, identifier, prefix + ': Robot representation',
+            style=wx.DEFAULT_FRAME_STYLE | wx.FULL_REPAINT_ON_RESIZE
+        )
         self.robo = robo
-        self.params_dict = params_dict if params_dict is not None else {}
+        self.params_dict = params if params is not None else {}
 
         self.solve_loops = False
         self.canvas = myGLCanvas(self, robo, self.params_dict, size=(600, 600))
@@ -376,8 +384,10 @@ class MainWindow(wx.Frame):
                 label = 'th'
             else:
                 label = 'r'
-            gridJnts.Add(wx.StaticText(self.p, label=label+str(jnt.index)), pos=(p_index, 0), flag=wx.ALIGN_CENTER_VERTICAL)
-            s = FS.FloatSpin(self.p, size=(70, -1), id=jnt.index, min_val=0, increment=0.05)
+            gridJnts.Add(wx.StaticText(self.p, label=label+str(jnt.index)),
+                         pos=(p_index, 0), flag=wx.ALIGN_CENTER_VERTICAL)
+            s = FS.FloatSpin(self.p, size=(70, -1), id=jnt.index,
+                             min_val=0, increment=0.05)
             if self.robo.sigma[jnt.index] == 1:
                 s.SetRange(-10, 10)
             else:
@@ -391,27 +401,28 @@ class MainWindow(wx.Frame):
             p_index += 1
 
         if self.robo.structure == CLOSED_LOOP:
-            self.radioBox = wx.RadioBox(self.p, choices=['Break Loops', 'Make Loops'], style=wx.RA_SPECIFY_ROWS)
+            self.radioBox = wx.RadioBox(self.p, choices=
+                ['Break Loops', 'Make Loops'], style=wx.RA_SPECIFY_ROWS)
             self.radioBox.Bind(wx.EVT_RADIOBOX, self.OnSelectLoops)
             gridControl.Add(self.radioBox, pos=(5, 0), flag=wx.ALIGN_CENTER)
 
-            # self.lblConvergence = wx.StaticText(self.p, label='  Convergence  ')
-            # self.lblConvergence.SetForegroundColour((0, 127, 0))
-            # font = self.lblConvergence.GetFont()
-            # font.SetWeight(wx.BOLD)
-            # self.lblConvergence.SetFont(font)
-            # gridControl.Add(self.lblConvergence, pos=(6, 0), flag=wx.ALIGN_CENTER)
-            #
-            # self.btnActive = wx.Button(self.p, label="Solve All")
-            # self.btnActive.Bind(wx.EVT_BUTTON, self.find_close)
-            # gridControl.Add(self.btnActive, pos=(7,0), flag=wx.ALIGN_CENTER)
-            #
-            # self.btnReset.SetLabelText("Reset Active")
-            #
-            # btnSaveConf = wx.Button(self.p, label="Save Values")
-            # btnSaveConf.Bind(wx.EVT_BUTTON, self.save_configuration)
-            # gridJoints.Add(btnSaveConf, pos=(p_index,0), flag=wx.ALIGN_CENTER)
-            # gridJoints.SetItemSpan(btnSaveConf, wx.GBSpan(1,2))
+# self.lblConvergence = wx.StaticText(self.p, label='  Convergence  ')
+# self.lblConvergence.SetForegroundColour((0, 127, 0))
+# font = self.lblConvergence.GetFont()
+# font.SetWeight(wx.BOLD)
+# self.lblConvergence.SetFont(font)
+# gridControl.Add(self.lblConvergence, pos=(6, 0), flag=wx.ALIGN_CENTER)
+#
+# self.btnActive = wx.Button(self.p, label="Solve All")
+# self.btnActive.Bind(wx.EVT_BUTTON, self.find_close)
+# gridControl.Add(self.btnActive, pos=(7,0), flag=wx.ALIGN_CENTER)
+#
+# self.btnReset.SetLabelText("Reset Active")
+#
+# btnSaveConf = wx.Button(self.p, label="Save Values")
+# btnSaveConf.Bind(wx.EVT_BUTTON, self.save_configuration)
+# gridJoints.Add(btnSaveConf, pos=(p_index,0), flag=wx.ALIGN_CENTER)
+# gridJoints.SetItemSpan(btnSaveConf, wx.GBSpan(1,2))
 
         choices = []
         for jnt in self.canvas.jnt_objs:
