@@ -395,7 +395,7 @@ class MainFrame(wx.Frame):
 
     def OnNew(self, _):
         dialog = ui_definition.DialogDefinition(PROG_NAME, self.robo.name, self.robo.nl,
-                                             self.robo.nj, self.robo.structure, self.robo.is_mobile)
+                                                self.robo.nj, self.robo.structure, self.robo.is_mobile)
         if dialog.ShowModal() == wx.ID_OK:
             result = dialog.GetValues()
             new_robo = Robot(*result['init_pars'])
