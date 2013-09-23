@@ -3,8 +3,8 @@ import OpenGL.GL as gl
 from numpy import degrees, identity, array
 from primitives import Primitives
 
-class Frame(object):
 
+class Frame(object):
     def __init__(self, index=0, length=0.5, T=identity(4), show_frame=True):
         self.children = []
         self.T = T

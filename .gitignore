@@ -189,7 +189,7 @@ $RECYCLE.BIN/
 #############
 
 *.py[co]
-*.pyc
+*.txt
 # Packages
 *.egg
 *.egg-info

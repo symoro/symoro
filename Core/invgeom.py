@@ -410,7 +410,7 @@ def _solve_type_8(symo, X, Y, Z1, Z2, th_i, th_j):
     Z1 = symo.replace(symo.CS12_simp(Z1), 'Z1', th_j)
     Z2 = symo.replace(symo.CS12_simp(Z2), 'Z2', th_j)
     Cj = symo.replace((Z1**2 + Z2**2 - X**2 - Y**2) / (2*X*Y), 'C', th_j)
-    YPS = var('YPS' + th_j)
+    YPS = var('YPS%s' % th_j)
     symo.add_to_dict(YPS, (ONE, - ONE))
     symo.add_to_dict(th_j, atan2(YPS*sqrt(1 - Cj**2), Cj))
     Q1 = symo.replace(X + Y*cos(th_j), 'Q1', th_i)

@@ -31,6 +31,9 @@ class myGLCanvas(GLCanvas):
         self.hor_angle = self.ver_angle = 0
         self.cen_x = self.cen_y = self.cen_z = 0
         self.robo = robo
+        self.q_sym = self.robo.q_vec
+        self.q_pas_sym = self.robo.q_passive
+        self.q_act_sym = self.robo.q_active
         self.pars_num = params
         self.length = 0.5
         self.init = 0
@@ -68,7 +71,6 @@ class myGLCanvas(GLCanvas):
 
     def add_items_to_frame(self, frame, index, jnt_hier):
         children = jnt_hier[index]
-        self.q_sym = self.robo.q_vec
         for child_i in children:
             params = [child_i, self.length]
             for par in ['theta', 'r', 'alpha', 'd', 'gamma', 'b']:
@@ -180,7 +182,6 @@ class myGLCanvas(GLCanvas):
             if min_sln is not None:
                 for i, sym in enumerate(self.q_pas_sym):
                     self.jnt_dict[sym].q = min_sln[i]
-                print 'hahah'
             else:
                 return False
         return True
@@ -189,15 +190,13 @@ class myGLCanvas(GLCanvas):
         if self.robo.structure == CLOSED_LOOP:
             symo = Symoro()
             loop_solve(self.robo, symo)
-            self.q_pas_sym = self.robo.q_passive
-            self.q_act_sym = self.robo.q_active
             self.l_solver = symo.gen_func('IGM_gen', self.q_pas_sym,
                                           self.q_act_sym, multival=True)
         else:
             self.l_solver = None
 
     def centralize_to_frame(self, index):
-        q_vec = [jnt.q for jnt in self.jnt_objs[1:]]
+        q_vec = [self.jnt_dict[sym].q for sym in self.q_sym]
         T = self.dgms[index](q_vec)
         self.cen_x, self.cen_y, self.cen_z = T[0][3], T[1][3], T[2][3]
         self.CameraTransformation()
@@ -373,7 +372,7 @@ class MainWindow(wx.Frame):
         btnRandom.Bind(wx.EVT_BUTTON, self.FindRandom)
         gridControl.Add(btnRandom, pos=(4, 0), flag=wx.ALIGN_CENTER)
 
-        self.spin_ctrls = []
+        self.spin_ctrls = {}
         gridJnts = wx.GridBagSizer(hgap=10, vgap=10)
         p_index = 0
         for sym in self.canvas.q_sym:
@@ -394,9 +393,9 @@ class MainWindow(wx.Frame):
                 s.SetRange(-3.14, 3.14)
             s.Bind(FS.EVT_FLOATSPIN, self.SetJointVar)
             s.SetDigits(2)
-            if not self.robo.mu[jnt.index]:
+            if sym in self.canvas.q_pas_sym:
                 s.Enable(False)
-            self.spin_ctrls.append(s)
+            self.spin_ctrls[sym] = s
             gridJnts.Add(s, pos=(p_index, 1), flag=wx.ALIGN_CENTER_VERTICAL)
             p_index += 1
 
@@ -469,15 +468,20 @@ class MainWindow(wx.Frame):
         self.check_list.SetChecked(indices)
 
     def update_spin_controls(self):
-        for ctrl in self.spin_ctrls:
+        for ctrl in self.spin_ctrls.values():
             ctrl.SetValue(self.canvas.jnt_objs[ctrl.Id].q)
 
     def OnSelectLoops(self, _):
+        for q in self.canvas.q_pas_sym:
+            self.spin_ctrls[q].Enable(not self.radioBox.Selection)
         if self.radioBox.Selection == 1:
             self.solve_loops = True
             self.canvas.solve()
             self.update_spin_controls()
             self.canvas.OnDraw()
+        else:
+            self.solve_loops = False
+
 
     def ResetJoints(self, evt):
         pass

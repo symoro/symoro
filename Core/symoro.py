@@ -774,21 +774,22 @@ def get_max_coef(sym, x):
 
 
 def make_fname(robo, ext=None):
+    if ext is None:
+        fname = '%s.par' % robo.name
+    else:
+        fname = '%s_%s.txt' % (robo.name, ext)
     if robo.directory.find(':') == -1:      # path is not absolute
-        if ext is None:
-            fname = 'Robots\\%s\\%s.par' % (robo.directory, robo.name)
-        else:
-            fname = 'Robots\\%s\\%s_%s.txt' % (robo.directory, robo.name, ext)
+        full_name = 'Robots\\%s\\%s' % (robo.directory, fname)
         if not os.path.exists('Robots'):
             os.makedirs('Robots')
         d = 'Robots\\%s' % robo.directory
         if not os.path.exists(d):
             os.makedirs(d)
     else:
-        fname = '%s\\%s_%s.txt' % (robo.directory, robo.name, ext)
+        full_name = '%s\\%s' % (robo.directory, fname)
         if not os.path.exists(robo.directory):
             os.makedirs(robo.directory)
-    return fname
+    return full_name
 
 
 def get_max_coef_mul(sym, x):
@@ -1440,6 +1441,6 @@ class Symoro:
         fun_body = self.gen_fbody(name, to_return, wr_syms, multival)
         fun_string = "".join(fun_head + fun_body)
         exec fun_string
-#        print fun_string
+        print fun_string
 #  TODO:       print is for debug pupuses, to be removed
         return eval('%s_func' % name)

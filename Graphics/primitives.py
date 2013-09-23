@@ -1,8 +1,8 @@
 __author__ = 'Izzat'
 
 from itertools import product
-from numpy import sin, cos, pi, array
-from OpenGL.GL import *
+from numpy import sin, cos, pi
+
 
 def create_cyl_array(radius, length, n_segments, centered=True):
     vertices, indices, normals = [], [], []
@@ -12,7 +12,7 @@ def create_cyl_array(radius, length, n_segments, centered=True):
         alpha = 2 * pi * i / n_segments
         xn, yn = cos(alpha), sin(alpha)
         x, y = radius*xn, radius*yn
-        vertices += ( x, y, z, x, y, z + length )
+        vertices += (x, y, z, x, y, z + length)
         normals += (xn, yn, 0, xn, yn, 0)
     num_trian = 2 * n_segments
     for i in range(num_trian):
@@ -22,7 +22,7 @@ def create_cyl_array(radius, length, n_segments, centered=True):
         for i in range(n_segments):
             alpha = 2 * pi * i / n_segments
             x, y = radius*cos(alpha), radius*sin(alpha)
-            vertices += ( x, y, z )
+            vertices += (x, y, z)
             normals += (0, 0, -1 + j*2)
             indices += (j*n_segments + num_trian + i,
                         j*n_segments + num_trian + (i + 1) % n_segments,
@@ -32,13 +32,14 @@ def create_cyl_array(radius, length, n_segments, centered=True):
         z += length
     return vertices, indices, normals
 
+
 def create_sphere_array(radius, n_lat, n_long):
     vertices, indices = [0., 0., radius, 0., 0., -radius], []
     normals = [0., 0., 1., 0., 0., -1.]
     for i in range(1, n_lat):
         theta = i*pi/n_lat
         for j in range(n_long):
-            phi = j*2*pi/n_long
+            phi = j*2.*pi/n_long
             xn, yn, zn = cos(phi)*sin(theta), sin(phi)*sin(theta), cos(theta)
             x, y, z = radius * xn, radius * yn, radius * zn
             normals += xn, yn, zn
@@ -57,16 +58,17 @@ def create_sphere_array(radius, n_lat, n_long):
                         (j + 1) % n_long + start_i + n_long)
     return vertices, indices, normals
 
+
 def create_arrow_array(length, thick_rod=0.04, thick_hat=0.125, length_hat=1.3):
     vertices, indices, normals = [], [], []
     # Arrow rod
     for i, j in product([-1, 1], repeat=2):
-        vertices += (i*thick_rod*length, i*j*thick_rod*length,0)
-        vertices += (i*thick_rod*length, i*j*thick_rod*length,length)
+        vertices += (i*thick_rod*length, i*j*thick_rod*length, 0)
+        vertices += (i*thick_rod*length, i*j*thick_rod*length, length)
         normals += 2 * (0.707*i, 0.707*i*j, 0)
     # Arrow head
     for i, j in product([-1, 1], repeat=2):
-        vertices += (i*thick_hat*length,i*j*thick_hat*length,length)
+        vertices += (i*thick_hat*length, i*j*thick_hat*length, length)
         normals += (0.707*i, 0.707*i*j, 0)
     vertices += (0, 0, length_hat * length)
     normals += (0, 0, 1)
@@ -75,6 +77,7 @@ def create_arrow_array(length, thick_rod=0.04, thick_hat=0.125, length_hat=1.3):
     for i in range(4):
         indices += (i + 8, (i + 1) % 4 + 8, 12)
     return vertices, indices, normals
+
 
 def create_box_array(length=3., width=1.):
     dim = [0.5 * width, 0.5 * width, 0.5 * length]
@@ -89,6 +92,7 @@ def create_box_array(length=3., width=1.):
             coord[(l+2) % 3] = j*k*dim[(l+2) % 3]
             vertices += coord
     return vertices, normals
+
 
 class Primitives:
 
