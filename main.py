@@ -498,13 +498,16 @@ class MainFrame(wx.Frame):
 
     def OnOpen(self, _):
         if self.changed:
-            if wx.MessageBox('Current definition has not been saved! Proceed?',
+            dialog_res = wx.MessageBox('Do you want to save changes?',
                              'Please confirm',
-                             wx.ICON_QUESTION | wx.YES_NO, self) == wx.NO:
+                             wx.ICON_QUESTION | wx.YES_NO_CANCEL, self)
+            if dialog_res == wx.NO:
                 return
-            if self.OnSave(None) == FAIL:
+            elif dialog_res == wx.YES:
+                if self.OnSave(None) == FAIL:
+                    return
+            else:
                 return
-
         dialog = wx.FileDialog(self, message="Choose PAR file", style=wx.OPEN,
                                wildcard='*.par', defaultFile='*.par')
         if dialog.ShowModal() == wx.ID_OK:

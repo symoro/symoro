@@ -32,7 +32,7 @@ class testMisc(unittest.TestCase):
 
     def test_robo_misc(self):
         self.robo = symoro.Robot.SR400()
-        q = list(var('th1:10')) + [0]
+        q = list(var('th1:10'))
         self.assertEqual(self.robo.q_vec, q)
         self.assertEqual(self.robo.chain(6), [6, 5, 4, 3, 2, 1])
         self.assertEqual(self.robo.chain(6, 3), [6, 5, 4])
@@ -218,12 +218,12 @@ class testGeometry(unittest.TestCase):
                          fast_form=True, trig_subs=True)
         f60 = self.symo.gen_func('DGM_generated2', T, self.robo.q_vec)
         for x in xrange(10):
-            arg = random.normal(size=10)
+            arg = random.normal(size=9)
             M = matrix(f06(arg))*matrix(f60(arg))-eye(4)
             self.assertLess(amax(M), 1e-12)
         t06 = matrix([[1, 0, 0, 3], [0, -1, 0, 0],
                       [0, 0, -1, -1], [0, 0, 0, 1]])
-        self.assertLess(amax(matrix(f06(zeros(10))) - t06), 1e-12)
+        self.assertLess(amax(matrix(f06(zeros(9))) - t06), 1e-12)
 
     def test_igm(self):
         invgeom._paul_solve(self.robo, self.symo, invgeom.T_GENERAL, 0, 6)

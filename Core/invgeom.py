@@ -56,7 +56,8 @@ def _look_for_eq(symo, M_eq, known, th_all, r_all):
             th_vars = (eq.atoms(Symbol) & th_all) - known
             if th_vars:
                 arg_sum = max(at.count_ops()-1 for at in eq.atoms(sin, cos)
-                              if not at.atoms(Symbol) & known)
+                              if not at.atoms(Symbol) & known and
+                              at.atoms(Symbol) <= th_all)
             else:
                 arg_sum = 0
             rs_s = (eq.atoms(Symbol) & r_all) - known
@@ -76,14 +77,13 @@ def _look_for_eq(symo, M_eq, known, th_all, r_all):
 
 def loop_solve(robo, symo, knowns=None):
     #TODO: rewrite
-    q_vec = [0] + robo.q_vec
+    q_vec = q_vec = [robo.get_q(i) for i in xrange(robo.NF)]
     loops = []
     if knowns is None:
         knowns = robo.q_active
         # set(q for i, q in enumerate(q_vec) if robo.mu[i] == 1)
     for i, j in robo.loop_terminals:
         chain = robo.loop_chain(i, j)
-        print chain, q_vec
         knowns_ij = set(q_vec[i] for i in chain if q_vec[i] in knowns)
         unknowns_ij = set(q_vec[i] for i in chain if q_vec[i] not in knowns)
         loops.append([len(unknowns_ij), i, j, knowns_ij, unknowns_ij])

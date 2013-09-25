@@ -193,7 +193,11 @@ class Robot:
     def q_vec(self):
         """Generates vector of joint variables
         """
-        return [self.get_q(i) for i in xrange(1, self.NF)]
+        qs = []
+        for i in xrange(1, self.NJ):
+            if self.sigma[i] != 2:
+                qs.append(self.get_q(i))
+        return qs
 
     @property
     def endeffectors(self):
@@ -778,17 +782,9 @@ def make_fname(robo, ext=None):
         fname = '%s.par' % robo.name
     else:
         fname = '%s_%s.txt' % (robo.name, ext)
-    if robo.directory.find(':') == -1:      # path is not absolute
-        full_name = 'Robots\\%s\\%s' % (robo.directory, fname)
-        if not os.path.exists('Robots'):
-            os.makedirs('Robots')
-        d = 'Robots\\%s' % robo.directory
-        if not os.path.exists(d):
-            os.makedirs(d)
-    else:
-        full_name = '%s\\%s' % (robo.directory, fname)
-        if not os.path.exists(robo.directory):
-            os.makedirs(robo.directory)
+    full_name = '%s\\%s' % (robo.directory, fname)
+    if not os.path.exists(robo.directory):
+        os.makedirs(robo.directory)
     return full_name
 
 
@@ -1323,7 +1319,7 @@ class Symoro:
         ==========
         syms: list, Matrix or tuple of them
         rpl_liter: bool
-            if true, all literals will be replaced with 'NULx' name.
+            if true, all literals will be replaced with _
             It is done to evoid expression like [x, 0] = args[1]
             Because it will cause exception of assigning to literal
         """
@@ -1346,7 +1342,7 @@ class Symoro:
             return res
         else:
             if rpl_liter and sympify(syms).is_number:
-                return 'NUL'
+                return '_'
             else:
                 return str(syms)
 
