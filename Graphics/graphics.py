@@ -405,24 +405,6 @@ class MainWindow(wx.Frame):
             self.radioBox.Bind(wx.EVT_RADIOBOX, self.OnSelectLoops)
             gridControl.Add(self.radioBox, pos=(5, 0), flag=wx.ALIGN_CENTER)
 
-# self.lblConvergence = wx.StaticText(self.p, label='  Convergence  ')
-# self.lblConvergence.SetForegroundColour((0, 127, 0))
-# font = self.lblConvergence.GetFont()
-# font.SetWeight(wx.BOLD)
-# self.lblConvergence.SetFont(font)
-# gridControl.Add(self.lblConvergence, pos=(6, 0), flag=wx.ALIGN_CENTER)
-#
-# self.btnActive = wx.Button(self.p, label="Solve All")
-# self.btnActive.Bind(wx.EVT_BUTTON, self.find_close)
-# gridControl.Add(self.btnActive, pos=(7,0), flag=wx.ALIGN_CENTER)
-#
-# self.btnReset.SetLabelText("Reset Active")
-#
-# btnSaveConf = wx.Button(self.p, label="Save Values")
-# btnSaveConf.Bind(wx.EVT_BUTTON, self.save_configuration)
-# gridJoints.Add(btnSaveConf, pos=(p_index,0), flag=wx.ALIGN_CENTER)
-# gridJoints.SetItemSpan(btnSaveConf, wx.GBSpan(1,2))
-
         choices = []
         for jnt in self.canvas.jnt_objs:
             choices.append("Frame " + str(jnt.index))
