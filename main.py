@@ -488,8 +488,8 @@ class MainFrame(wx.Frame):
                          'Error', wx.OK | wx.ICON_WARNING).ShowModal()
 
     def MessageInfo(self, message):
-        wx.MessageDialog(None, message,
-                         'Information', wx.OK | wx.ICON_INFORMATION).ShowModal()
+        wx.MessageDialog(None, message, 'Information',
+                         wx.OK | wx.ICON_INFORMATION).ShowModal()
 
     def model_success(self, model_name):
         msg = 'The model has been saved in models\\%s_%s.txt' % \
@@ -499,8 +499,9 @@ class MainFrame(wx.Frame):
     def OnOpen(self, _):
         if self.changed:
             dialog_res = wx.MessageBox('Do you want to save changes?',
-                             'Please confirm',
-                             wx.ICON_QUESTION | wx.YES_NO_CANCEL, self)
+                                       'Please confirm',
+                                       wx.ICON_QUESTION | wx.YES_NO_CANCEL,
+                                       self)
             if dialog_res == wx.NO:
                 return
             elif dialog_res == wx.YES:

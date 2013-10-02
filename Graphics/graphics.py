@@ -162,7 +162,6 @@ class myGLCanvas(GLCanvas):
         if self.l_solver is not None:
             qs_act = []
             qs_pas = []
-            print self.q_sym
             for sym in self.q_sym:
                 if sym in self.q_act_sym:
                     qs_act.append(self.jnt_dict[sym].q)
@@ -393,8 +392,8 @@ class MainWindow(wx.Frame):
                 s.SetRange(-3.14, 3.14)
             s.Bind(FS.EVT_FLOATSPIN, self.SetJointVar)
             s.SetDigits(2)
-            if sym in self.canvas.q_pas_sym:
-                s.Enable(False)
+#            if sym in self.canvas.q_pas_sym:
+#                s.Enable(False)
             self.spin_ctrls[sym] = s
             gridJnts.Add(s, pos=(p_index, 1), flag=wx.ALIGN_CENTER_VERTICAL)
             p_index += 1

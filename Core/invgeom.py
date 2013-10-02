@@ -9,7 +9,8 @@ ECN - ARIA1 2013
 """
 
 from heapq import heapify, heappop
-from sympy import Matrix, var, Symbol, sin, cos, eye, atan2, sqrt, pi
+from sympy import var, sin, cos, eye, atan2, sqrt, pi
+from sympy import Matrix, Symbol, Expr
 from symoro import Symoro, ZERO, ONE, get_max_coef
 from geometry import dgm
 
@@ -29,6 +30,10 @@ def _paul_solve(robo, symo, nTm, n, m, known=set()):
     iTm = dgm(robo, symo, n, m, key='left', trig_subs=False)
     th_all = set(robo.theta[i] for i in chain if i >= 0 and robo.sigma[i] == 0)
     r_all = set(robo.r[i] for i in chain if i >= 0 and robo.sigma[i] == 1)
+    known |= set(robo.gamma[i] for i in chain
+                 if isinstance(robo.gamma[i], Expr))
+    known |= set(robo.alpha[i] for i in chain
+                 if isinstance(robo.alpha[i], Expr))
     while True:
         repeat = False
         for i in reversed(chain):
@@ -56,8 +61,7 @@ def _look_for_eq(symo, M_eq, known, th_all, r_all):
             th_vars = (eq.atoms(Symbol) & th_all) - known
             if th_vars:
                 arg_sum = max(at.count_ops()-1 for at in eq.atoms(sin, cos)
-                              if not at.atoms(Symbol) & known and
-                              at.atoms(Symbol) <= th_all)
+                              if not at.atoms(Symbol) & known)
             else:
                 arg_sum = 0
             rs_s = (eq.atoms(Symbol) & r_all) - known
@@ -65,6 +69,7 @@ def _look_for_eq(symo, M_eq, known, th_all, r_all):
             if eq_features in eq_dict:
                 eq_key = eq_dict[eq_features]
                 eq_pack = (eq, list(rs_s), list(th_vars))
+                print eq_pack
                 eq_candidates[eq_key].append(eq_pack)
     cont_search |= _try_solve_0(symo, eq_candidates[0], known)
     cont_search |= _try_solve_1(symo, eq_candidates[1], known)
@@ -90,7 +95,6 @@ def loop_solve(robo, symo, knowns=None):
     while loops:
         heapify(loops)
         loop = heappop(loops)
-        print loop
         res_knowns = _paul_solve(robo, symo, eye(4), *loop[1:4])
         for l in loops:
             found = l[4] & res_knowns
@@ -131,7 +135,7 @@ def _try_solve_1(symo, eq_sys, known):
         eqi, rs_i, [th_i] = eq_sys[i]
         if th_i in known:
             continue
-        Xi, Yi, Zi, i_ok = _get_coefs(eqi, sin(th_i), cos(th_i))
+        Xi, Yi, Zi, i_ok = _get_coefs(eqi, sin(th_i), cos(th_i), th_i)
         i_ok &= sum([Xi == ZERO, Yi == ZERO, Zi == ZERO]) <= 1
         if not i_ok:
             continue
@@ -139,7 +143,7 @@ def _try_solve_1(symo, eq_sys, known):
         for j in xrange(i+1, len(eq_sys)):
             eqj, rs_j, [th_j] = eq_sys[j]
             if th_i == th_j:
-                Xj, Yj, Zj, j_ok = _get_coefs(eqj, sin(th_j), cos(th_j))
+                Xj, Yj, Zj, j_ok = _get_coefs(eqj, sin(th_j), cos(th_j), th_i)
                 j_ok &= (Xi*Yj != Xj*Yi)
                 if j_ok:
                     break
@@ -167,14 +171,14 @@ def _try_solve_2(symo, eq_sys, known):
             th = ths_i[0]
             C, S = cos(th), sin(th)
             r = rs_i[0]
-            X1, Y1, Z1, i_ok = _get_coefs(eqi, S, r)
-            X2, Y2, Z2, j_ok = _get_coefs(eqj, C, r)
+            X1, Y1, Z1, i_ok = _get_coefs(eqi, S, r, th, r)
+            X2, Y2, Z2, j_ok = _get_coefs(eqj, C, r, th, r)
             all_ok = j_ok and i_ok and not eqi.has(C) and not eqj.has(S)
             if all_ok:
                 eq_type = 5
                 break
-            X1, Y1, Z1, i_ok = _get_coefs(eqi, S, C)
-            X2, Y2, Z2, j_ok = _get_coefs(eqj, C, S)
+            X1, Y1, Z1, i_ok = _get_coefs(eqi, S, C, th, r)
+            X2, Y2, Z2, j_ok = _get_coefs(eqj, C, S, th, r)
             i_ok &= X1.has(r) and not Z1.has(r) and Y1 == ZERO
             j_ok &= X2.has(r) and not Z2.has(r) and Y2 == ZERO
             all_ok = j_ok and i_ok
@@ -213,11 +217,11 @@ def _try_solve_3(symo, eq_sys, known):
             th2 = ths_i[1]
             C1, S1 = cos(th1), sin(th1)
             C2, S2 = cos(th2), sin(th2)
-            X1, Y1, ZW1, i_ok = _get_coefs(eqi, C1, S1)
-            X2, Y2, ZW2, j_ok = _get_coefs(eqj, S1, C1)
+            X1, Y1, ZW1, i_ok = _get_coefs(eqi, C1, S1, th1)
+            X2, Y2, ZW2, j_ok = _get_coefs(eqj, S1, C1, th1)
             Y2 = -Y2
-            V1, W1, Z1, iw_ok = _get_coefs(ZW1, C2, S2)
-            V2, W2, Z2, jw_ok = _get_coefs(ZW2, S2, C2)
+            V1, W1, Z1, iw_ok = _get_coefs(ZW1, C2, S2, th1, th2)
+            V2, W2, Z2, jw_ok = _get_coefs(ZW2, S2, C2, th1, th2)
             W2 = -W2
             all_ok = j_ok and i_ok and jw_ok and iw_ok
             if X1 == 0 or Y1 == 0:
@@ -244,6 +248,7 @@ def _try_solve_3(symo, eq_sys, known):
     return False
 
 
+#TODO: make it with itertool
 def _try_solve_4(symo, eq_sys, known):
     res = False
     for i in xrange(len(eq_sys)):
@@ -262,8 +267,8 @@ def _try_solve_4(symo, eq_sys, known):
                 th2 = ths_i[0]
             C1, S1 = cos(th1), sin(th1)
             C12, S12 = cos(th12), sin(th12)
-            X1, Y1, Z1, i_ok = _get_coefs(eqi, C1, C12)
-            X2, Y2, Z2, j_ok = _get_coefs(eqj, S1, S12)
+            X1, Y1, Z1, i_ok = _get_coefs(eqi, C1, C12, th1, th2)
+            X2, Y2, Z2, j_ok = _get_coefs(eqj, S1, S12, th1, th2)
             all_ok = (X1*Y2 == Y1*X2 and i_ok and j_ok)
             all_ok &= not eqi.has(S1) and not eqi.has(S12)
             all_ok &= not eqj.has(C1) and not eqj.has(C12)
@@ -434,11 +439,20 @@ def _solve_square(symo, A, B, C, x):
     symo.add_to_dict(x, (-B + YPS*sqrt(Delta))/(2*A))
 
 
-def _get_coefs(eq, A1, A2):
+def _get_coefs(eq, A1, A2, *xs):
     eqe = eq.expand()
     X = get_max_coef(eqe, A1)
     eqe = eqe.xreplace({A1: 0})
     Y = get_max_coef(eqe, A2)
     Z = eqe.xreplace({A2: 0})
-    is_ok = not X.has(A2) and not X.has(A1) and not Y.has(A2)
+#    is_ok = not X.has(A2) and not X.has(A1) and not Y.has(A2)
+    is_ok = True
+    for coef in (X, Y, Z):
+        for x in xs:
+            is_ok &= not coef.has(x)
+#    if is_ok != is_ok2:
+#        print 'GET COEF333333333333333333333333333333333333333333333"'
+#        print X, Y, Z, is_ok
+#        print eq, 'i', A1, 'i', A2
+#        print xs
     return X, Y, Z, is_ok

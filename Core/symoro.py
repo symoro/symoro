@@ -38,7 +38,7 @@ class Robot:
         # member variables:
         self.name = name
         """  name of the robot: string"""
-        self.directory = name
+        self.directory = 'Robots\\%s' % name
         """ directory name"""
         self.is_mobile = is_mobile
         """ whethere the base frame is floating: bool"""
@@ -919,7 +919,7 @@ class Symoro:
             else:
                 p = 1
             e = self.C2S2_simp(e)
-            e = self.CS12_simp(e)
+            e = self.CS12_simp(e, silent=True)
             new_sym *= e**p
         return new_sym
 
@@ -1234,13 +1234,15 @@ class Symoro:
         this function will replace the trigonometric symbol bu sum,
         trying to separate known and unknown terms
         """
+        if not isinstance(eq, Expr) or eq.is_number:
+            return eq
         while True:
             res = False
             trigs = eq.atoms(sin, cos)
             for trig in trigs:
                 args = trig.args[0].atoms()
                 if args & known and not args <= known and trig in self.sydi:
-                    eq = eq.subs(trig, self.sydi[trig])
+                    eq = eq.subs(trig, self.sydi[trig]).expand()
                     res = True
             if not res:
                 break

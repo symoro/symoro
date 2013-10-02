@@ -18,7 +18,7 @@ class testMisc(unittest.TestCase):
     def test_readwrite(self):
         original_robo = symoro.Robot.RX90()
         parfile.writepar(original_robo)
-        d_name = 'Robots\\%s' % original_robo.directory
+        d_name = original_robo.directory
         new_robo, flag = parfile.readpar(d_name,
                                          original_robo.name)
         self.assertEqual(flag, symoro.OK)
