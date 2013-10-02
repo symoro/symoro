@@ -187,7 +187,7 @@ class myGLCanvas(GLCanvas):
 
     def generate_loop_fcn(self):
         if self.robo.structure == CLOSED_LOOP:
-            symo = Symoro()
+            symo = Symoro(sydi=self.pars_num)
             loop_solve(self.robo, symo)
             self.l_solver = symo.gen_func('IGM_gen', self.q_pas_sym,
                                           self.q_act_sym, multival=True)
