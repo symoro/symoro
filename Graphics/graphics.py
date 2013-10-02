@@ -13,6 +13,9 @@ from sympy import Expr
 
 #TODO: Fullscreen camera rotation bug
 #TODO: X-, Z-axis
+#TODO: Random button
+#TODO: Joint limits -pi pi Delete limits
+#TODO: Difference criterion change
 
 
 class myGLCanvas(GLCanvas):
@@ -153,7 +156,12 @@ class myGLCanvas(GLCanvas):
     def generate_dgms(self):
         self.dgms = []
         for i in range(self.robo.NF):
-            symo = Symoro()
+            symo = Symoro(sydi=self.pars_num)
+            if self.robo.d[i] == 0 and self.robo.r[i] == 0 and self.robo.d[i] == 0:
+                ant = self.robo.ant[self.robo.ant[i]]
+                if len(self.dgms) > ant:
+                    self.dgms.append(self.dgms[ant])
+                    continue
             T = dgm(self.robo, symo, 0, i, fast_form=True, trig_subs=True)
             f = symo.gen_func('dgm_generated', T, self.q_sym)
             self.dgms.append(f)
