@@ -897,15 +897,15 @@ def trigonometric_info(sym):
 
 class Symoro:
     """Symbol manager, responsible for symbol replacing, file writing."""
-    def __init__(self, file_out='disp'):
+    def __init__(self, file_out='disp', sydi={}):
         """Default values correspond to empty dictionary and screen output.
         """
         self.file_out = file_out
         """Output descriptor. Can be None, 'disp', file
         defines the output destination"""
-        self.sydi = {}
+        self.sydi = dict((k, sydi[k]) for k in sydi)
         """Dictionary. All the substitutions are saved in it"""
-        self.revdi = {}
+        self.revdi = dict((sydi[k], k) for k in sydi)
         """Dictionary. Revers to the self.sydi"""
         self.order_list = []
         """keeps the order of variables to be compute"""
