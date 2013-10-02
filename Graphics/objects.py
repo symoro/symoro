@@ -101,23 +101,29 @@ class JointObject(Frame):
 
     def draw(self):
         gl.glPushMatrix()
-        self.draw_rod(self.b)
+        if self.b:
+            self.draw_rod(self.b)
+            gl.glTranslatef(0, 0, self.b)
         gl.glRotatef(degrees(self.gamma), 0, 0, 1)
-        gl.glTranslatef(0, 0, self.b)
-        gl.glPushMatrix()
-        gl.glRotatef(90, 0, 1, 0)
-        self.draw_rod(self.d)
-        gl.glPopMatrix()
+        if self.d:
+            gl.glPushMatrix()
+            gl.glRotatef(90, 0, 1, 0)
+            self.draw_rod(self.d)
+            gl.glPopMatrix()
+            gl.glTranslatef(self.d, 0, 0)
         gl.glRotatef(degrees(self.alpha), 1, 0, 0)
-        gl.glTranslatef(self.d, 0, 0)
-        self.draw_rod(self.r)
+        if self.r:
+            self.draw_rod(self.r)
+            gl.glTranslatef(0, 0, self.r)
         gl.glRotatef(degrees(self.theta), 0, 0, 1)
-        gl.glTranslatef(0, 0, self.r)
-        gl.glPushMatrix()
-        self.draw_rod(self.shift)
-        gl.glTranslatef(0, 0, self.shift)
-        self.draw_joint()
-        gl.glPopMatrix()
+        if self.shift:
+            gl.glPushMatrix()
+            self.draw_rod(self.shift)
+            gl.glTranslatef(0, 0, self.shift)
+            self.draw_joint()
+            gl.glPopMatrix()
+        else:
+            self.draw_joint()
         for child in self.children:
             child.draw()
         gl.glPopMatrix()
