@@ -500,15 +500,14 @@ class MainFrame(wx.Frame):
         if self.changed:
             dialog_res = wx.MessageBox('Do you want to save changes?',
                                        'Please confirm',
-                                       wx.ICON_QUESTION | wx.YES_NO_CANCEL,
+                                       wx.ICON_QUESTION |
+                                       wx.YES_NO | wx.CANCEL,
                                        self)
-            if dialog_res == wx.NO:
+            if dialog_res == wx.CANCEL:
                 return
             elif dialog_res == wx.YES:
                 if self.OnSave(None) == FAIL:
                     return
-            else:
-                return
         dialog = wx.FileDialog(self, message="Choose PAR file", style=wx.OPEN,
                                wildcard='*.par', defaultFile='*.par')
         if dialog.ShowModal() == wx.ID_OK:

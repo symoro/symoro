@@ -907,7 +907,7 @@ class Symoro:
         """Dictionary. All the substitutions are saved in it"""
         self.revdi = dict((sydi[k], k) for k in sydi)
         """Dictionary. Revers to the self.sydi"""
-        self.order_list = []
+        self.order_list = sydi.keys()
         """keeps the order of variables to be compute"""
 
     def simp(self, sym):
