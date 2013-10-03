@@ -6,6 +6,7 @@ import OpenGL.GLU as glu
 from objects import Frame, RevoluteJoint, FixedJoint, PrismaticJoint
 from wx.glcanvas import GLCanvas
 from numpy import sin, cos, radians, pi, inf, nan
+from math import atan2
 from Core.symoro import Symoro, CLOSED_LOOP
 from Core.invgeom import loop_solve
 from Core.geometry import dgm
@@ -174,7 +175,8 @@ class myGLCanvas(GLCanvas):
                 if sym in self.q_act_sym:
                     qs_act.append(self.jnt_dict[sym].q)
                 elif sym in self.q_pas_sym:
-                    qs_pas.append(self.jnt_dict[sym].q)
+                    qs_pas.append((self.jnt_dict[sym].q,
+                                  self.robo.sigma[self.jnt_dict[sym].index]))
 
             slns = self.l_solver(qs_act)
             min_error = 99999999
@@ -182,7 +184,12 @@ class myGLCanvas(GLCanvas):
             for sln in slns:
                 if nan in sln:
                     continue
-                error = sum((qp - sln[j])**2 for j, qp in enumerate(qs_pas))
+                error = 0
+                for j, (qp, sigma) in enumerate(qs_pas):
+                    if sigma == 0:
+                        error += atan2(sin(qp-sln[j]), cos(qp-sln[j]))**2
+                    else:
+                        error += (qp - sln[j])**2
                 if error < min_error:
                     min_sln = sln
                     min_error = error
@@ -393,11 +400,7 @@ class MainWindow(wx.Frame):
             gridJnts.Add(wx.StaticText(self.p, label=label+str(jnt.index)),
                          pos=(p_index, 0), flag=wx.ALIGN_CENTER_VERTICAL)
             s = FS.FloatSpin(self.p, size=(70, -1), id=jnt.index,
-                             min_val=0, increment=0.05)
-            if self.robo.sigma[jnt.index] == 1:
-                s.SetRange(-10, 10)
-            else:
-                s.SetRange(-3.14, 3.14)
+                             increment=0.05, min_val=-10., max_val=10.)
             s.Bind(FS.EVT_FLOATSPIN, self.SetJointVar)
             s.SetDigits(2)
 #            if sym in self.canvas.q_pas_sym:
@@ -490,7 +493,11 @@ class MainWindow(wx.Frame):
         """
         jnt_index = evt.GetId()
         jnt = self.canvas.jnt_objs[jnt_index]
-        jnt.q = evt.EventObject.GetValue()
+        value = evt.EventObject.GetValue()
+        if self.robo.sigma[jnt_index] == 0:
+            value = atan2(sin(value), cos(value))
+            evt.EventObject.SetValue(value)
+        jnt.q = value
         if self.solve_loops:
             self.canvas.solve()
             self.update_spin_controls()
