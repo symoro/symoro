@@ -18,7 +18,7 @@ _NL = ['XX', 'XY', 'XZ', 'YY', 'YZ', 'ZZ',
        'IA', 'FV', 'FS', 'FX', 'FY', 'FZ',
        'CX', 'CY', 'CZ']
 _VEC = ['W0', 'WP0', 'V0', 'VP0']
-
+_ZERO_BASED = {'W0', 'WP0', 'V0', 'VP0', 'Z', 'G'}
 _bool_dict = {'True': True, 'False': False,
               'true': True, 'false': False,
               '1': True, '0': False}
@@ -30,11 +30,22 @@ _keyword_repl = {'Ant': 'ant', 'Sigma': 'sigma', 'B': 'b', 'R': 'r',
 def _extract_vals(robo, key, line):
     line = line.replace('{', '')
     line = line.replace('}', '')
-    if key in {'W0', 'WP0', 'V0', 'VP0', 'Z', 'G'}:
+    if key in _ZERO_BASED:
         k = 0
     else:
         k = 1
-    for i, v in enumerate(line.split(',')):
+    items = line.split(',')
+    items_proc = []
+    prev_item = False
+    for i, v in enumerate(items):
+        if v.find('atan2') == -1 and not prev_item:
+            items_proc.append(v)
+        elif prev_item:
+            items_proc.append('%s,%s' % (items[i-1], v))
+            prev_item = False
+        else:
+            prev_item = True
+    for i, v in enumerate(items_proc):
         if robo.put_val(i+k, key, v.strip()) == symoro.FAIL:
             return symoro.FAIL
 
