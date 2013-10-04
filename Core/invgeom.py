@@ -224,16 +224,21 @@ def _try_solve_3(symo, eq_sys, known):
             V2, W2, Z2, jw_ok = _get_coefs(ZW2, S2, C2, th1, th2)
             W2 = -W2
             all_ok = j_ok and i_ok and jw_ok and iw_ok
+            all_ok &= _check_const((X1, Y1), th2)
             if X1 == 0 or Y1 == 0:
                 X1, Y1, V1, W1 = V1, W1, X1, Y1
                 X2, Y2, V2, W2 = V2, W2, X2, Y2
                 th1, th2 = th2, th1
             all_ok &= _match_coef(X1, X2, Y1, Y2)
             all_ok &= _match_coef(V1, V2, W1, W2)
-            if W1 == W2 and Y1 == -Y2:
-                eps = -1
+            eps = 1
+            if X1 == X2 and Y1 == Y2:
+                if W1 == -W2 and V1 == -V2:
+                    eps = -1
             else:
-                eps = 1
+                if W1 == W2 and V1 == V2:
+                    eps = -1
+                Z2 = -Z2
             for a in (X1, X2, Y1, Y2):
                 all_ok &= not a.has(C2)
                 all_ok &= not a.has(S2)
@@ -242,6 +247,8 @@ def _try_solve_3(symo, eq_sys, known):
         if not all_ok:
             continue
         symo.write_line("# Solving type 6, 7")
+        print 'HERE THE ERROR'
+        print eps
         _solve_type_7(symo, V1, W1, -X1, -Y1, -Z1, -Z2, eps, th1, th2)
         known |= {th1, th2}
         return True
@@ -438,18 +445,23 @@ def _solve_square(symo, A, B, C, x):
     symo.add_to_dict(YPS, (ONE, - ONE))
     symo.add_to_dict(x, (-B + YPS*sqrt(Delta))/(2*A))
 
+def _check_const(consts, *xs):
+    is_ok = True
+    for coef in consts:
+        for x in xs:
+            is_ok &= not coef.has(x)
+    return is_ok
+
 
 def _get_coefs(eq, A1, A2, *xs):
     eqe = eq.expand()
     X = get_max_coef(eqe, A1)
-    eqe = eqe.xreplace({A1: 0})
+    eqe = eqe.xreplace({A1: ZERO})
     Y = get_max_coef(eqe, A2)
-    Z = eqe.xreplace({A2: 0})
+    Z = eqe.xreplace({A2: ZERO})
 #    is_ok = not X.has(A2) and not X.has(A1) and not Y.has(A2)
     is_ok = True
-    for coef in (X, Y, Z):
-        for x in xs:
-            is_ok &= not coef.has(x)
+    is_ok &= _check_const((X, Y, Z), *xs)
 #    if is_ok != is_ok2:
 #        print 'GET COEF333333333333333333333333333333333333333333333"'
 #        print X, Y, Z, is_ok
