@@ -965,6 +965,7 @@ class Symoro:
         names, short_form = trigonometric_info(sym)
         names = list(names)
         names.sort()
+        sym2 = sym
         for n1, n2 in combinations(names, 2):
             if short_form:
                 C1, S1 = CS_syms(n1)
@@ -980,9 +981,12 @@ class Symoro:
                 C2, S2 = cos(n2), sin(n2)
                 C12, S12 = cos(n1+n2), sin(n1+n2)
                 C1m2, S1m2 = cos(n1-n2), sin(n1-n2)
-            sym = self.try_opt(S12, S1m2, S1*C2, C1*S2, sym, silent)
-            sym = self.try_opt(C12, C1m2, C1*C2, -S1*S2, sym, silent)
-        return sym
+            sym2 = self.try_opt(S12, S1m2, S1*C2, C1*S2, sym2, silent)
+            sym2 = self.try_opt(C12, C1m2, C1*C2, -S1*S2, sym2, silent)
+        if sym2 != sym:
+            return self.CS12_simp(sym2, silent)
+        else:
+            return sym
 
     def try_opt(self, A, Am, B, C, old_sym, silent=False):
         """Replaces B + C by A or B - C by Am.

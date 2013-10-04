@@ -69,7 +69,6 @@ def _look_for_eq(symo, M_eq, known, th_all, r_all):
             if eq_features in eq_dict:
                 eq_key = eq_dict[eq_features]
                 eq_pack = (eq, list(rs_s), list(th_vars))
-                print eq_pack
                 eq_candidates[eq_key].append(eq_pack)
     cont_search |= _try_solve_0(symo, eq_candidates[0], known)
     cont_search |= _try_solve_1(symo, eq_candidates[1], known)

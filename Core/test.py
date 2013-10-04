@@ -134,6 +134,9 @@ class testSymoroTrig(unittest.TestCase):
                      C3*D8*S2m7 - C3m78*D3*S2 + D2*S3""")
         e2ans = sympify("D2*S3 - D3*S278m3 - D8*S23m7")
         self.assertEqual(self.symo.CS12_simp(e2), e2ans)
+        e2 = sympify("sin(g12 + th2)*sin(th3 + th8) - cos(g12 + th2)*cos(th3 + th8)")
+        e2ans = sympify("-cos(g12 + th2 + th3 + th8)")
+        self.assertEqual(self.symo.CS12_simp(e2), e2ans)
         e3 = sympify("""-a1*sin(th2+th1)*sin(th3)*cos(th1)-
                      a1*cos(th1)*cos(th2+th1)*cos(th3)""")
         e3ans = sympify("-a1*cos(th1)*cos(th1 + th2 - th3)")
@@ -322,5 +325,5 @@ if __name__ == '__main__':
     unittest.main()
 #########################
 #    suite = unittest.TestSuite()
-#    suite.addTest(testMisc('test_readwrite'))
+#    suite.addTest(testSymoroTrig('test_trig_simp'))
 #    unittest.TextTestRunner().run(suite)
