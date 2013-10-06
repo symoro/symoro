@@ -15,9 +15,6 @@ from sympy import Expr
 #TODO: Fullscreen camera rotation bug
 #TODO: X-, Z-axis
 #TODO: Random button
-#TODO: Joint limits -pi pi Delete limits
-#TODO: Difference criterion change
-
 
 class myGLCanvas(GLCanvas):
 
@@ -46,8 +43,8 @@ class myGLCanvas(GLCanvas):
         self.jnt_objs = []
         self.construct_hierarchy()
         self.assign_mono_scale()
-        self.generate_dgms()
-        self.generate_loop_fcn()
+        self.dgms = {}
+        self.l_solver = None
 
     def OnEraseBackground(self, event):
         # Do nothing, to avoid flashing on MSW.
@@ -154,64 +151,63 @@ class myGLCanvas(GLCanvas):
             self.CameraTransformation()
             self.Refresh(False)
 
-    def generate_dgms(self):
-        self.dgms = []
-        for i in range(self.robo.NF):
-            symo = Symoro(sydi=self.pars_num)
-            if self.robo.d[i] == 0 and self.robo.r[i] == 0 and self.robo.d[i] == 0:
-                ant = self.robo.ant[self.robo.ant[i]]
-                if len(self.dgms) > ant:
-                    self.dgms.append(self.dgms[ant])
-                    continue
-            T = dgm(self.robo, symo, 0, i, fast_form=True, trig_subs=True)
-            f = symo.gen_func('dgm_generated', T, self.q_sym)
-            self.dgms.append(f)
+    def dgm_for_frame(self, i):
+        if i not in self.dgms:
+            if i > 0 and self.jnt_objs[i].r == 0 and self.jnt_objs[i].d == 0 \
+                     and self.jnt_objs[i].b == 0:
+                self.dgms[i] = self.dgm_for_frame(self.robo.ant[i])
+            else:
+                symo = Symoro(sydi=self.pars_num)
+                T = dgm(self.robo, symo, 0, i, fast_form=True, trig_subs=True)
+                self.dgms[i] = symo.gen_func('dgm_generated', T, self.q_sym)
+        return self.dgms[i]
+
+    def find_solution(self, qs_act, qs_pas):
+        slns = self.l_solver(qs_act)
+        min_error = 99999999
+        min_sln = None
+        for sln in slns:
+            if nan in sln:
+                continue
+            error = 0
+            for j, (qp, sigma) in enumerate(qs_pas):
+                if sigma == 0:
+                    error += atan2(sin(qp-sln[j]), cos(qp-sln[j]))**2
+                else:
+                    error += (qp - sln[j])**2
+            if error < min_error:
+                min_sln = sln
+                min_error = error
+        if min_sln is not None:
+            for i, sym in enumerate(self.q_pas_sym):
+                self.jnt_dict[sym].q = min_sln[i]
 
     def solve(self):
-        if self.l_solver is not None:
-            qs_act = []
-            qs_pas = []
-            for sym in self.q_sym:
-                if sym in self.q_act_sym:
-                    qs_act.append(self.jnt_dict[sym].q)
-                elif sym in self.q_pas_sym:
-                    qs_pas.append((self.jnt_dict[sym].q,
-                                  self.robo.sigma[self.jnt_dict[sym].index]))
+        if self.robo.structure != CLOSED_LOOP:
+            return
+        if self.l_solver is None:
+            self.generate_loop_fcn()
+        qs_act = []
+        qs_pas = []
+        for sym in self.q_sym:
+            if sym in self.q_act_sym:
+                qs_act.append(self.jnt_dict[sym].q)
+            elif sym in self.q_pas_sym:
+                i = self.jnt_dict[sym].index
+                if i < self.robo.NL:
+                    qs_pas.append((self.jnt_dict[sym].q, self.robo.sigma[i]))
 
-            slns = self.l_solver(qs_act)
-            min_error = 99999999
-            min_sln = None
-            for sln in slns:
-                if nan in sln:
-                    continue
-                error = 0
-                for j, (qp, sigma) in enumerate(qs_pas):
-                    if sigma == 0:
-                        error += atan2(sin(qp-sln[j]), cos(qp-sln[j]))**2
-                    else:
-                        error += (qp - sln[j])**2
-                if error < min_error:
-                    min_sln = sln
-                    min_error = error
-            if min_sln is not None:
-                for i, sym in enumerate(self.q_pas_sym):
-                    self.jnt_dict[sym].q = min_sln[i]
-            else:
-                return False
-        return True
+        self.find_solution(qs_act, qs_pas)
 
     def generate_loop_fcn(self):
-        if self.robo.structure == CLOSED_LOOP:
-            symo = Symoro(sydi=self.pars_num)
-            loop_solve(self.robo, symo)
-            self.l_solver = symo.gen_func('IGM_gen', self.q_pas_sym,
-                                          self.q_act_sym, multival=True)
-        else:
-            self.l_solver = None
+        symo = Symoro(sydi=self.pars_num)
+        loop_solve(self.robo, symo)
+        self.l_solver = symo.gen_func('IGM_gen', self.q_pas_sym,
+                                      self.q_act_sym, multival=True)
 
     def centralize_to_frame(self, index):
         q_vec = [self.jnt_dict[sym].q for sym in self.q_sym]
-        T = self.dgms[index](q_vec)
+        T = self.dgm_for_frame(index)(q_vec)
         self.cen_x, self.cen_y, self.cen_z = T[0][3], T[1][3], T[2][3]
         self.CameraTransformation()
         self.Refresh(False)
@@ -378,9 +374,9 @@ class MainWindow(wx.Frame):
         self.tButton.Bind(wx.EVT_TOGGLEBUTTON, self.ShowAllFrames)
         gridControl.Add(self.tButton, pos=(1, 0), flag=wx.ALIGN_CENTER)
 
-        self.btnReset = wx.Button(self.p, label="Reset All")
-        self.btnReset.Bind(wx.EVT_BUTTON, self.ResetJoints)
-        gridControl.Add(self.btnReset, pos=(3, 0), flag=wx.ALIGN_CENTER)
+        btnReset = wx.Button(self.p, label="Reset All")
+        btnReset.Bind(wx.EVT_BUTTON, self.ResetJoints)
+        gridControl.Add(btnReset, pos=(3, 0), flag=wx.ALIGN_CENTER)
 
         btnRandom = wx.Button(self.p, label="Random")
         btnRandom.Bind(wx.EVT_BUTTON, self.FindRandom)
@@ -426,7 +422,9 @@ class MainWindow(wx.Frame):
         self.check_list.Bind(wx.EVT_LISTBOX, self.SelectFrames)
         gridControl.Add(self.check_list, pos=(2, 0), flag=wx.ALIGN_CENTER)
 
-        top_sizer.Add(gridJnts, 0, wx.ALL, 10)
+        q_box = wx.StaticBoxSizer(wx.StaticBox(self.p, label='Joint variables'))
+        q_box.Add(gridJnts, 0, wx.ALL, 10)
+        top_sizer.Add(q_box, 0, wx.ALL, 10)
         top_sizer.AddSpacer(10)
         top_sizer.Add(gridControl, 0, wx.ALL, 10)
 
@@ -476,14 +474,13 @@ class MainWindow(wx.Frame):
 
 
     def ResetJoints(self, evt):
-        pass
-        # for jnt in self.canvas.jnt_objs[1:]:
-        #     if self.robo.sigma[jnt.index] == 0:
-        #         jnt.q = self.params_dict['theta', jnt.index]
-        #     elif self.robo.sigma[jnt.index] == 1:
-        #         jnt.q = self.params_dict['r', jnt.index]
-        # self.update_spin_controls()
-        # self.canvas.OnDraw()
+        for ctrl in self.spin_ctrls.values():
+            jnt_obj = self.canvas.jnt_objs[ctrl.Id]
+            jnt_obj.q = jnt_obj.q_init
+            ctrl.SetValue(jnt_obj.q)
+        if self.solve_loops:
+            self.canvas.solve()
+        self.canvas.OnDraw()
 
     def FindRandom(self, evt):
         pass

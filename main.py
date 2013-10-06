@@ -36,13 +36,13 @@ class MainFrame(wx.Frame):
         self.Fit()
         self.FeedData()
 
-    def LabelsTextboxesInGrid(self, grid, rows, elems, handler=None, start_i=0):
+    def params_grid(self, grid, rows, elems, handler=None, start_i=0, size=60):
         for i, name in enumerate(elems):
             horBox = wx.BoxSizer(wx.HORIZONTAL)
             horBox.Add(wx.StaticText(self.p, label=name,
                                      size=(40, -1), style=wx.ALIGN_RIGHT),
                        0, wx.ALL | wx.ALIGN_RIGHT, 5)
-            textBox = wx.TextCtrl(self.p, size=(60, -1), name=name, id=i % rows)
+            textBox = wx.TextCtrl(self.p, size=(size, -1), name=name, id=i%rows)
             self.widgets[name] = textBox
             textBox.Bind(wx.EVT_KILL_FOCUS, handler)
             horBox.Add(textBox, 0, wx.ALL | wx.ALIGN_LEFT, 1)
@@ -121,7 +121,7 @@ class MainFrame(wx.Frame):
         ##### Geometric Params
         sbs = wx.StaticBoxSizer(
             wx.StaticBox(self.p, label='Geometric Params'), wx.HORIZONTAL)
-        grid = wx.GridBagSizer(0, 39)
+        grid = wx.GridBagSizer(0, 5)
         vertBox = wx.BoxSizer(wx.VERTICAL)
         vertBox.Add(wx.StaticText(self.p, label='Frame'),
                     0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 5)
@@ -146,8 +146,8 @@ class MainFrame(wx.Frame):
         grid.Add(vertBox, pos=(0, 0), flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
                  span=(3, 1), border=5)
 
-        self.LabelsTextboxesInGrid(grid, 2, self.robo.get_geom_head()[4:],
-                                   self.OnGeoParamChanged, 2)
+        self.params_grid(grid, 2, self.robo.get_geom_head()[4:],
+                                   self.OnGeoParamChanged, 2, 111)
 
         sbs.Add(grid)
         sizer2.Add(sbs, 0, wx.ALL | wx.EXPAND, 0)
@@ -169,7 +169,7 @@ class MainFrame(wx.Frame):
 
         params = self.robo.get_dynam_head()[1:]
         params += self.robo.get_ext_dynam_head()[1:-3]
-        self.LabelsTextboxesInGrid(grid, 4, params, self.OnDynParamChanged, 1)
+        self.params_grid(grid, 4, params, self.OnDynParamChanged, 1)
 
         sbs.Add(grid)
         sbs.AddSpacer(4)
@@ -190,7 +190,7 @@ class MainFrame(wx.Frame):
             for c in ['X', 'Y', 'Z']:
                 params.append(name + c)
 
-        self.LabelsTextboxesInGrid(grid, 3, params, self.OnBaseTwistChanged, 0)
+        self.params_grid(grid, 3, params, self.OnBaseTwistChanged, 0)
 
         ##### Joints velocity and acceleration
         lbl = 'Joint velocity and acceleration'
