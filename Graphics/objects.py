@@ -135,6 +135,7 @@ class RevoluteJoint(JointObject):
         super(RevoluteJoint, self).__init__(*args)
         self.cyl_vertices, self.cyl_indices, self.cyl_normals = \
             Primitives.cyl_array(self.length)
+        self.q_init = self.theta
 
     def draw_joint(self):
         gl.glColor3f(1., 1., 0.)
@@ -157,6 +158,7 @@ class PrismaticJoint(JointObject):
     def __init__(self, *args):
         super(PrismaticJoint, self).__init__(*args)
         self.box_vertices, self.box_normals = Primitives.box_array(self.length)
+        self.q_init = self.r
 
     def draw_joint(self):
         gl.glColor3f(1., 0.6, 0.)

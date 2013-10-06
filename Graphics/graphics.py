@@ -477,9 +477,9 @@ class MainWindow(wx.Frame):
         for ctrl in self.spin_ctrls.values():
             jnt_obj = self.canvas.jnt_objs[ctrl.Id]
             jnt_obj.q = jnt_obj.q_init
-            ctrl.SetValue(jnt_obj.q)
         if self.solve_loops:
             self.canvas.solve()
+        self.update_spin_controls()
         self.canvas.OnDraw()
 
     def FindRandom(self, evt):
