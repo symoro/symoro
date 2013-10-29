@@ -178,6 +178,7 @@ def _kinematic_loop_constraints(robo, symo, proj=None):
                 extend_W(J, row, W_c, indx_c, chi)
     W_a, W_p = Matrix(W_a), Matrix(W_p)
     W_ac, W_pc, W_c = Matrix(W_ac), Matrix(W_pc), Matrix(W_c)
+    print W_a, W_p, W_ac, W_pc, W_c
     return W_a, W_p, W_ac, W_pc, W_c
 
 
