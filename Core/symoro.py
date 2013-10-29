@@ -1060,7 +1060,10 @@ class Symoro:
         sym_list = [(cos_sym, cos(angle)), (sin_sym, sin(angle))]
         subs_dict = {}
         for sym, sym_old in sym_list:
-            subs_dict[sym_old] = sym
+            if sym_old.has(-1):
+                subs_dict[-sym_old] = -sym
+            else:
+                subs_dict[sym_old] = sym
             self.add_to_dict(sym, sym_old)
         for i1 in xrange(M.shape[0]):
             for i2 in xrange(M.shape[1]):

@@ -262,6 +262,13 @@ class testKinematics(unittest.TestCase):
         self.symo = symoro.Symoro()
         self.robo = symoro.Robot.RX90()
 
+    def test_speeds(self):
+        print 'Speeds and accelerations'
+        kinematics.speeds_accelerations(self.robo)
+
+        print 'Kinematic constraint equations'
+        kinematics.kinematic_constraints(symoro.Robot.SR400())
+
     def test_jac(self):
         kinematics.jacobian(self.robo, 6, 0, 0)
         for j in range(1, 1):
@@ -320,10 +327,9 @@ class testDynamics(unittest.TestCase):
         dynamics.base_paremeters(robo)
 
 if __name__ == '__main__':
-    robo = symoro.Robot.RX90()
-    kinematics.jacobian(robo, 6, 5, 4)
-    unittest.main()
+#    unittest.main()
 #########################
-#    suite = unittest.TestSuite()
+    suite = unittest.TestSuite()
 #    suite.addTest(testSymoroTrig('test_trig_simp'))
-#    unittest.TextTestRunner().run(suite)
+    suite.addTest(testKinematics('test_speeds'))
+    unittest.TextTestRunner().run(suite)
