@@ -5,13 +5,13 @@ import unittest
 from sympy import sympify, var, Matrix
 from sympy.abc import A, B, C, X, Y, Z
 from numpy import random, amax, matrix, eye, zeros
-import symoro
-import geometry
-import kinematics
-import invgeom
-from geometry import Transform as trns
-import dynamics
-import parfile
+from core import symoro
+from core import geometry
+from core import kinematics
+from core import invgeom
+from core.geometry import Transform as trns
+from core import dynamics
+from core import parfile
 
 
 class testMisc(unittest.TestCase):
