@@ -1,10 +1,10 @@
 __author__ = 'Izzat'
 import wx
-from core.symoro import Robot, FAIL
-from core import geometry, kinematics, dynamics, invgeom
-from visualize import graphics
-from gui import ui_definition, ui_geometry, ui_kinematics
-from core.parfile import readpar, writepar
+from pysymoro.core.symoro import Robot, FAIL
+from pysymoro.core import geometry, kinematics, dynamics, invgeom
+from pysymoro.visualize import graphics
+from pysymoro.gui import ui_definition, ui_geometry, ui_kinematics
+from pysymoro.core.parfile import readpar, writepar
 import os
 
 PROG_NAME = 'SYMORO-Python'
