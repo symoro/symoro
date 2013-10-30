@@ -254,6 +254,7 @@ def _dgm_right(robo, symo, i, j, trig_subs=True, sep_const=False):
 def _dgm_one(robo, symo, i, j, fast_form=True,
              forced=False, trig_subs=True):
     k = robo.common_root(i, j)
+    is_loop = i > robo.NL and j > robo.NL
     chain1 = robo.chain(j, k)
     chain2 = robo.chain(i, k)
     chain2.reverse()
@@ -268,7 +269,11 @@ def _dgm_one(robo, symo, i, j, fast_form=True,
                 symo.trig_replace(T, ang, name)
         if fast_form:
             T = T.expand()
+#        print T
         T = T.applyfunc(symo.CS12_simp)
+        if is_loop:
+            T = T.applyfunc(symo.C2S2_simp)
+#        print T
         x_next = complete_chain[indx + 1]
         if robo.paral(x, x_next):    # false if x_next is None
             continue

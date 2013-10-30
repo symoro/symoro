@@ -8,7 +8,8 @@ Needed modules : symoro.py, geometry.py
 ECN - ARIA1 2013
 """
 from sympy import Matrix, zeros
-from pysymoro.core.symoro import Symoro, Init, hat, ZERO
+from pysymoro.core.symoro import Symoro, Init, hat
+from pysymoro.core.symoro import FAIL, ZERO
 from pysymoro.core.geometry import dgm, Transform, compute_rot_trans
 
 TERMINAL = 0
@@ -144,8 +145,8 @@ def _kinematic_loop_constraints(robo, symo, proj=None):
     B = robo.NJ - robo.NL
     if B == 0:
         print 'There are no loops'
-        return
-    indx_c = range(robo.NL, robo.NJ + B)
+        return FAIL
+    indx_c = range(robo.NL, robo.NL + B)
     indx_a, indx_p = [], []
     for i in xrange(1, robo.NL):
         if robo.mu[i] == 1:
@@ -153,7 +154,8 @@ def _kinematic_loop_constraints(robo, symo, proj=None):
         else:
             indx_p.append(i)
     W_a, W_p, W_ac, W_pc, W_c = [], [], [], [], []
-    for indx, i, j in enumerate(robo.get_loop_terminals()):
+    for indx, (i, j) in enumerate(robo.loop_terminals):
+        # i - cut joint, j - fixed joint
         k = robo.common_root(i, j)
         chi = robo.chain(i, k)
         chj = robo.chain(j, k)
@@ -168,7 +170,7 @@ def _kinematic_loop_constraints(robo, symo, proj=None):
         for row in xrange(6):
             if all(J[row, col] == ZERO for col in xrange(len(chi))):
                 continue
-            elif J[row, chi.index(j)] == ZERO:
+            elif J[row, chi.index(i)] == ZERO:
                 extend_W(J, row, W_a, indx_a, chi)
                 extend_W(J, row, W_p, indx_p, chi)
             else:
@@ -177,6 +179,7 @@ def _kinematic_loop_constraints(robo, symo, proj=None):
                 extend_W(J, row, W_c, indx_c, chi)
     W_a, W_p = Matrix(W_a), Matrix(W_p)
     W_ac, W_pc, W_c = Matrix(W_ac), Matrix(W_pc), Matrix(W_c)
+    print W_a, W_p, W_ac, W_pc, W_c
     return W_a, W_p, W_ac, W_pc, W_c
 
 
@@ -208,6 +211,15 @@ def compute_speeds_accelerations(robo, symo, antRj=None, antPj=None):
     return w, wdot, vdot, U
 
 
+def speeds_accelerations(robo):
+    symo = Symoro(None)
+    symo.file_open(robo, 'acc')
+    symo.write_params_table(robo, 'Speeds and accelerations')
+    compute_speeds_accelerations(robo, symo)
+    symo.file_close()
+    return symo
+
+
 def jacobian(robo, n, i, j):
     symo = Symoro()
     symo.file_open(robo, 'jac')
@@ -232,8 +244,27 @@ def jacobian_determinant(robo, n, i, j, rows, cols):
     symo.file_close()
     return symo
 
+
+def kinematic_constraints(robo):
+    symo = Symoro(None)
+    res = _kinematic_loop_constraints(robo, symo)
+    if res == FAIL:
+        return FAIL
+    W_a, W_p, W_ac, W_pc, W_c = res
+    symo.file_open(robo, 'ckel')
+    symo.write_params_table(robo, 'Constraint kinematic equations of loop')
+    symo.mat_replace(W_a, 'WA', forced=True)
+    symo.mat_replace(W_p, 'WP', forced=True)
+    symo.mat_replace(W_ac, 'WPA', forced=True)
+    symo.mat_replace(W_pc, 'WPC', forced=True)
+    symo.mat_replace(W_c, 'WC', forced=True)
+    symo.file_close()
+    return symo
+
+
 #symo = Symoro()
 #from symoro import Symoro, Robot
+#kinematic_constraints(Robot.SR400())
 ##jacobian_determinant(robo, 6, range(6), range(6))
 ###print _jac(robo, symo, 2, 5, 5)
 ###print _jac_det(robo, symo, 5)
