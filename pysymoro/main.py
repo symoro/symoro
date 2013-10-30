@@ -384,6 +384,9 @@ class MainFrame(wx.Frame):
         determ = wx.MenuItem(kinMenu, wx.ID_ANY, "Determinant of a Jacobian...")
         self.Bind(wx.EVT_MENU, self.OnDeterminant, determ)
         kinMenu.AppendItem(determ)
+        ckel = wx.MenuItem(kinMenu, wx.ID_ANY, "Kinematic constraints")
+        self.Bind(wx.EVT_MENU, self.OnCkel, ckel)
+        kinMenu.AppendItem(ckel)
 
         menuBar.Append(kinMenu, "&Kinematic")
 
@@ -581,6 +584,10 @@ class MainFrame(wx.Frame):
             kinematics.jacobian_determinant(self.robo, *dialog.GetValues())
             self.model_success('det')
         dialog.Destroy()
+
+    def OnCkel(self, _):
+        kinematics.kinematic_constraints(self.robo)
+        self.model_success('ckel')
 
     def OnInverseDynamic(self, _):
         dynamics.inverse_dynamic_NE(self.robo)

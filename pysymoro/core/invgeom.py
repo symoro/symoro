@@ -28,12 +28,20 @@ def _paul_solve(robo, symo, nTm, n, m, known=set()):
     chain = robo.loop_chain(m, n)
     iTn = dgm(robo, symo, m, n, key='left', trig_subs=False)
     iTm = dgm(robo, symo, n, m, key='left', trig_subs=False)
-    th_all = set(robo.theta[i] for i in chain if i >= 0 and robo.sigma[i] == 0)
-    r_all = set(robo.r[i] for i in chain if i >= 0 and robo.sigma[i] == 1)
-    known |= set(robo.gamma[i] for i in chain
-                 if isinstance(robo.gamma[i], Expr))
-    known |= set(robo.alpha[i] for i in chain
-                 if isinstance(robo.alpha[i], Expr))
+#    mTi = dgm(robo, symo, m, n, key='right', trig_subs=False)
+#    nTi = dgm(robo, symo, n, m, key='right', trig_subs=False)
+    th_all = set()
+    r_all = set()
+    for i in chain:
+        if i >= 0:
+            if robo.sigma[i] == 0:
+                th_all.add(robo.theta[i])
+            if robo.sigma[i] == 1:
+                r_all.add(robo.r[i])
+        if isinstance(robo.gamma[i], Expr):
+            known |= robo.gamma[i].atoms(Symbol)
+        if isinstance(robo.alpha[i], Expr):
+            known |= robo.alpha[i].atoms(Symbol)
     while True:
         repeat = False
         for i in reversed(chain):
@@ -45,6 +53,16 @@ def _paul_solve(robo, symo, nTm, n, m, known=set()):
                     break
             if th_all | r_all <= known:
                 break
+#        if th_all | r_all <= known:
+#            break
+#        for i in reversed(chain):
+#            while True:
+#                found = _look_for_eq(symo, M_eq, known, th_all, r_all)
+#                repeat |= found
+#                if not found or th_all | r_all <= known:
+#                    break
+#            if th_all | r_all <= known:
+#                break
         if not repeat or th_all | r_all <= known:
             break
     return known
@@ -80,7 +98,7 @@ def _look_for_eq(symo, M_eq, known, th_all, r_all):
 
 
 def loop_solve(robo, symo, knowns=None):
-    #TODO: rewrite
+    #TODO: rewrite; Add parallelogram detection
     q_vec = q_vec = [robo.get_q(i) for i in xrange(robo.NF)]
     loops = []
     if knowns is None:
@@ -113,6 +131,7 @@ def igm_Paul(robo, T_ref, n):
     return symo
 
 
+#TODO: think about smarter way of matching
 def _try_solve_0(symo, eq_sys, known):
     res = False
     for eq, [r], th_names in eq_sys:
@@ -246,8 +265,6 @@ def _try_solve_3(symo, eq_sys, known):
         if not all_ok:
             continue
         symo.write_line("# Solving type 6, 7")
-        print 'HERE THE ERROR'
-        print eps
         _solve_type_7(symo, V1, W1, -X1, -Y1, -Z1, -Z2, eps, th1, th2)
         known |= {th1, th2}
         return True
@@ -443,6 +460,13 @@ def _solve_square(symo, A, B, C, x):
     YPS = var('YPS' + x)
     symo.add_to_dict(YPS, (ONE, - ONE))
     symo.add_to_dict(x, (-B + YPS*sqrt(Delta))/(2*A))
+
+
+def _is_parallelogram(robo, i, j):
+    k = robo.common_root(i, j)
+    chi = robo.chain(i,k)
+    chj = robo.chain(j,k)
+
 
 def _check_const(consts, *xs):
     is_ok = True

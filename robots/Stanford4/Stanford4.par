@@ -1,0 +1,57 @@
+(* Robotname = 'Stanford4' *)
+NL = 4
+NJ = 4
+NF = 4
+Type = 0
+is_mobile = 0
+
+(* Geometric parameters *)
+ant = {0,1,2,3}
+sigma = {0,0,1,0}
+b = {0,0,0,0}
+d = {0,0,0,0}
+r = {0,RL2,r3,0}
+gamma = {0,0,0,0}
+alpha = {0,-pi/2,pi/2,0}
+mu = {0,0,0,0}
+theta = {th1,th2,0,th4}
+
+(* Dynamic parameters and external forces *)
+XX = {XX1,XX2,XX3,XX4}
+XY = {XY1,XY2,XY3,XY4}
+XZ = {XZ1,XZ2,XZ3,XZ4}
+YY = {YY1,YY2,YY3,YY4}
+YZ = {YZ1,YZ2,YZ3,YZ4}
+ZZ = {ZZ1,ZZ2,ZZ3,ZZ4}
+MX = {MX1,MX2,MX3,MX4}
+MY = {MY1,MY2,MY3,MY4}
+MZ = {MZ1,MZ2,MZ3,MZ4}
+M = {M1,M2,M3,M4}
+IA = {IA1,IA2,IA3,IA4}
+FV = {FV1,FV2,FV3,FV4}
+FS = {FS1,FS2,FS3,FS4}
+FX = {0,0,0,FX4}
+FY = {0,0,0,FY4}
+FZ = {0,0,0,FZ4}
+CX = {0,0,0,CX4}
+CY = {0,0,0,CY4}
+CZ = {0,0,0,CZ4}
+
+(* Joint parameters *)
+QP = {QP1,QP2,QP3,QP4}
+QDP = {QDP1,QDP2,QDP3,QDP4}
+GAM = {GAM1,GAM2,GAM3,GAM4}
+
+(* Speed and acceleration of the base *)
+W0 = {0,0,0}
+WP0 = {0,0,0}
+V0 = {0,0,0}
+VP0 = {0,0,0}
+
+(* Acceleration of gravity *)
+G = {0,0,G3}
+
+(* Transformation of 0 frame position fT0 *)
+Z = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1}
+
+(* End of definition *)
