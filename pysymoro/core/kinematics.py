@@ -8,7 +8,8 @@ Needed modules : symoro.py, geometry.py
 ECN - ARIA1 2013
 """
 from sympy import Matrix, zeros
-from pysymoro.core.symoro import Symoro, Init, hat, ZERO
+from pysymoro.core.symoro import Symoro, Init, hat
+from pysymoro.core.symoro import FAIL, ZERO
 from pysymoro.core.geometry import dgm, Transform, compute_rot_trans
 
 TERMINAL = 0
