@@ -9,10 +9,12 @@ ECN - ARIA1 2013
 """
 import sympy
 from sympy import Matrix
-from symoro import Symoro, Init, hat, ZERO
 from copy import copy, deepcopy
-from geometry import compute_screw_transform, compute_rot_trans, Transform
-from kinematics import compute_speeds_accelerations, compute_omega
+from pysymoro.core.symoro import Symoro, Init, hat, ZERO
+from pysymoro.core.geometry import compute_screw_transform
+from pysymoro.core.geometry import compute_rot_trans, Transform
+from pysymoro.core.kinematics import compute_speeds_accelerations
+from pysymoro.core.kinematics import compute_omega
 
 chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 inert_names = ('XXR', 'XYR', 'XZR', 'YYR', 'YZR',

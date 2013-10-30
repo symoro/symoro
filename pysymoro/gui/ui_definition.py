@@ -1,7 +1,7 @@
 __author__ = 'Izzat'
 import wx
 import wx.lib.scrolledpanel as scrolled
-from Core.symoro import SIMPLE, TREE, CLOSED_LOOP
+from pysymoro.core.symoro import SIMPLE, TREE, CLOSED_LOOP
 from sympy import Expr, Symbol
 #TODO: PROG_NAME
 
@@ -166,3 +166,4 @@ class DialogDefinition(wx.Dialog):
         return {'init_pars' : (name, NL, NJ, 2*NJ - NL, self.check_is_mobile.Value, self.cmb_structure.Value),
                 'keep_geo' : self.check_keep_geo.Value, 'keep_dyn' : self.check_keep_dyn.Value,
                 'keep_base' : self.check_keep_base.Value}
+

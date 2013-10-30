@@ -38,7 +38,7 @@ class Robot:
         # member variables:
         self.name = name
         """  name of the robot: string"""
-        self.directory = 'Robots\\%s' % name
+        self.directory = os.path.join('robots', name)
         """ directory name"""
         self.is_mobile = is_mobile
         """ whethere the base frame is floating: bool"""

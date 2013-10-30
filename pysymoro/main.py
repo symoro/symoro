@@ -1,10 +1,10 @@
 __author__ = 'Izzat'
 import wx
-from Core.symoro import Robot, FAIL
-from Core import geometry, kinematics, dynamics, invgeom
-from Graphics import graphics
-from UI import ui_definition, ui_geometry, ui_kinematics
-from Core.parfile import readpar, writepar
+from core.symoro import Robot, FAIL
+from core import geometry, kinematics, dynamics, invgeom
+from visualize import graphics
+from gui import ui_definition, ui_geometry, ui_kinematics
+from core.parfile import readpar, writepar
 import os
 
 PROG_NAME = 'SYMORO-Python'
@@ -475,7 +475,7 @@ class MainFrame(wx.Frame):
                 new_robo.vdot0 = self.robo.vdot0
                 new_robo.G = self.robo.G
             self.robo = new_robo
-            directory = 'Robots\\' + self.robo.name + '\\'
+            directory = os.path.join('robots', self.robo.name)
             if not os.path.exists(directory):
                 os.makedirs(directory)
             self.robo.directory = directory
@@ -639,3 +639,4 @@ app = wx.App(redirect=False)
 main = MainFrame()
 main.Show()
 app.MainLoop()
+
