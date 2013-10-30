@@ -472,7 +472,7 @@ class MainFrame(wx.Frame):
                 new_robo.vdot0 = self.robo.vdot0
                 new_robo.G = self.robo.G
             self.robo = new_robo
-            directory = 'Robots\\' + self.robo.name + '\\'
+            directory = os.path.join('robots', self.robo.name)
             if not os.path.exists(directory):
                 os.makedirs(directory)
             self.robo.directory = directory
