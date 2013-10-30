@@ -1,10 +1,10 @@
 __author__ = 'Izzat'
 import wx
-from Core.symoro import Robot, FAIL
-from Core import geometry, kinematics, dynamics, invgeom
-from Graphics import graphics
-from UI import ui_definition, ui_geometry, ui_kinematics
-from Core.parfile import readpar, writepar
+from core.symoro import Robot, FAIL
+from core import geometry, kinematics, dynamics, invgeom
+from visualize import graphics
+from gui import ui_definition, ui_geometry, ui_kinematics
+from core.parfile import readpar, writepar
 import os
 
 PROG_NAME = 'SYMORO-Python'
@@ -632,3 +632,4 @@ app = wx.App(redirect=False)
 main = MainFrame()
 main.Show()
 app.MainLoop()
+

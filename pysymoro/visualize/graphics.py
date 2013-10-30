@@ -7,9 +7,9 @@ from objects import Frame, RevoluteJoint, FixedJoint, PrismaticJoint
 from wx.glcanvas import GLCanvas
 from numpy import sin, cos, radians, pi, inf, nan
 from math import atan2
-from Core.symoro import Symoro, CLOSED_LOOP
-from Core.invgeom import loop_solve
-from Core.geometry import dgm
+from core.symoro import Symoro, CLOSED_LOOP
+from core.invgeom import loop_solve
+from core.geometry import dgm
 from sympy import Expr
 
 #TODO: Fullscreen camera rotation bug
