@@ -8,9 +8,9 @@ Needed modules : symoro.py, geometry.py
 ECN - ARIA1 2013
 """
 from sympy import Matrix, zeros
-from pysymoro.core.symoro import Symoro, Init, hat
-from pysymoro.core.symoro import FAIL, ZERO
-from pysymoro.core.geometry import dgm, Transform, compute_rot_trans
+from symoro import Symoro, Init, hat
+from symoro import FAIL, ZERO
+from geometry import dgm, Transform, compute_rot_trans
 
 TERMINAL = 0
 ROOT = 1
@@ -68,6 +68,7 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
     Computes jacobian of frame n (with origin On in Oj) projected to frame i
     """
 #    symo.write_geom_param(robo, 'Jacobian')
+    # TODO: Check projection frames, rewrite DGM call for higher efficiency
     M = []
     if chain is None:
         chain = reversed(robo.chain(n))
@@ -142,29 +143,23 @@ def extend_W(J, r, W, indx, chain):
 
 
 def _kinematic_loop_constraints(robo, symo, proj=None):
-    B = robo.NJ - robo.NL
-    if B == 0:
-        print 'There are no loops'
+    if robo.NJ == robo.NL:
         return FAIL
-    indx_c = range(robo.NL, robo.NL + B)
-    indx_a, indx_p = [], []
-    for i in xrange(1, robo.NL):
-        if robo.mu[i] == 1:
-            indx_a.append(i)
-        else:
-            indx_p.append(i)
+    indx_c = robo.indx_cut
+    indx_a = robo.indx_active
+    indx_p = robo.indx_passive
     W_a, W_p, W_ac, W_pc, W_c = [], [], [], [], []
     for indx, (i, j) in enumerate(robo.loop_terminals):
         # i - cut joint, j - fixed joint
         k = robo.common_root(i, j)
         chi = robo.chain(i, k)
         chj = robo.chain(j, k)
-        if proj is not None and len(proj) == B and proj[indx] == TERMINAL:
+        if proj is not None and len(proj) > indx and proj[indx] == TERMINAL:
             Ji, L = _jac(robo, symo, i, i, i, chi)
             Jj, L = _jac(robo, symo, j, j, j, chj)
         else:
-            Ji, L = _jac(robo, symo, k, i, i, chi)
-            Jj, L = _jac(robo, symo, k, j, j, chj)
+            Ji, L = _jac(robo, symo, i, k, i, chi)
+            Jj, L = _jac(robo, symo, j, k, j, chj)
         chi.extend(chj)
         J = Ji.row_join(-Jj)
         for row in xrange(6):
@@ -252,7 +247,17 @@ def kinematic_constraints(robo):
         return FAIL
     W_a, W_p, W_ac, W_pc, W_c = res
     symo.file_open(robo, 'ckel')
-    symo.write_params_table(robo, 'Constraint kinematic equations of loop')
+    symo.write_params_table(robo, 'Constraint kinematic equations of loop',
+                            equations=False)
+    symo.write_line('Active joint variables')
+    symo.write_line([robo.get_q(i) for i in robo.indx_active])
+    symo.write_line()
+    symo.write_line('Passive joints variables')
+    symo.write_line([robo.get_q(i) for i in robo.indx_passive])
+    symo.write_line()
+    symo.write_line('Cut joints variables')
+    symo.write_line([robo.get_q(i) for i in robo.indx_cut])
+    symo.write_line()
     symo.mat_replace(W_a, 'WA', forced=True)
     symo.mat_replace(W_p, 'WP', forced=True)
     symo.mat_replace(W_ac, 'WPA', forced=True)

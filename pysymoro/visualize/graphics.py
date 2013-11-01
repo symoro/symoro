@@ -7,10 +7,11 @@ from objects import Frame, RevoluteJoint, FixedJoint, PrismaticJoint
 from wx.glcanvas import GLCanvas
 from numpy import sin, cos, radians, pi, inf, nan
 from math import atan2
-from pysymoro.core.symoro import Symoro, CLOSED_LOOP
-from pysymoro.core.invgeom import loop_solve
-from pysymoro.core.geometry import dgm
 from sympy import Expr
+from core.symoro import Symoro, CLOSED_LOOP
+from core.invgeom import loop_solve
+from core.geometry import dgm
+
 
 #TODO: Fullscreen camera rotation bug
 #TODO: X-, Z-axis
@@ -153,8 +154,8 @@ class myGLCanvas(GLCanvas):
 
     def dgm_for_frame(self, i):
         if i not in self.dgms:
-            if i > 0 and self.jnt_objs[i].r == 0 and self.jnt_objs[i].d == 0 \
-                     and self.jnt_objs[i].b == 0:
+            jnt = self.jnt_objs[i]
+            if i > 0 and jnt.r == 0 and jnt.d == 0 and jnt.b == 0:
                 self.dgms[i] = self.dgm_for_frame(self.robo.ant[i])
             else:
                 symo = Symoro(sydi=self.pars_num)
@@ -406,8 +407,9 @@ class MainWindow(wx.Frame):
             p_index += 1
 
         if self.robo.structure == CLOSED_LOOP:
-            self.radioBox = wx.RadioBox(self.p, choices=
-                ['Break Loops', 'Make Loops'], style=wx.RA_SPECIFY_ROWS)
+            choise_list = ['Break Loops', 'Make Loops']
+            self.radioBox = wx.RadioBox(self.p, choices=choise_list,
+                                        style=wx.RA_SPECIFY_ROWS)
             self.radioBox.Bind(wx.EVT_RADIOBOX, self.OnSelectLoops)
             gridControl.Add(self.radioBox, pos=(5, 0), flag=wx.ALIGN_CENTER)
 
@@ -453,7 +455,10 @@ class MainWindow(wx.Frame):
     def ShowAllFrames(self, _):
         """Shows or hides all the frames (Toggle button event handler)
         """
-        indices = range(len(self.canvas.jnt_objs)) if self.tButton.Value else []
+        if self.tButton.Value:
+            indices = range(len(self.canvas.jnt_objs))
+        else:
+            indices = []
         self.canvas.show_frames(indices)
         self.check_list.SetChecked(indices)
 
@@ -471,7 +476,6 @@ class MainWindow(wx.Frame):
             self.canvas.OnDraw()
         else:
             self.solve_loops = False
-
 
     def ResetJoints(self, evt):
         for ctrl in self.spin_ctrls.values():
@@ -509,6 +513,7 @@ class MainWindow(wx.Frame):
         selections = evt.EventObject.GetSelections()
         if selections:
             self.canvas.centralize_to_frame(selections[0])
+
 
 if __name__ == '__main__':
     app = wx.PySimpleApp()

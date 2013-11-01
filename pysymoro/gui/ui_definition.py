@@ -1,7 +1,7 @@
 __author__ = 'Izzat'
 import wx
 import wx.lib.scrolledpanel as scrolled
-from pysymoro.core.symoro import SIMPLE, TREE, CLOSED_LOOP
+from core.symoro import SIMPLE, TREE, CLOSED_LOOP
 from sympy import Expr, Symbol
 #TODO: PROG_NAME
 

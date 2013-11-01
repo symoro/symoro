@@ -223,6 +223,24 @@ class Robot:
                 q.append(self.get_q(i))
         return q
 
+    @property
+    def indx_passive(self):
+        """Generates vector of passive joint indices
+        """
+        return [i for i in xrange(1, self.NL) if self.mu[i] == 0]
+
+    @property
+    def indx_active(self):
+        """Generates vector of active joint indices
+        """
+        return [i for i in xrange(1, self.NL) if self.mu[i] == 1]
+
+    @property
+    def indx_cut(self):
+        """Generates vector of cut joint indices
+        """
+        return range(self.NL, self.NJ)
+
     def fric_v(self, j):
         """Fluid friction torque
 
@@ -1194,7 +1212,7 @@ class Symoro:
             self.write_line(l2str(params))
         self.write_line()
 
-    #TDO: rewrite docstring
+    #TODO: rewrite docstring
     def write_params_table(self, robo, title='', geom=True, inert=False,
                            dynam=False, equations=True,
                            inert_name='Dynamic inertia parameters'):

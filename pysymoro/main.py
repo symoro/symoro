@@ -1,11 +1,12 @@
 __author__ = 'Izzat'
-import wx
-from pysymoro.core.symoro import Robot, FAIL
-from pysymoro.core import geometry, kinematics, dynamics, invgeom
-from pysymoro.visualize import graphics
-from pysymoro.gui import ui_definition, ui_geometry, ui_kinematics
-from pysymoro.core.parfile import readpar, writepar
 import os
+import wx
+from core.symoro import Robot, FAIL
+from core import geometry, kinematics, dynamics, invgeom
+from visualize import graphics
+from gui import ui_definition, ui_geometry, ui_kinematics
+from core.parfile import readpar, writepar
+
 
 PROG_NAME = 'SYMORO-Python'
 
@@ -384,6 +385,7 @@ class MainFrame(wx.Frame):
         determ = wx.MenuItem(kinMenu, wx.ID_ANY, "Determinant of a Jacobian...")
         self.Bind(wx.EVT_MENU, self.OnDeterminant, determ)
         kinMenu.AppendItem(determ)
+        #TODO: add the dialog, ask for projection frame
         ckel = wx.MenuItem(kinMenu, wx.ID_ANY, "Kinematic constraints")
         self.Bind(wx.EVT_MENU, self.OnCkel, ckel)
         kinMenu.AppendItem(ckel)
@@ -586,8 +588,10 @@ class MainFrame(wx.Frame):
         dialog.Destroy()
 
     def OnCkel(self, _):
-        kinematics.kinematic_constraints(self.robo)
-        self.model_success('ckel')
+        if kinematics.kinematic_constraints(self.robo) == FAIL:
+            self.MessageWarning('There are no loops')
+        else:
+            self.model_success('ckel')
 
     def OnInverseDynamic(self, _):
         dynamics.inverse_dynamic_NE(self.robo)

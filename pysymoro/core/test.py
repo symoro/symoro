@@ -5,17 +5,18 @@ import unittest
 from sympy import sympify, var, Matrix
 from sympy.abc import A, B, C, X, Y, Z
 from numpy import random, amax, matrix, eye, zeros
-from pysymoro.core import symoro
-from pysymoro.core import geometry
-from pysymoro.core import kinematics
-from pysymoro.core import invgeom
-from pysymoro.core.geometry import Transform as trns
-from pysymoro.core import dynamics
-from pysymoro.core import parfile
+import symoro
+import geometry
+import kinematics
+import invgeom
+from geometry import Transform as trns
+import dynamics
+import parfile
 
 
 class testMisc(unittest.TestCase):
     def test_readwrite(self):
+        print "######## test_readwrite ##########"
         original_robo = symoro.Robot.RX90()
         parfile.writepar(original_robo)
         d_name = original_robo.directory
@@ -31,6 +32,7 @@ class testMisc(unittest.TestCase):
                                  new_robo.get_val(i, Name))
 
     def test_robo_misc(self):
+        print "######## test_robo_misc ##########"
         self.robo = symoro.Robot.SR400()
         q = list(var('th1:10'))
         self.assertEqual(self.robo.q_vec, q)
@@ -65,6 +67,7 @@ class testSymoroTrig(unittest.TestCase):
         self.symo = symoro.Symoro()
 
     def test_GetMaxCoef(self):
+        print "######## test_GetMaxCoef ##########"
         expr1 = A*B*X + C**2 - X
         expr2 = Y*Z - B
         self.assertEqual(symoro.get_max_coef(expr1*X + expr2, X), expr1)
@@ -78,6 +81,7 @@ class testSymoroTrig(unittest.TestCase):
         self.assertEqual(res.expand(), symoro.ZERO)
 
     def test_name_extraction(self):
+        print "######## test_name_extraction ##########"
         expr1 = sympify("C2*S3*R + S2*C3*R")
         self.assertEqual(symoro.get_trig_couple_names(expr1), {'2', '3'})
         expr2 = sympify("CG2*S3*R + SG2*C1*R")
@@ -88,6 +92,7 @@ class testSymoroTrig(unittest.TestCase):
         self.assertEqual(symoro.get_trig_couple_names(expr3), set())
 
     def test_name_operations(self):
+        print "######## test_name_operations ##########"
         self.assertEqual(symoro.reduce_str('12', '13'), ('2', '3'))
         self.assertEqual(symoro.reduce_str('124', '123'), ('4', '3'))
         self.assertEqual(symoro.reduce_str('124', '134'), ('2', '3'))
@@ -96,6 +101,7 @@ class testSymoroTrig(unittest.TestCase):
         self.assertEqual(symoro.reduce_str('1G2G4', '13G4'), ('G2', '3'))
 
     def test_try_opt(self):
+        print "######## test_try_opt ##########"
         e1 = A*(B-C)*X**2 + B*X**3 + A*(B-C)*Y**2 + B*X*Y**2
         e2 = X**2
         e3 = Y**2
@@ -111,6 +117,7 @@ class testSymoroTrig(unittest.TestCase):
                          e7*A*(B-C) + e7*B*X)
 
     def test_trig_simp(self):
+        print "######## test_trig_simp ##########"
         e1 = sympify("S2**2 + C2**2")
         e1ans = sympify("1")
         self.assertEqual(self.symo.C2S2_simp(e1), e1ans)
@@ -134,8 +141,8 @@ class testSymoroTrig(unittest.TestCase):
                      C3*D8*S2m7 - C3m78*D3*S2 + D2*S3""")
         e2ans = sympify("D2*S3 - D3*S278m3 - D8*S23m7")
         self.assertEqual(self.symo.CS12_simp(e2), e2ans)
-        e2 = sympify("sin(g12 + th2)*sin(th3 + th8) - cos(g12 + th2)*cos(th3 + th8)")
-        e2ans = sympify("-cos(g12 + th2 + th3 + th8)")
+        e2 = sympify("sin(g+th2)*sin(th3+th8)-cos(g+th2)*cos(th3+th8)")
+        e2ans = sympify("-cos(g+th2+th3+th8)")
         self.assertEqual(self.symo.CS12_simp(e2), e2ans)
         e3 = sympify("""-a1*sin(th2+th1)*sin(th3)*cos(th1)-
                      a1*cos(th1)*cos(th2+th1)*cos(th3)""")
@@ -185,6 +192,7 @@ class testGeometry(unittest.TestCase):
 #        self.assertEqual(robo2.type_of_structure, symoro.CLOSED_LOOP)
 
     def test_dgm_RX90(self):
+        print "######## test_dgm_RX90 ##########"
         T = geometry.dgm(self.robo, self.symo, 0, 6,
                          fast_form=True, trig_subs=True)
         f06 = self.symo.gen_func('DGM_generated1', T, self.robo.q_vec)
@@ -213,6 +221,7 @@ class testGeometry(unittest.TestCase):
         self.assertEqual(T36, T_true36)
 
     def test_dgm_SR400(self):
+        print "######## test_dgm_SR400 ##########"
         self.robo = symoro.Robot.SR400()
         T = geometry.dgm(self.robo, self.symo, 0, 6,
                          fast_form=True, trig_subs=True)
@@ -229,6 +238,7 @@ class testGeometry(unittest.TestCase):
         self.assertLess(amax(matrix(f06(zeros(9))) - t06), 1e-12)
 
     def test_igm(self):
+        print "######## test_igm ##########"
         invgeom._paul_solve(self.robo, self.symo, invgeom.T_GENERAL, 0, 6)
         igm_f = self.symo.gen_func('IGM_gen', self.robo.q_vec,
                                    invgeom.T_GENERAL)
@@ -243,6 +253,7 @@ class testGeometry(unittest.TestCase):
                 self.assertLess(amax(matrix(f06(q))-Ttest), 1e-12)
 
     def test_loop(self):
+        print "######## test_loop ##########"
         self.robo = symoro.Robot.SR400()
         invgeom.loop_solve(self.robo, self.symo)
         l_solver = self.symo.gen_func('IGM_gen', self.robo.q_vec,
@@ -270,6 +281,7 @@ class testKinematics(unittest.TestCase):
         kinematics.kinematic_constraints(symoro.Robot.SR400())
 
     def test_jac(self):
+        print "######## test_jac ##########"
         kinematics.jacobian(self.robo, 6, 0, 0)
         for j in range(1, 1):
             #compute Jac
@@ -289,6 +301,7 @@ class testKinematics(unittest.TestCase):
                 self.assertLess(amax(dX[:3] - trns.P(T)), 1e-12)
 
     def test_jac2(self):
+        print "######## test_jac2 ##########"
         J, L = kinematics._jac(self.robo, self.symo, 6, 3, 3)
         jac63 = self.symo.gen_func('Jac1RX90', J, self.robo.q_vec)
         L63 = self.symo.gen_func('LRX90', L, self.robo.q_vec)
@@ -327,9 +340,9 @@ class testDynamics(unittest.TestCase):
         dynamics.base_paremeters(robo)
 
 if __name__ == '__main__':
-#    unittest.main()
+    unittest.main()
 #########################
-    suite = unittest.TestSuite()
-#    suite.addTest(testSymoroTrig('test_trig_simp'))
-    suite.addTest(testKinematics('test_speeds'))
-    unittest.TextTestRunner().run(suite)
+#    suite = unittest.TestSuite()
+##    suite.addTest(testSymoroTrig('test_trig_simp'))
+#    suite.addTest(testKinematics('test_speeds'))
+#    unittest.TextTestRunner().run(suite)
