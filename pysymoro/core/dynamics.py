@@ -7,9 +7,9 @@ Needed modules : symoro.py, geometry.py, kinematics.py
 
 ECN - ARIA1 2013
 """
+from copy import copy, deepcopy
 import sympy
 from sympy import Matrix
-from copy import copy, deepcopy
 from symoro import Symoro, Init, hat, ZERO
 from geometry import compute_screw_transform
 from geometry import compute_rot_trans, Transform

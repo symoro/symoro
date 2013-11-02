@@ -216,7 +216,7 @@ def _dgm_left(robo, symo, i, j, trig_subs=True, sep_const=False):
         T_out[t_name] = T * T_res
         if robo.paral(x, x_next):
             continue
-        T_res = T * T_res
+        T_res = T_out[t_name]
         T = eye(4)
     return T_out
 
@@ -231,7 +231,7 @@ def _dgm_right(robo, symo, i, j, trig_subs=True, sep_const=False):
     T_res = eye(4)
     T = eye(4)
     for indx, x in enumerate(complete_chain[:-1]):
-        inverted = indx >= len(chain1)
+        inverted = indx < len(chain1)
         T = T * _transform(robo, x, inverted)
         if trig_subs:
             for ang, name in robo.get_angles(x):
@@ -240,13 +240,13 @@ def _dgm_right(robo, symo, i, j, trig_subs=True, sep_const=False):
         T = T.applyfunc(symo.CS12_simp)
         x_next = complete_chain[indx + 1]
         if inverted:
-            t_name = (i, x)
-        else:
             t_name = (i, robo.ant[x])
+        else:
+            t_name = (i, x)
         T_out[t_name] = T_res * T
         if robo.paral(x, x_next):
             continue
-        T_res = T_res * T
+        T_res = T_out[t_name]
         T = eye(4)
     return T_out
 

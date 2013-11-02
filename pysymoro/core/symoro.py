@@ -205,7 +205,7 @@ class Robot:
 
     @property
     def q_passive(self):
-        """Generates vector of passive joint variables
+        """Generates vector of passive joint variables (including cut!)
         """
         q = list()
         for i in xrange(1, self.NJ):
@@ -215,7 +215,7 @@ class Robot:
 
     @property
     def q_active(self):
-        """Generates vector of active joint variables
+        """Generates vector of active joint variables (including cut!)
         """
         q = list()
         for i in xrange(1, self.NJ):
@@ -1464,6 +1464,6 @@ class Symoro:
         fun_body = self.gen_fbody(name, to_return, wr_syms, multival)
         fun_string = "".join(fun_head + fun_body)
         exec fun_string
-        print fun_string
+#        print fun_string
 #  TODO:       print is for debug pupuses, to be removed
         return eval('%s_func' % name)

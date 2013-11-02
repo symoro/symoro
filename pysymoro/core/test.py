@@ -282,10 +282,11 @@ class testKinematics(unittest.TestCase):
 
     def test_jac(self):
         print "######## test_jac ##########"
-        kinematics.jacobian(self.robo, 6, 0, 0)
-        for j in range(1, 1):
+        kinematics.jacobian(self.robo, 6, 3, 6)
+        for j in xrange(1, 7):
+            print "######## Jac validation through DGM ##########"
             #compute Jac
-            J, l = kinematics._jac(self.robo, self.symo, 0, j, j)
+            J, l = kinematics._jac(self.robo, self.symo, j, 0, j)
             jacj = self.symo.gen_func('JacRX90', J, self.robo.q_vec)
             #compute DGM
             T = geometry.dgm(self.robo, self.symo, 0, j,
@@ -296,8 +297,6 @@ class testKinematics(unittest.TestCase):
                 q = random.normal(size=6)
                 dX = matrix(jacj(q)) * matrix(dq[:j]).T
                 T = (matrix(T0j(q+dq)) - T0j(q))
-    #            print dX
-    #            print T
                 self.assertLess(amax(dX[:3] - trns.P(T)), 1e-12)
 
     def test_jac2(self):
@@ -342,7 +341,7 @@ class testDynamics(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 #########################
-#    suite = unittest.TestSuite()
+    suite = unittest.TestSuite()
 ##    suite.addTest(testSymoroTrig('test_trig_simp'))
-#    suite.addTest(testKinematics('test_speeds'))
+    suite.addTest(testKinematics('test_jac'))
 #    unittest.TextTestRunner().run(suite)

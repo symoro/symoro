@@ -7,6 +7,7 @@ Needed modules : symoro.py, geometry.py
 
 ECN - ARIA1 2013
 """
+from copy import deepcopy
 from sympy import Matrix, zeros
 from symoro import Symoro, Init, hat
 from symoro import FAIL, ZERO
@@ -71,10 +72,22 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
     # TODO: Check projection frames, rewrite DGM call for higher efficiency
     M = []
     if chain is None:
-        chain = reversed(robo.chain(n))
+        chain = robo.chain(n)
+        chain.reverse()
+#    chain_ext = chain + [robo.ant[min(chain)]]
+#    if not i in chain_ext:
+#        i = min(chain_ext)
+#    if not j in chain_ext:
+#        j = max(chain_ext)
+    kTj_dict = dgm(robo, symo, chain[0], j, key='left', trig_subs=trig_subs)
+    kTj_tmp = dgm(robo, symo, chain[-1], j, key='left', trig_subs=trig_subs)
+    kTj_dict.update(kTj_tmp)
+    iTk_dict = dgm(robo, symo, i, chain[0], key='right', trig_subs=trig_subs)
+    iTk_tmp = dgm(robo, symo, i, chain[-1], key='right', trig_subs=trig_subs)
+    iTk_dict.update(iTk_tmp)
     for k in chain:
-        kTj = dgm(robo, symo, k, j, fast_form=False, trig_subs=trig_subs)
-        iTk = dgm(robo, symo, i, k, fast_form=False, trig_subs=trig_subs)
+        kTj = kTj_dict[k, j]
+        iTk = iTk_dict[i, k]
         isk, ink, iak = Transform.sna(iTk)
         sigm = robo.sigma[k]
         if sigm == 1:
@@ -88,9 +101,8 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
         M.append(J_col.T)
     Jac = Matrix(M).T
     Jac = Jac.applyfunc(symo.simp)
-    iTj = dgm(robo, symo, i, j, fast_form=False, trig_subs=trig_subs)
+    iRj = Transform.R(iTk_dict[i, j])
     jTn = dgm(robo, symo, j, n, fast_form=False, trig_subs=trig_subs)
-    iRj = Transform.R(iTj)
     jPn = Transform.P(jTn)
     L = -hat(iRj*jPn)
     if forced:
@@ -174,7 +186,9 @@ def _kinematic_loop_constraints(robo, symo, proj=None):
                 extend_W(J, row, W_c, indx_c, chi)
     W_a, W_p = Matrix(W_a), Matrix(W_p)
     W_ac, W_pc, W_c = Matrix(W_ac), Matrix(W_pc), Matrix(W_c)
-    print W_a, W_p, W_ac, W_pc, W_c
+    print W_a
+    print W_p
+    print W_ac, W_pc, W_c
     return W_a, W_p, W_ac, W_pc, W_c
 
 
@@ -214,6 +228,15 @@ def speeds_accelerations(robo):
     symo.file_close()
     return symo
 
+def rotational_accelerations(robo):
+    symo = Symoro(None)
+    robo_no_qdd = deepcopy(robo)
+    robo_no_qdd.qddot = [ZERO for i in xrange(robo.NJ)]
+    symo.file_open(robo, 'jpqp')
+    symo.write_params_table(robo, 'Jpqp')
+    compute_speeds_accelerations(robo_no_qdd, symo)
+    symo.file_close()
+    return symo
 
 def jacobian(robo, n, i, j):
     symo = Symoro()
