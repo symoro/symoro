@@ -1,35 +1,31 @@
 __author__ = 'Izzat'
-import OpenGL.GL as gl
+import OpenGL.GL as gL
 from numpy import degrees, identity, array
 from primitives import Primitives
 
 
 class Frame(object):
-    def __init__(self, index=0, length=0.5, T=identity(4), show_frame=True):
+    def __init__(self, index=0, T=identity(4), show_frame=True):
         self.children = []
         self.T = T
         self.show_frame = show_frame
         self.index = index
-        self.length = length
-        self.arr_vertices, self.arr_indices, self.arr_normals = \
-            Primitives.arr_array(self.length)
-        # TODO: Change to variable
 
     def draw_frame(self):
         if self.show_frame:
-            gl.glPushMatrix()
-            gl.glColor3f(1, 0, 0)
+            gL.glPushMatrix()
+            gL.glColor3f(1, 0, 0)
             self.draw_arrow()
-            gl.glRotatef(90, 0, 1, 0)
-            gl.glColor3f(0, 1, 0)
+            gL.glRotatef(90, 0, 1, 0)
+            gL.glColor3f(0, 1, 0)
             self.draw_arrow()
-            gl.glPopMatrix()
+            gL.glPopMatrix()
 
     def draw_arrow(self):
-        gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.arr_vertices)
-        gl.glNormalPointer(gl.GL_FLOAT, 0, self.arr_normals)
-        gl.glDrawElements(gl.GL_TRIANGLES, len(self.arr_indices),
-                          gl.GL_UNSIGNED_INT, self.arr_indices)
+        gL.glVertexPointer(3, gL.GL_FLOAT, 0, self.arr_vertices)
+        gL.glNormalPointer(gL.GL_FLOAT, 0, self.arr_normals)
+        gL.glDrawElements(gL.GL_TRIANGLES, len(self.arr_indices),
+                          gL.GL_UNSIGNED_INT, self.arr_indices)
 
     def set_show_frame(self, show=True):
         self.show_frame = show
@@ -38,29 +34,32 @@ class Frame(object):
         self.children.append(child)
 
     def draw_frames(self):
-        gl.glPushMatrix()
-        gl.glMultMatrixf(self.T)
+        gL.glPushMatrix()
+        gL.glMultMatrixf(self.T)
         self.draw_frame()
         for child in self.children:
             child.draw_frames()
-        gl.glPopMatrix()
+        gL.glPopMatrix()
 
     def draw(self):
-        gl.glPushMatrix()
-        gl.glMultMatrixf(self.T)
+        gL.glPushMatrix()
+        gL.glMultMatrixf(self.T)
         for child in self.children:
             child.draw()
-        gl.glPopMatrix()
+        gL.glPopMatrix()
 
     def __str__(self):
         return '{0} Children: {1}'.format(self.index, self.children)
 
+    def set_length(self, new_length):
+        self.arr_vertices, self.arr_indices, self.arr_normals = \
+            Primitives.arr_array(new_length)
+
 
 class JointObject(Frame):
 
-    def __init__(self, index, length,
-                 theta=0., r=0., alpha=0., d=0., gamma=0., b=0.):
-        super(JointObject, self).__init__(index, length)
+    def __init__(self, index, theta=0., r=0., alpha=0., d=0., gamma=0., b=0.):
+        super(JointObject, self).__init__(index)
         self.theta = theta
         self.r = r
         self.alpha = alpha
@@ -68,81 +67,78 @@ class JointObject(Frame):
         self.gamma = gamma
         self.b = b
         self.shift = 0.
-        self.length = length
-        self.rod_vertices, self.rod_indices, self.rod_normals = \
-            Primitives.rod_array(self.length)
 
     def draw_rod(self, length):
-        gl.glPushMatrix()
-        gl.glMultMatrixf(array([[1., 0., 0., 0.], [0., 1., 0., 0.],
+        gL.glPushMatrix()
+        gL.glMultMatrixf(array([[1., 0., 0., 0.], [0., 1., 0., 0.],
                                 [0., 0., length, 0.], [0., 0., 0., 1.]]))
-        gl.glColor3f(0.8, 0.51, 0.25)
-        gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.rod_vertices)
-        gl.glNormalPointer(gl.GL_FLOAT, 0, self.rod_normals)
-        gl.glDrawElements(gl.GL_TRIANGLES, len(self.rod_indices),
-                          gl.GL_UNSIGNED_INT, self.rod_indices)
-        gl.glPopMatrix()
-
-    def set_shift(self, shift):
-        self.shift = shift
+        gL.glColor3f(0.8, 0.51, 0.25)
+        gL.glVertexPointer(3, gL.GL_FLOAT, 0, self.rod_vertices)
+        gL.glNormalPointer(gL.GL_FLOAT, 0, self.rod_normals)
+        gL.glDrawElements(gL.GL_TRIANGLES, len(self.rod_indices),
+                          gL.GL_UNSIGNED_INT, self.rod_indices)
+        gL.glPopMatrix()
 
     def draw_frames(self):
-        gl.glPushMatrix()
-        gl.glRotatef(degrees(self.gamma), 0, 0, 1)
-        gl.glTranslatef(0, 0, self.b)
-        gl.glRotatef(degrees(self.alpha), 1, 0, 0)
-        gl.glTranslatef(self.d, 0, 0)
-        gl.glRotatef(degrees(self.theta), 0, 0, 1)
-        gl.glTranslatef(0, 0, self.r)
+        gL.glPushMatrix()
+        gL.glRotatef(degrees(self.gamma), 0, 0, 1)
+        gL.glTranslatef(0, 0, self.b)
+        gL.glRotatef(degrees(self.alpha), 1, 0, 0)
+        gL.glTranslatef(self.d, 0, 0)
+        gL.glRotatef(degrees(self.theta), 0, 0, 1)
+        gL.glTranslatef(0, 0, self.r)
         self.draw_frame()
         for child in self.children:
             child.draw_frames()
-        gl.glPopMatrix()
+        gL.glPopMatrix()
 
     def draw(self):
-        gl.glPushMatrix()
+        gL.glPushMatrix()
         if self.b:
             self.draw_rod(self.b)
-            gl.glTranslatef(0, 0, self.b)
-        gl.glRotatef(degrees(self.gamma), 0, 0, 1)
+            gL.glTranslatef(0, 0, self.b)
+        gL.glRotatef(degrees(self.gamma), 0, 0, 1)
         if self.d:
-            gl.glPushMatrix()
-            gl.glRotatef(90, 0, 1, 0)
+            gL.glPushMatrix()
+            gL.glRotatef(90, 0, 1, 0)
             self.draw_rod(self.d)
-            gl.glPopMatrix()
-            gl.glTranslatef(self.d, 0, 0)
-        gl.glRotatef(degrees(self.alpha), 1, 0, 0)
+            gL.glPopMatrix()
+            gL.glTranslatef(self.d, 0, 0)
+        gL.glRotatef(degrees(self.alpha), 1, 0, 0)
         if self.r:
             self.draw_rod(self.r)
-            gl.glTranslatef(0, 0, self.r)
-        gl.glRotatef(degrees(self.theta), 0, 0, 1)
+            gL.glTranslatef(0, 0, self.r)
+        gL.glRotatef(degrees(self.theta), 0, 0, 1)
         if self.shift:
-            gl.glPushMatrix()
+            gL.glPushMatrix()
             self.draw_rod(self.shift)
-            gl.glTranslatef(0, 0, self.shift)
+            gL.glTranslatef(0, 0, self.shift)
             self.draw_joint()
-            gl.glPopMatrix()
+            gL.glPopMatrix()
         else:
             self.draw_joint()
         for child in self.children:
             child.draw()
-        gl.glPopMatrix()
+        gL.glPopMatrix()
+
+    def set_length(self, new_length):
+        self.rod_vertices, self.rod_indices, self.rod_normals = \
+            Primitives.rod_array(new_length)
+        super(JointObject, self).set_length(new_length)
 
 
 class RevoluteJoint(JointObject):
 
     def __init__(self, *args):
         super(RevoluteJoint, self).__init__(*args)
-        self.cyl_vertices, self.cyl_indices, self.cyl_normals = \
-            Primitives.cyl_array(self.length)
         self.q_init = self.theta
 
     def draw_joint(self):
-        gl.glColor3f(1., 1., 0.)
-        gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.cyl_vertices)
-        gl.glNormalPointer(gl.GL_FLOAT, 0, self.cyl_normals)
-        gl.glDrawElements(gl.GL_TRIANGLES, len(self.cyl_indices),
-                          gl.GL_UNSIGNED_INT, self.cyl_indices)
+        gL.glColor3f(1., 1., 0.)
+        gL.glVertexPointer(3, gL.GL_FLOAT, 0, self.cyl_vertices)
+        gL.glNormalPointer(gL.GL_FLOAT, 0, self.cyl_normals)
+        gL.glDrawElements(gL.GL_TRIANGLES, len(self.cyl_indices),
+                          gL.GL_UNSIGNED_INT, self.cyl_indices)
 
     @property
     def q(self):
@@ -152,19 +148,23 @@ class RevoluteJoint(JointObject):
     def q(self, theta):
         self.theta = theta
 
+    def set_length(self, new_length):
+        self.cyl_vertices, self.cyl_indices, self.cyl_normals = \
+            Primitives.cyl_array(new_length)
+        super(RevoluteJoint, self).set_length(new_length)
+
 
 class PrismaticJoint(JointObject):
 
     def __init__(self, *args):
         super(PrismaticJoint, self).__init__(*args)
-        self.box_vertices, self.box_normals = Primitives.box_array(self.length)
         self.q_init = self.r
 
     def draw_joint(self):
-        gl.glColor3f(1., 0.6, 0.)
-        gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.box_vertices)
-        gl.glNormalPointer(gl.GL_FLOAT, 0, self.box_normals)
-        gl.glDrawArrays(gl.GL_QUADS, 0, 24)
+        gL.glColor3f(1., 0.6, 0.)
+        gL.glVertexPointer(3, gL.GL_FLOAT, 0, self.box_vertices)
+        gL.glNormalPointer(gL.GL_FLOAT, 0, self.box_normals)
+        gL.glDrawArrays(gL.GL_QUADS, 0, 24)
 
     @property
     def q(self):
@@ -174,17 +174,24 @@ class PrismaticJoint(JointObject):
     def q(self, r):
         self.r = r
 
+    def set_length(self, new_length):
+        self.box_vertices, self.box_normals = Primitives.box_array(new_length)
+        super(PrismaticJoint, self).set_length(new_length)
+
 
 class FixedJoint(JointObject):
 
     def __init__(self, *args):
         super(FixedJoint, self).__init__(*args)
-        self.sph_vertices, self.sph_indices, self.sph_normals = \
-            Primitives.sph_array(self.length)
 
     def draw_joint(self):
-        gl.glColor3f(1., 0., 1.)
-        gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.sph_vertices)
-        gl.glNormalPointer(gl.GL_FLOAT, 0, self.sph_normals)
-        gl.glDrawElements(gl.GL_TRIANGLES, len(self.sph_indices),
-                          gl.GL_UNSIGNED_INT, self.sph_indices)
+        gL.glColor3f(1., 0., 1.)
+        gL.glVertexPointer(3, gL.GL_FLOAT, 0, self.sph_vertices)
+        gL.glNormalPointer(gL.GL_FLOAT, 0, self.sph_normals)
+        gL.glDrawElements(gL.GL_TRIANGLES, len(self.sph_indices),
+                          gL.GL_UNSIGNED_INT, self.sph_indices)
+
+    def set_length(self, new_length):
+        self.sph_vertices, self.sph_indices, self.sph_normals = \
+            Primitives.sph_array(new_length)
+        super(FixedJoint, self).set_length(new_length)
