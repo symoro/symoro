@@ -178,6 +178,35 @@ class PrismaticJoint(JointObject):
         self.box_vertices, self.box_normals = Primitives.box_array(new_length)
         super(PrismaticJoint, self).set_length(new_length)
 
+    def draw(self):
+        gL.glPushMatrix()
+        if self.b:
+            self.draw_rod(self.b)
+            gL.glTranslatef(0, 0, self.b)
+        gL.glRotatef(degrees(self.gamma), 0, 0, 1)
+        if self.d:
+            gL.glPushMatrix()
+            gL.glRotatef(90, 0, 1, 0)
+            self.draw_rod(self.d)
+            gL.glPopMatrix()
+            gL.glTranslatef(self.d, 0, 0)
+        gL.glRotatef(degrees(self.alpha), 1, 0, 0)
+        if self.shift:
+            gL.glPushMatrix()
+            self.draw_rod(self.shift)
+            gL.glTranslatef(0, 0, self.shift)
+            self.draw_joint()
+            gL.glPopMatrix()
+        else:
+            self.draw_joint()
+        if self.r:
+            self.draw_rod(self.r)
+            gL.glTranslatef(0, 0, self.r)
+        gL.glRotatef(degrees(self.theta), 0, 0, 1)
+        for child in self.children:
+            child.draw()
+        gL.glPopMatrix()
+
 
 class FixedJoint(JointObject):
 

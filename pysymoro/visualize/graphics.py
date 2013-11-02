@@ -278,7 +278,9 @@ class myGLCanvas(GLCanvas):
                     jnt.shift = 1.2*self.length
                 elif child is not None:
                     if child.alpha != 0:
-                        if jnt.r != 0 and child.d == 0:
+                        if self.robo.sigma[i] == 1 and child.d == 0:
+                            jnt.shift = 0.8*self.length
+                        elif jnt.r != 0 and child.d == 0:
                             jnt.shift = -0.5*jnt.r
                         elif i == 1:
                             # Always shift the first frame
@@ -286,12 +288,14 @@ class myGLCanvas(GLCanvas):
                     elif child.d == 0 and child.r == 0:
                         s_child = self.get_child_obj(child)
                         if not s_child or s_child.d != 0:
-                            jnt.shift = -1.3*self.length
+                            jnt.shift = 0.8*self.length
                         else:
                             # jnt.shift = -2*self.length
                             # shift = -0.7*self.length
-                            jnt.shift = -(4*jnt.r + self.length)/6.
-                            child.shift = -(2*jnt.r - self.length)/6.
+                            # jnt.shift = -(4*jnt.r + self.length)/6.
+                            # child.shift = -(2*jnt.r - self.length)/6.
+                            jnt.shift = 0.8*self.length
+                            child.shift = -0.8*self.length
 
         else:
             for obj in self.jnt_objs[1:]:
@@ -345,7 +349,7 @@ class myGLCanvas(GLCanvas):
 
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
-        glu.gluPerspective(40.0, 1., 0.5, 200.0)
+        glu.gluPerspective(40.0, 1., 0.2, 200.0)
 
         gl.glMatrixMode(gl.GL_MODELVIEW)
         self.CameraTransformation()
