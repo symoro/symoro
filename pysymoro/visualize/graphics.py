@@ -67,6 +67,8 @@ class myGLCanvas(GLCanvas):
         self.length = 0.4*minv
         print self.length
         for jnt in self.jnt_objs:
+            if isinstance(jnt, PrismaticJoint):
+                jnt.r = 3*self.length
             jnt.set_length(self.length)
 
     def add_items_to_frame(self, frame, index, jnt_hier):
@@ -82,10 +84,7 @@ class myGLCanvas(GLCanvas):
                         params.append(float(val))
                 except:
                     if val in self.q_sym:
-                        if self.robo.sigma[child_i] == 0:
-                            params.append(0.)
-                        else:
-                            params.append(1.2)
+                        params.append(0.)
 
             if self.robo.sigma[child_i] == 0:
                 child_frame = RevoluteJoint(*params)
@@ -309,6 +308,11 @@ class myGLCanvas(GLCanvas):
             self.jnt_objs[index].set_show_frame(True)
         self.OnDraw()
 
+    def change_lengths(self, new_length):
+        for jnt in self.jnt_objs:
+            jnt.set_length(new_length)
+        self.OnDraw()
+
     def OnDraw(self):
         if not self.init:
             return
@@ -441,7 +445,17 @@ class MainWindow(wx.Frame):
 
         q_box = wx.StaticBoxSizer(wx.StaticBox(self.p, label='Joint variables'))
         q_box.Add(gridJnts, 0, wx.ALL, 10)
-        top_sizer.Add(q_box, 0, wx.ALL, 10)
+
+        ver_sizer = wx.BoxSizer(wx.VERTICAL)
+        ver_sizer.Add(q_box)
+        lbl_length = wx.StaticText(self.p, label='Joint length')
+        self.jnt_slider = wx.Slider(self.p, minValue=0, maxValue=100)
+        self.jnt_slider.SetValue(100*self.canvas.length)
+        self.jnt_slider.Bind(wx.EVT_SCROLL, self.OnSliderChanged)
+        ver_sizer.Add(lbl_length, 0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, 15)
+        ver_sizer.Add(self.jnt_slider, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 5)
+
+        top_sizer.Add(ver_sizer, 0, wx.ALL, 10)
         top_sizer.AddSpacer(10)
         top_sizer.Add(gridControl, 0, wx.ALL, 10)
 
@@ -528,6 +542,9 @@ class MainWindow(wx.Frame):
         selections = evt.EventObject.GetSelections()
         if selections:
             self.canvas.centralize_to_frame(selections[0])
+
+    def OnSliderChanged(self, _):
+        self.canvas.change_lengths(self.jnt_slider.Value/100.)
 
 
 if __name__ == '__main__':
