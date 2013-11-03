@@ -389,9 +389,15 @@ class MainFrame(wx.Frame):
         ckel = wx.MenuItem(kin_mnu, wx.ID_ANY, "Kinematic constraints")
         self.Bind(wx.EVT_MENU, self.OnCkel, ckel)
         kin_mnu.AppendItem(ckel)
-        rot_acc = wx.MenuItem(kin_mnu, wx.ID_ANY, "Jpqp")
-        self.Bind(wx.EVT_MENU, self.OnRotAccel, rot_acc)
-        kin_mnu.AppendItem(rot_acc)
+        vels = wx.MenuItem(kin_mnu, wx.ID_ANY, "Velocities")
+        self.Bind(wx.EVT_MENU, self.OnVelocities, vels)
+        kin_mnu.AppendItem(vels)
+        accel = wx.MenuItem(kin_mnu, wx.ID_ANY, "Accelerations")
+        self.Bind(wx.EVT_MENU, self.OnAccelerations, accel)
+        kin_mnu.AppendItem(accel)
+        jpqp = wx.MenuItem(kin_mnu, wx.ID_ANY, "Jpqp")
+        self.Bind(wx.EVT_MENU, self.OnJpqp, jpqp)
+        kin_mnu.AppendItem(jpqp)
 
         mnu_bar.Append(kin_mnu, "&Kinematic")
 
@@ -596,8 +602,16 @@ class MainFrame(wx.Frame):
         else:
             self.model_success('ckel')
 
-    def OnRotAccel(self, _):
-        kinematics.rotational_accelerations(self.robo)
+    def OnVelocities(self, _):
+        kinematics.velocities(self.robo)
+        self.model_success('vlct')
+
+    def OnAccelerations(self, _):
+        kinematics.accelerations(self.robo)
+        self.model_success('aclr')
+
+    def OnJpqp(self, _):
+        kinematics.jdot_qdot(self.robo)
         self.model_success('jpqp')
 
     def OnInverseDynamic(self, _):

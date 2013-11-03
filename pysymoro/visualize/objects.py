@@ -67,6 +67,7 @@ class JointObject(Frame):
         self.gamma = gamma
         self.b = b
         self.shift = 0.
+        self.init_length = 0.
 
     def draw_rod(self, length):
         gL.glPushMatrix()
@@ -111,8 +112,9 @@ class JointObject(Frame):
         gL.glRotatef(degrees(self.theta), 0, 0, 1)
         if self.shift:
             gL.glPushMatrix()
-            self.draw_rod(self.shift)
-            gL.glTranslatef(0, 0, self.shift)
+            shift = self.shift*self.length
+            self.draw_rod(shift)
+            gL.glTranslatef(0, 0, shift)
             self.draw_joint()
             gL.glPopMatrix()
         else:
@@ -122,8 +124,11 @@ class JointObject(Frame):
         gL.glPopMatrix()
 
     def set_length(self, new_length):
-        self.rod_vertices, self.rod_indices, self.rod_normals = \
-            Primitives.rod_array(new_length)
+        if not self.init_length:
+            self.rod_vertices, self.rod_indices, self.rod_normals = \
+                Primitives.rod_array(new_length)
+            self.init_length = new_length
+        self.length = new_length
         super(JointObject, self).set_length(new_length)
 
 
@@ -193,8 +198,9 @@ class PrismaticJoint(JointObject):
         gL.glRotatef(degrees(self.alpha), 1, 0, 0)
         if self.shift:
             gL.glPushMatrix()
-            self.draw_rod(self.shift)
-            gL.glTranslatef(0, 0, self.shift)
+            shift = self.shift*self.length
+            self.draw_rod(shift)
+            gL.glTranslatef(0, 0, shift)
             self.draw_joint()
             gL.glPopMatrix()
         else:

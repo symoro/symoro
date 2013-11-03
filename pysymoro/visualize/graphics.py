@@ -68,7 +68,7 @@ class myGLCanvas(GLCanvas):
         print self.length
         for jnt in self.jnt_objs:
             if isinstance(jnt, PrismaticJoint):
-                jnt.r = 3*self.length
+                jnt.r = 3.5*self.length
             jnt.set_length(self.length)
 
     def add_items_to_frame(self, frame, index, jnt_hier):
@@ -274,27 +274,24 @@ class myGLCanvas(GLCanvas):
                 child = self.get_child_obj(jnt)
                 if child is None and jnt.r == 0:
                     # The last frame (like Rx-90 6-th frame)
-                    jnt.shift = 1.2*self.length
+                    jnt.shift = 1
                 elif child is not None:
                     if child.alpha != 0:
                         if self.robo.sigma[i] == 1 and child.d == 0:
-                            jnt.shift = 0.8*self.length
-                        elif jnt.r != 0 and child.d == 0:
-                            jnt.shift = -0.5*jnt.r
-                        elif i == 1:
-                            # Always shift the first frame
-                            jnt.shift = -1.2*self.length
+                            jnt.shift = 1
+                        elif jnt.r != 0 and child.d == 0 or i == 1:
+                            jnt.shift = -1
                     elif child.d == 0 and child.r == 0:
                         s_child = self.get_child_obj(child)
                         if not s_child or s_child.d != 0:
-                            jnt.shift = 0.8*self.length
+                            jnt.shift = 1
                         else:
                             # jnt.shift = -2*self.length
                             # shift = -0.7*self.length
                             # jnt.shift = -(4*jnt.r + self.length)/6.
                             # child.shift = -(2*jnt.r - self.length)/6.
-                            jnt.shift = 0.8*self.length
-                            child.shift = -0.8*self.length
+                            jnt.shift = 1
+                            child.shift = -1
 
         else:
             for obj in self.jnt_objs[1:]:
@@ -311,6 +308,7 @@ class myGLCanvas(GLCanvas):
     def change_lengths(self, new_length):
         for jnt in self.jnt_objs:
             jnt.set_length(new_length)
+        self.length = new_length
         self.OnDraw()
 
     def OnDraw(self):
@@ -448,8 +446,8 @@ class MainWindow(wx.Frame):
 
         ver_sizer = wx.BoxSizer(wx.VERTICAL)
         ver_sizer.Add(q_box)
-        lbl_length = wx.StaticText(self.p, label='Joint length')
-        self.jnt_slider = wx.Slider(self.p, minValue=0, maxValue=100)
+        lbl_length = wx.StaticText(self.p, label='Joint size')
+        self.jnt_slider = wx.Slider(self.p, minValue=1, maxValue=100)
         self.jnt_slider.SetValue(100*self.canvas.length)
         self.jnt_slider.Bind(wx.EVT_SCROLL, self.OnSliderChanged)
         ver_sizer.Add(lbl_length, 0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, 15)
