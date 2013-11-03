@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """
 This module of SYMORO package provides description
 of the robot parametrizaion container and symbol replacer class.

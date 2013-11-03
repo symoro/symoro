@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """
 This module of SYMORO package provides symbolic
 modeling of robots' dynamics.

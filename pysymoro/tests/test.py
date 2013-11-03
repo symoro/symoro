@@ -1,6 +1,10 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """
 Unit tests for SYMORO modules
 """
+
 import unittest
 
 from sympy import sympify, var, Matrix
