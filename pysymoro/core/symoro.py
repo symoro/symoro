@@ -211,7 +211,7 @@ class Robot:
 
     @property
     def q_passive(self):
-        """Generates vector of passive joint variables
+        """Generates vector of passive joint variables (including cut!)
         """
         q = list()
         for i in xrange(1, self.NJ):
@@ -221,13 +221,31 @@ class Robot:
 
     @property
     def q_active(self):
-        """Generates vector of active joint variables
+        """Generates vector of active joint variables (including cut!)
         """
         q = list()
         for i in xrange(1, self.NJ):
             if self.mu[i] == 1:
                 q.append(self.get_q(i))
         return q
+
+    @property
+    def indx_passive(self):
+        """Generates vector of passive joint indices
+        """
+        return [i for i in xrange(1, self.NL) if self.mu[i] == 0]
+
+    @property
+    def indx_active(self):
+        """Generates vector of active joint indices
+        """
+        return [i for i in xrange(1, self.NL) if self.mu[i] == 1]
+
+    @property
+    def indx_cut(self):
+        """Generates vector of cut joint indices
+        """
+        return range(self.NL, self.NJ)
 
     def fric_v(self, j):
         """Fluid friction torque
@@ -668,18 +686,28 @@ class Init:
     def init_w(cls, robo):
         """Generates a list of vectors for angular velocities.
         Size of the list is number of links + 1.
-        The last vector is the base angular velocity
+        The zero vector is the base angular velocity
         """
         w = cls.init_vec(robo)
-        w.append(robo.w0)
+        w[0] = robo.w0
         return w
 
     @classmethod
-    def init_wv_dot(cls, robo):
+    def init_v(cls, robo):
+        """Generates a list of vectors for linear velocities.
+        Size of the list is number of links + 1.
+        The zero vector is the base angular velocity
+        """
+        v = cls.init_vec(robo)
+        v[0] = robo.v0
+        return v
+
+    @classmethod
+    def init_wv_dot(cls, robo, gravity=True):
         """Generates lists of vectors for
         angular and linear accelerations.
         Size of the list is number of links + 1.
-        The last vector is the base angular velocity
+        The zero vector is the base angular velocity
 
         Returns
         =======
@@ -687,9 +715,11 @@ class Init:
         wdot: list of Matrices 3x1
         """
         wdot = cls.init_vec(robo)
-        wdot.append(robo.wdot0)
+        wdot[0] = robo.wdot0
         vdot = cls.init_vec(robo)
-        vdot.append(robo.vdot0 - robo.G)
+        vdot[0] = robo.vdot0
+        if gravity:
+            vdot[0] -= robo.G
         return wdot, vdot
 
     @classmethod
@@ -1107,7 +1137,10 @@ class Symoro:
                     return i * self.revdi[i * old_sym]
         new_sym = var(str(name) + str(index))
         self.add_to_dict(new_sym, old_sym)
-        return new_sym
+        if is_simple:
+            return old_sym
+        else:
+            return new_sym
 
     def mat_replace(self, M, name, index='',
                     forced=False, skip=0, symmet=False):
@@ -1200,7 +1233,7 @@ class Symoro:
             self.write_line(l2str(params))
         self.write_line()
 
-    #TDO: rewrite docstring
+    #TODO: rewrite docstring
     def write_params_table(self, robo, title='', geom=True, inert=False,
                            dynam=False, equations=True,
                            inert_name='Dynamic inertia parameters'):
@@ -1452,6 +1485,6 @@ class Symoro:
         fun_body = self.gen_fbody(name, to_return, wr_syms, multival)
         fun_string = "".join(fun_head + fun_body)
         exec fun_string
-        print fun_string
+#        print fun_string
 #  TODO:       print is for debug pupuses, to be removed
         return eval('%s_func' % name)

@@ -28,40 +28,30 @@ TERMINAL = 0
 ROOT = 1
 
 
-def compute_omega(robo, symo, j, antRj, w, wi):
-    """Internal function. Computes angular velocity of jth frame and
-    projection of the antecedent frame's angular velocity
-
-    Notes
-    =====
-    w, wi, U, vdot are the output parameters
-    """
-    jRant = antRj[j].T
-    qdj = Matrix([0, 0, robo.qdot[j]])
-    wi[j], w[j] = omega_ij(robo, symo, j, jRant, w, qdj)
+def _omega_ij(robo, j, jRant, w, qdj):
+    wi = jRant*w[robo.ant[j]]
+    w[j] = wi
+    if robo.sigma[j] == 0:    # revolute joint
+        w[j] += qdj
+    return wi, w[j]
 
 
-def omega_ij(robo, symo, j, jRant, w, qdj, forced=False):
-    wi = symo.mat_replace(jRant*w[robo.ant[j]], 'WI', j)
-    wj = symo.mat_replace(wi + (1 - robo.sigma[j])*qdj, 'W', j, forced)
-    return wi, wj
+def _omega_dot_j(robo, j, jRant, w, wi, wdot, qdj, qddj):
+    wdot[j] = jRant*wdot[robo.ant[j]]
+    if robo.sigma[j] == 0:    # revolute joint
+        wdot[j] += (qddj + hat(wi)*qdj)
+    return wdot[j]
 
 
-def compute_twist(robo, symo, j, antRj, antPj, w, wdot, U, vdot, forced=False):
-    """Internal function. Computes angular velocity, auxiliary U matrix and
-    linear and angular accelerations.
+def _v_j(robo, j, antPj, jRant, v, w, qdj, forced=False):
+    ant = robo.ant[j]
+    v[j] = jRant*(hat(w[ant])*antPj[j] + v[ant])
+    if robo.sigma[j] == 1:     # prismatic joint
+        v[j] += qdj
+    return v[j]
 
-    Notes
-    =====
-    w, wdot, U, vdot are the output parameters
-    """
-    jRant = antRj[j].T
-    qdj = Matrix([0, 0, robo.qdot[j]])
-    qddj = Matrix([0, 0, robo.qddot[j]])
-    wi, w[j] = omega_ij(robo, symo, j, jRant, w, qdj, forced)
-    self_rotation = (1 - robo.sigma[j])*(qddj + hat(wi)*qdj)
-    wdot[j] = jRant*wdot[robo.ant[j]] + self_rotation
-    symo.mat_replace(wdot[j], 'WP', j, forced)
+
+def _v_dot_j(robo, symo, j, jRant, antPj, w, wi, wdot, U, vdot, qdj, qddj):
     DV = Init.product_combinations(w[j])
     symo.mat_replace(DV, 'DV', j)
     hatw_hatw = Matrix([[-DV[3]-DV[5], DV[1], DV[2]],
@@ -71,8 +61,25 @@ def compute_twist(robo, symo, j, antRj, antPj, w, wdot, U, vdot, forced=False):
     symo.mat_replace(U[j], 'U', j)
     vsp = vdot[robo.ant[j]] + U[robo.ant[j]]*antPj[j]
     symo.mat_replace(vsp, 'VSP', j)
-    vdot[j] = jRant*vsp + robo.sigma[j]*(qddj + 2*hat(wi)*qdj)
-    symo.mat_replace(vdot[j], 'VP', j, forced)
+    vdot[j] = jRant*vsp
+    if robo.sigma[j] == 1:    # prismatic joint
+        vdot[j] += qddj + 2*hat(wi)*qdj
+    return vdot[j]
+
+
+def compute_omega(robo, symo, j, antRj, w, wi):
+    """Internal function. Computes angular velocity of jth frame and
+    projection of the antecedent frame's angular velocity
+
+    Notes
+    =====
+    w, wi are the output parameters
+    """
+    jRant = antRj[j].T
+    qdj = Z_AXIS * robo.qdot[j]
+    wi[j], w[j] = _omega_ij(robo, j, jRant, w, qdj)
+    symo.mat_replace(wi[j], 'WI', j)
+    symo.mat_replace(w[j], 'W', j)
 
 
 def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
@@ -80,12 +87,25 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
     Computes jacobian of frame n (with origin On in Oj) projected to frame i
     """
 #    symo.write_geom_param(robo, 'Jacobian')
+    # TODO: Check projection frames, rewrite DGM call for higher efficiency
     M = []
     if chain is None:
-        chain = reversed(robo.chain(n))
+        chain = robo.chain(n)
+        chain.reverse()
+#    chain_ext = chain + [robo.ant[min(chain)]]
+#    if not i in chain_ext:
+#        i = min(chain_ext)
+#    if not j in chain_ext:
+#        j = max(chain_ext)
+    kTj_dict = dgm(robo, symo, chain[0], j, key='left', trig_subs=trig_subs)
+    kTj_tmp = dgm(robo, symo, chain[-1], j, key='left', trig_subs=trig_subs)
+    kTj_dict.update(kTj_tmp)
+    iTk_dict = dgm(robo, symo, i, chain[0], key='right', trig_subs=trig_subs)
+    iTk_tmp = dgm(robo, symo, i, chain[-1], key='right', trig_subs=trig_subs)
+    iTk_dict.update(iTk_tmp)
     for k in chain:
-        kTj = dgm(robo, symo, k, j, fast_form=False, trig_subs=trig_subs)
-        iTk = dgm(robo, symo, i, k, fast_form=False, trig_subs=trig_subs)
+        kTj = kTj_dict[k, j]
+        iTk = iTk_dict[i, k]
         isk, ink, iak = Transform.sna(iTk)
         sigm = robo.sigma[k]
         if sigm == 1:
@@ -99,13 +119,11 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
         M.append(J_col.T)
     Jac = Matrix(M).T
     Jac = Jac.applyfunc(symo.simp)
-    iTj = dgm(robo, symo, i, j, fast_form=False, trig_subs=trig_subs)
+    iRj = Transform.R(iTk_dict[i, j])
     jTn = dgm(robo, symo, j, n, fast_form=False, trig_subs=trig_subs)
-    iRj = Transform.R(iTj)
     jPn = Transform.P(jTn)
     L = -hat(iRj*jPn)
     if forced:
-#        symo.write
         symo.mat_replace(Jac, 'J', '', forced)
         L = symo.mat_replace(L, 'L', '', forced)
     return Jac, L
@@ -154,29 +172,23 @@ def extend_W(J, r, W, indx, chain):
 
 
 def _kinematic_loop_constraints(robo, symo, proj=None):
-    B = robo.NJ - robo.NL
-    if B == 0:
-        print 'There are no loops'
+    if robo.NJ == robo.NL:
         return FAIL
-    indx_c = range(robo.NL, robo.NL + B)
-    indx_a, indx_p = [], []
-    for i in xrange(1, robo.NL):
-        if robo.mu[i] == 1:
-            indx_a.append(i)
-        else:
-            indx_p.append(i)
+    indx_c = robo.indx_cut
+    indx_a = robo.indx_active
+    indx_p = robo.indx_passive
     W_a, W_p, W_ac, W_pc, W_c = [], [], [], [], []
     for indx, (i, j) in enumerate(robo.loop_terminals):
         # i - cut joint, j - fixed joint
         k = robo.common_root(i, j)
         chi = robo.chain(i, k)
         chj = robo.chain(j, k)
-        if proj is not None and len(proj) == B and proj[indx] == TERMINAL:
+        if proj is not None and len(proj) > indx and proj[indx] == TERMINAL:
             Ji, L = _jac(robo, symo, i, i, i, chi)
             Jj, L = _jac(robo, symo, j, j, j, chj)
         else:
-            Ji, L = _jac(robo, symo, k, i, i, chi)
-            Jj, L = _jac(robo, symo, k, j, j, chj)
+            Ji, L = _jac(robo, symo, i, k, i, chi)
+            Jj, L = _jac(robo, symo, j, k, j, chj)
         chi.extend(chj)
         J = Ji.row_join(-Jj)
         for row in xrange(6):
@@ -191,11 +203,14 @@ def _kinematic_loop_constraints(robo, symo, proj=None):
                 extend_W(J, row, W_c, indx_c, chi)
     W_a, W_p = Matrix(W_a), Matrix(W_p)
     W_ac, W_pc, W_c = Matrix(W_ac), Matrix(W_pc), Matrix(W_c)
-    print W_a, W_p, W_ac, W_pc, W_c
+    # print is for debug purpose
+#    print W_a
+#    print W_p
+#    print W_ac, W_pc, W_c
     return W_a, W_p, W_ac, W_pc, W_c
 
 
-def compute_speeds_accelerations(robo, symo, antRj=None, antPj=None):
+def compute_vel_acc(robo, symo, antRj, antPj, forced=False, gravity=True):
     """Internal function. Computes speeds and accelerations usitn
 
     Parameters
@@ -205,29 +220,73 @@ def compute_speeds_accelerations(robo, symo, antRj=None, antPj=None):
     symo : Symoro
         Instance of symbolic manager
     """
-
     #init velocities and accelerations
     w = Init.init_w(robo)
-    wdot, vdot = Init.init_wv_dot(robo)
-    #init transformation
-    if antRj is None or antPj is None:
-        antRj, antPj = compute_rot_trans(robo, symo)
-        forced = True
-    else:
-        forced = False
+    wdot, vdot = Init.init_wv_dot(robo, gravity)
     #init auxilary matrix
     U = Init.init_U(robo)
-
     for j in xrange(1, robo.NL):
-        compute_twist(robo, symo, j, antRj, antPj, w, wdot, U, vdot, forced)
+        jRant = antRj[j].T
+        qdj = Z_AXIS * robo.qdot[j]
+        qddj = Z_AXIS * robo.qddot[j]
+        wi, w[j] = _omega_ij(robo, j, jRant, w, qdj)
+        symo.mat_replace(w[j], 'W', j)
+        symo.mat_replace(wi, 'WI', j)
+        _omega_dot_j(robo, j, jRant, w, wi, wdot, qdj, qddj)
+        symo.mat_replace(wdot[j], 'WP', j, forced)
+        _v_dot_j(robo, symo, j, jRant, antPj, w, wi, wdot, U, vdot, qdj, qddj)
+        symo.mat_replace(vdot[j], 'VP', j, forced)
     return w, wdot, vdot, U
 
 
-def speeds_accelerations(robo):
+def velocities(robo):
+    symo = Symoro(None)
+    symo.file_open(robo, 'vel')
+    symo.write_params_table(robo, 'Link velocities')
+    antRj, antPj = compute_rot_trans(robo, symo)
+    w = Init.init_w(robo)
+    v = Init.init_v(robo)
+    for j in xrange(1, robo.NL):
+        jRant = antRj[j].T
+        qdj = Z_AXIS * robo.qdot[j]
+        _omega_ij(robo, j, jRant, w, qdj)
+        symo.mat_replace(w[j], 'W', j, forced=True)
+        _v_j(robo, j, antPj, jRant, v, w, qdj)
+        symo.mat_replace(v[j], 'V', j, forced=True)
+    symo.file_close()
+    return symo
+
+
+def accelerations(robo):
     symo = Symoro(None)
     symo.file_open(robo, 'acc')
-    symo.write_params_table(robo, 'Speeds and accelerations')
-    compute_speeds_accelerations(robo, symo)
+    symo.write_params_table(robo, 'Link accelerations')
+    antRj, antPj = compute_rot_trans(robo, symo)
+    compute_vel_acc(robo, symo, antRj, antPj, forced=True, gravity=False)
+    symo.file_close()
+    return symo
+
+
+#very simial to comute_vel_acc
+def jdot_qdot(robo):
+    symo = Symoro(None)
+    symo.file_open(robo, 'jpqp')
+    symo.write_params_table(robo, 'JdotQdot')
+    antRj, antPj = compute_rot_trans(robo, symo)
+    w = Init.init_w(robo)
+    wdot, vdot = Init.init_wv_dot(robo, gravity=False)
+    U = Init.init_U(robo)
+    for j in xrange(1, robo.NL):
+        jRant = antRj[j].T
+        qdj = Z_AXIS * robo.qdot[j]
+        qddj = Z_AXIS * ZERO
+        wi, w[j] = _omega_ij(robo, j, jRant, w, qdj)
+        symo.mat_replace(w[j], 'W', j)
+        symo.mat_replace(wi, 'WI', j)
+        _omega_dot_j(robo, j, jRant, w, wi, wdot, qdj, qddj)
+        symo.mat_replace(wdot[j], 'WPJ', j, forced=True)
+        _v_dot_j(robo, symo, j, jRant, antPj, w, wi, wdot, U, vdot, qdj, qddj)
+        symo.mat_replace(vdot[j], 'VPJ', j, forced=True)
     symo.file_close()
     return symo
 
@@ -264,7 +323,17 @@ def kinematic_constraints(robo):
         return FAIL
     W_a, W_p, W_ac, W_pc, W_c = res
     symo.file_open(robo, 'ckel')
-    symo.write_params_table(robo, 'Constraint kinematic equations of loop')
+    symo.write_params_table(robo, 'Constraint kinematic equations of loop',
+                            equations=False)
+    symo.write_line('Active joint variables')
+    symo.write_line([robo.get_q(i) for i in robo.indx_active])
+    symo.write_line()
+    symo.write_line('Passive joints variables')
+    symo.write_line([robo.get_q(i) for i in robo.indx_passive])
+    symo.write_line()
+    symo.write_line('Cut joints variables')
+    symo.write_line([robo.get_q(i) for i in robo.indx_cut])
+    symo.write_line()
     symo.mat_replace(W_a, 'WA', forced=True)
     symo.mat_replace(W_p, 'WP', forced=True)
     symo.mat_replace(W_ac, 'WPA', forced=True)

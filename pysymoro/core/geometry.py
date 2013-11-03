@@ -195,7 +195,7 @@ def compute_screw_transform(robo, symo, j, antRj, antPj, jTant):
                         zeros(3, 3).row_join(jRant)]))
 
 
-def trans_name(robo, i, j, pattern='T{0}T{1}'):
+def _trans_name(robo, i, j, pattern='T{0}T{1}'):
     return 'T%sT%s' % (i, j)
 
 
@@ -224,7 +224,7 @@ def _dgm_left(robo, symo, i, j, trig_subs=True, sep_const=False):
         T_out[t_name] = T * T_res
         if robo.paral(x, x_next):
             continue
-        T_res = T * T_res
+        T_res = T_out[t_name]
         T = eye(4)
     return T_out
 
@@ -239,7 +239,7 @@ def _dgm_right(robo, symo, i, j, trig_subs=True, sep_const=False):
     T_res = eye(4)
     T = eye(4)
     for indx, x in enumerate(complete_chain[:-1]):
-        inverted = indx >= len(chain1)
+        inverted = indx < len(chain1)
         T = T * _transform(robo, x, inverted)
         if trig_subs:
             for ang, name in robo.get_angles(x):
@@ -248,13 +248,13 @@ def _dgm_right(robo, symo, i, j, trig_subs=True, sep_const=False):
         T = T.applyfunc(symo.CS12_simp)
         x_next = complete_chain[indx + 1]
         if inverted:
-            t_name = (i, x)
-        else:
             t_name = (i, robo.ant[x])
+        else:
+            t_name = (i, x)
         T_out[t_name] = T_res * T
         if robo.paral(x, x_next):
             continue
-        T_res = T_res * T
+        T_res = T_out[t_name]
         T = eye(4)
     return T_out
 
@@ -275,13 +275,9 @@ def _dgm_one(robo, symo, i, j, fast_form=True,
         if trig_subs:
             for ang, name in robo.get_angles(x):
                 symo.trig_replace(T, ang, name)
-        if fast_form:
-            T = T.expand()
-#        print T
         T = T.applyfunc(symo.CS12_simp)
         if is_loop:
             T = T.applyfunc(symo.C2S2_simp)
-#        print T
         x_next = complete_chain[indx + 1]
         if robo.paral(x, x_next):    # false if x_next is None
             continue
@@ -296,10 +292,10 @@ def _dgm_one(robo, symo, i, j, fast_form=True,
 
 def _dgm_rename(robo, symo, T_res, x, i, j, inverted, forced):
     if inverted:
-        name = trans_name(robo, x, j)
+        name = _trans_name(robo, x, j)
         forced_now = x == i
     else:
-        name = trans_name(robo, robo.ant[x], j)
+        name = _trans_name(robo, robo.ant[x], j)
         forced_now = robo.ant[x] == i
     symo.mat_replace(T_res, name, forced=forced and forced_now, skip=1)
 

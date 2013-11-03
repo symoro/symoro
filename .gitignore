@@ -204,6 +204,7 @@ old/
 validation/
 symoro math/
 Test RX90/
+pysymoro/core/robots
 .installed.cfg
 
 # Installer logs

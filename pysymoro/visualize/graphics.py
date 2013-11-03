@@ -9,6 +9,9 @@ import OpenGL.GL as gl
 import OpenGL.GLU as glu
 import wx
 import wx.lib.agw.floatspin as FS
+import OpenGL.GL as gl
+import OpenGL.GLU as glu
+from objects import Frame, RevoluteJoint, FixedJoint, PrismaticJoint
 from wx.glcanvas import GLCanvas
 from numpy import sin, cos, radians, pi, inf, nan
 from sympy import Expr
@@ -47,13 +50,11 @@ class myGLCanvas(GLCanvas):
         self.q_pas_sym = self.robo.q_passive
         self.q_act_sym = self.robo.q_active
         self.pars_num = params
-        self.length = 0.5
         self.init = 0
         self.distance = 5.
         self.fov = 40.
         self.jnt_objs = []
         self.construct_hierarchy()
-        self.assign_mono_scale()
         self.dgms = {}
         self.l_solver = None
 
@@ -76,15 +77,17 @@ class myGLCanvas(GLCanvas):
                 minv = dist
         if minv == inf:
             minv = 1.
-        self.length = minv/2.
+        self.length = 0.4*minv
         print self.length
         for jnt in self.jnt_objs:
-            jnt.length = self.length
+            if isinstance(jnt, PrismaticJoint):
+                jnt.r = 3.5*self.length
+            jnt.set_length(self.length)
 
     def add_items_to_frame(self, frame, index, jnt_hier):
         children = jnt_hier[index]
         for child_i in children:
-            params = [child_i, self.length]
+            params = [child_i]
             for par in ['theta', 'r', 'alpha', 'd', 'gamma', 'b']:
                 val = self.robo.get_val(child_i, par)
                 try:
@@ -115,7 +118,7 @@ class myGLCanvas(GLCanvas):
 
     def construct_hierarchy(self):
         jnt_hier = self.get_joints_dictionary()
-        self.base = Frame(0, self.length)
+        self.base = Frame(0)
         self.jnt_objs.append(self.base)
         self.add_items_to_frame(self.base, 0, jnt_hier)
         self.jnt_objs.sort(key=lambda jnt_obj: jnt_obj.index)
@@ -124,6 +127,7 @@ class myGLCanvas(GLCanvas):
             sym = self.robo.get_q(i)
             if sym != 0:
                 self.jnt_dict[sym] = jnt
+        self.assign_mono_scale()
         self.representation(expanded=True)
 
     def OnSize(self, event):
@@ -164,8 +168,8 @@ class myGLCanvas(GLCanvas):
 
     def dgm_for_frame(self, i):
         if i not in self.dgms:
-            if i > 0 and self.jnt_objs[i].r == 0 and self.jnt_objs[i].d == 0 \
-                     and self.jnt_objs[i].b == 0:
+            jnt = self.jnt_objs[i]
+            if i > 0 and jnt.r == 0 and jnt.d == 0 and jnt.b == 0:
                 self.dgms[i] = self.dgm_for_frame(self.robo.ant[i])
             else:
                 symo = Symoro(sydi=self.pars_num)
@@ -257,7 +261,11 @@ class myGLCanvas(GLCanvas):
     #         jnt = jnt.antc
     #     return 1
 
-    def get_child_obj(self, jnt_obj):
+    @staticmethod
+    def get_child_obj(jnt_obj):
+        """ Returns a child frame which has the common perpendicular with
+            the current frame.
+        """
         for child in jnt_obj.children:
             if child.b == 0:
                 return child
@@ -266,35 +274,41 @@ class myGLCanvas(GLCanvas):
         return
 
     def representation(self, expanded=True):
+        """ This method is used to shift joints that have the same origin
+            in a way that is close to the scientific representation.
+            Only joints (not frames) are shifted.
+        """
         if expanded:
-            shift = 0.
             for jnt in self.jnt_objs[1:]:
                 i = jnt.index
                 if i > self.robo.nl or self.robo.sigma[i] == 2:
+                    # if cut or fixed don't shift
                     continue
-                if shift:
-                    jnt.set_shift(shift)
-                    shift = 0.
                 child = self.get_child_obj(jnt)
                 if child is None and jnt.r == 0:
-                    jnt.set_shift(self.length*0.8)
+                    # The last frame (like Rx-90 6-th frame)
+                    jnt.shift = 1
                 elif child is not None:
-                    if child.alpha != 0:  # TODO check condition
-                        if jnt.r != 0 and child.d == 0:
-                            jnt.set_shift(-jnt.r/2.)
-                        elif i == 1:
-                            jnt.set_shift(-self.length*0.8)
-                    elif child.alpha == 0 and child.d == 0 and child.r == 0:
+                    if child.alpha != 0:
+                        if self.robo.sigma[i] == 1 and child.d == 0:
+                            jnt.shift = 1
+                        elif jnt.r != 0 and child.d == 0 or i == 1:
+                            jnt.shift = -1
+                    elif child.d == 0 and child.r == 0:
                         s_child = self.get_child_obj(child)
                         if not s_child or s_child.d != 0:
-                            jnt.set_shift(-self.length*1.3)
+                            jnt.shift = 1
                         else:
-                            jnt.set_shift(-self.length*2)
-                            shift = -0.7*self.length
+                            # jnt.shift = -2*self.length
+                            # shift = -0.7*self.length
+                            # jnt.shift = -(4*jnt.r + self.length)/6.
+                            # child.shift = -(2*jnt.r - self.length)/6.
+                            jnt.shift = 1
+                            child.shift = -1
 
         else:
             for obj in self.jnt_objs[1:]:
-                obj.set_shift(0.)
+                obj.shift = 0.
         self.OnDraw()
 
     def show_frames(self, lst):
@@ -302,6 +316,12 @@ class myGLCanvas(GLCanvas):
             jnt.set_show_frame(False)
         for index in lst:
             self.jnt_objs[index].set_show_frame(True)
+        self.OnDraw()
+
+    def change_lengths(self, new_length):
+        for jnt in self.jnt_objs:
+            jnt.set_length(new_length)
+        self.length = new_length
         self.OnDraw()
 
     def OnDraw(self):
@@ -344,7 +364,7 @@ class myGLCanvas(GLCanvas):
 
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
-        glu.gluPerspective(40.0, 1., 0.5, 200.0)
+        glu.gluPerspective(40.0, 1., 0.2, 200.0)
 
         gl.glMatrixMode(gl.GL_MODELVIEW)
         self.CameraTransformation()
@@ -362,7 +382,7 @@ class MainWindow(wx.Frame):
         self.solve_loops = False
         self.canvas = myGLCanvas(self, robo, self.params_dict, size=(600, 600))
         self.p = wx.Panel(self)
-        self.InitUI()
+        self.init_ui()
         self.update_spin_controls()
 
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -372,25 +392,25 @@ class MainWindow(wx.Frame):
 
         self.Show()
 
-    def InitUI(self):
+    def init_ui(self):
         top_sizer = wx.BoxSizer(wx.HORIZONTAL)
         gridControl = wx.GridBagSizer(hgap=10, vgap=10)
         cb = wx.CheckBox(self.p, label="Exploded View")
         cb.SetValue(True)
         gridControl.Add(cb, pos=(0, 0), flag=wx.ALIGN_CENTER_VERTICAL)
-        cb.Bind(wx.EVT_CHECKBOX, self.ChangeRepresentation)
+        cb.Bind(wx.EVT_CHECKBOX, self.OnChangeRepresentation)
 
         self.tButton = wx.ToggleButton(self.p, label="All Frames")
         self.tButton.SetValue(True)
-        self.tButton.Bind(wx.EVT_TOGGLEBUTTON, self.ShowAllFrames)
+        self.tButton.Bind(wx.EVT_TOGGLEBUTTON, self.OnShowAllFrames)
         gridControl.Add(self.tButton, pos=(1, 0), flag=wx.ALIGN_CENTER)
 
         btnReset = wx.Button(self.p, label="Reset All")
-        btnReset.Bind(wx.EVT_BUTTON, self.ResetJoints)
+        btnReset.Bind(wx.EVT_BUTTON, self.OnResetJoints)
         gridControl.Add(btnReset, pos=(3, 0), flag=wx.ALIGN_CENTER)
 
         btnRandom = wx.Button(self.p, label="Random")
-        btnRandom.Bind(wx.EVT_BUTTON, self.FindRandom)
+        btnRandom.Bind(wx.EVT_BUTTON, self.OnFindRandom)
         gridControl.Add(btnRandom, pos=(4, 0), flag=wx.ALIGN_CENTER)
 
         self.spin_ctrls = {}
@@ -408,7 +428,7 @@ class MainWindow(wx.Frame):
                          pos=(p_index, 0), flag=wx.ALIGN_CENTER_VERTICAL)
             s = FS.FloatSpin(self.p, size=(70, -1), id=jnt.index,
                              increment=0.05, min_val=-10., max_val=10.)
-            s.Bind(FS.EVT_FLOATSPIN, self.SetJointVar)
+            s.Bind(FS.EVT_FLOATSPIN, self.OnSetJointVar)
             s.SetDigits(2)
 #            if sym in self.canvas.q_pas_sym:
 #                s.Enable(False)
@@ -417,8 +437,9 @@ class MainWindow(wx.Frame):
             p_index += 1
 
         if self.robo.structure == CLOSED_LOOP:
-            self.radioBox = wx.RadioBox(self.p, choices=
-                ['Break Loops', 'Make Loops'], style=wx.RA_SPECIFY_ROWS)
+            choise_list = ['Break Loops', 'Make Loops']
+            self.radioBox = wx.RadioBox(self.p, choices=choise_list,
+                                        style=wx.RA_SPECIFY_ROWS)
             self.radioBox.Bind(wx.EVT_RADIOBOX, self.OnSelectLoops)
             gridControl.Add(self.radioBox, pos=(5, 0), flag=wx.ALIGN_CENTER)
 
@@ -435,7 +456,17 @@ class MainWindow(wx.Frame):
 
         q_box = wx.StaticBoxSizer(wx.StaticBox(self.p, label='Joint variables'))
         q_box.Add(gridJnts, 0, wx.ALL, 10)
-        top_sizer.Add(q_box, 0, wx.ALL, 10)
+
+        ver_sizer = wx.BoxSizer(wx.VERTICAL)
+        ver_sizer.Add(q_box)
+        lbl_length = wx.StaticText(self.p, label='Joint size')
+        self.jnt_slider = wx.Slider(self.p, minValue=1, maxValue=100)
+        self.jnt_slider.SetValue(100*self.canvas.length)
+        self.jnt_slider.Bind(wx.EVT_SCROLL, self.OnSliderChanged)
+        ver_sizer.Add(lbl_length, 0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, 15)
+        ver_sizer.Add(self.jnt_slider, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 5)
+
+        top_sizer.Add(ver_sizer, 0, wx.ALL, 10)
         top_sizer.AddSpacer(10)
         top_sizer.Add(gridControl, 0, wx.ALL, 10)
 
@@ -454,17 +485,20 @@ class MainWindow(wx.Frame):
 
         self.p.SetSizerAndFit(top_sizer)
 
-    def ChangeRepresentation(self, evt):
+    def OnChangeRepresentation(self, evt):
         self.canvas.representation(evt.EventObject.GetValue())
 
-    def ShowWorldFrame(self, evt):
+    def OnShowWorldFrame(self, evt):
         self.canvas.base.set_show_frame(evt.EventObject.GetValue())
         self.canvas.OnDraw()
 
-    def ShowAllFrames(self, _):
+    def OnShowAllFrames(self, _):
         """Shows or hides all the frames (Toggle button event handler)
         """
-        indices = range(len(self.canvas.jnt_objs)) if self.tButton.Value else []
+        if self.tButton.Value:
+            indices = range(len(self.canvas.jnt_objs))
+        else:
+            indices = []
         self.canvas.show_frames(indices)
         self.check_list.SetChecked(indices)
 
@@ -483,8 +517,7 @@ class MainWindow(wx.Frame):
         else:
             self.solve_loops = False
 
-
-    def ResetJoints(self, evt):
+    def OnResetJoints(self, _):
         for ctrl in self.spin_ctrls.values():
             jnt_obj = self.canvas.jnt_objs[ctrl.Id]
             jnt_obj.q = jnt_obj.q_init
@@ -493,10 +526,10 @@ class MainWindow(wx.Frame):
         self.update_spin_controls()
         self.canvas.OnDraw()
 
-    def FindRandom(self, evt):
+    def OnFindRandom(self, evt):
         pass
 
-    def SetJointVar(self, evt):
+    def OnSetJointVar(self, evt):
         """Sets joint values from the spin-controls
         """
         jnt_index = evt.GetId()
@@ -520,6 +553,10 @@ class MainWindow(wx.Frame):
         selections = evt.EventObject.GetSelections()
         if selections:
             self.canvas.centralize_to_frame(selections[0])
+
+    def OnSliderChanged(self, _):
+        self.canvas.change_lengths(self.jnt_slider.Value/100.)
+
 
 if __name__ == '__main__':
     app = wx.PySimpleApp()

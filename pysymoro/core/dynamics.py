@@ -52,7 +52,7 @@ def Newton_Euler(robo, symo):
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
     # init velocities and accelerations
-    w, wdot, vdot, U = compute_speeds_accelerations(robo, symo, antRj, antPj)
+    w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
     # init forces vectors
     F = Init.init_vec(robo)
     N = Init.init_vec(robo)
@@ -93,7 +93,7 @@ def dynamic_identification_NE(robo):
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
     # init velocities and accelerations
-    w, wdot, vdot, U = compute_speeds_accelerations(robo, symo, antRj, antPj)
+    w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
     # virtual robot with only one non-zero parameter at once
     robo_tmp = deepcopy(robo)
     robo_tmp.IA = sympy.zeros(robo.NL, 1)
