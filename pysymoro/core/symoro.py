@@ -680,18 +680,28 @@ class Init:
     def init_w(cls, robo):
         """Generates a list of vectors for angular velocities.
         Size of the list is number of links + 1.
-        The last vector is the base angular velocity
+        The zero vector is the base angular velocity
         """
         w = cls.init_vec(robo)
-        w.append(robo.w0)
+        w[0] = robo.w0
         return w
 
     @classmethod
-    def init_wv_dot(cls, robo):
+    def init_v(cls, robo):
+        """Generates a list of vectors for linear velocities.
+        Size of the list is number of links + 1.
+        The zero vector is the base angular velocity
+        """
+        v = cls.init_vec(robo)
+        v[0] = robo.v0
+        return v
+
+    @classmethod
+    def init_wv_dot(cls, robo, gravity=True):
         """Generates lists of vectors for
         angular and linear accelerations.
         Size of the list is number of links + 1.
-        The last vector is the base angular velocity
+        The zero vector is the base angular velocity
 
         Returns
         =======
@@ -699,9 +709,11 @@ class Init:
         wdot: list of Matrices 3x1
         """
         wdot = cls.init_vec(robo)
-        wdot.append(robo.wdot0)
+        wdot[0] = robo.wdot0
         vdot = cls.init_vec(robo)
-        vdot.append(robo.vdot0 - robo.G)
+        vdot[0] = robo.vdot0
+        if gravity:
+            vdot[0] -= robo.G
         return wdot, vdot
 
     @classmethod
@@ -1119,7 +1131,10 @@ class Symoro:
                     return i * self.revdi[i * old_sym]
         new_sym = var(str(name) + str(index))
         self.add_to_dict(new_sym, old_sym)
-        return new_sym
+        if is_simple:
+            return old_sym
+        else:
+            return new_sym
 
     def mat_replace(self, M, name, index='',
                     forced=False, skip=0, symmet=False):
