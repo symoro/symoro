@@ -17,11 +17,13 @@ from sympy import Matrix, zeros
 try:
     from pysymoro.core.symoro import Symoro, Init, hat
     from pysymoro.core.symoro import FAIL, ZERO
-    from pysymoro.core.geometry import dgm, Transform, compute_rot_trans
+    from pysymoro.core.geometry import dgm, Transform
+    from pysymoro.core.geometry import compute_rot_trans, Z_AXIS
 except ImportError:
     from core.symoro import Symoro, Init, hat
     from core.symoro import FAIL, ZERO
-    from core.geometry import dgm, Transform, compute_rot_trans
+    from core.geometry import dgm, Transform
+    from core.geometry import compute_rot_trans, Z_AXIS
 
 
 TERMINAL = 0

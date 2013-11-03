@@ -20,13 +20,13 @@ try:
     from pysymoro.core.symoro import Symoro, Init, hat, ZERO
     from pysymoro.core.geometry import compute_screw_transform
     from pysymoro.core.geometry import compute_rot_trans, Transform
-    from pysymoro.core.kinematics import compute_speeds_accelerations
+    from pysymoro.core.kinematics import compute_vel_acc
     from pysymoro.core.kinematics import compute_omega
 except ImportError:
     from core.symoro import Symoro, Init, hat, ZERO
     from core.geometry import compute_screw_transform
     from core.geometry import compute_rot_trans, Transform
-    from core.kinematics import compute_speeds_accelerations
+    from core.kinematics import compute_vel_acc
     from core.kinematics import compute_omega
 
 
