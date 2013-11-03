@@ -1,16 +1,24 @@
 __author__ = 'Izzat'
-import wx
-import wx.lib.agw.floatspin as FS
+
+from math import atan2
+
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
-from objects import Frame, RevoluteJoint, FixedJoint, PrismaticJoint
+import wx
+import wx.lib.agw.floatspin as FS
 from wx.glcanvas import GLCanvas
 from numpy import sin, cos, radians, pi, inf, nan
-from math import atan2
-from pysymoro.core.symoro import Symoro, CLOSED_LOOP
-from pysymoro.core.invgeom import loop_solve
-from pysymoro.core.geometry import dgm
 from sympy import Expr
+
+from objects import Frame, RevoluteJoint, FixedJoint, PrismaticJoint
+try:
+    from pysymoro.core.symoro import Symoro, CLOSED_LOOP
+    from pysymoro.core.invgeom import loop_solve
+    from pysymoro.core.geometry import dgm
+except ImportError:
+    from core.symoro import Symoro, CLOSED_LOOP
+    from core.invgeom import loop_solve
+    from core.geometry import dgm
 
 #TODO: Fullscreen camera rotation bug
 #TODO: X-, Z-axis

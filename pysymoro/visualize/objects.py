@@ -1,6 +1,8 @@
 __author__ = 'Izzat'
+
 import OpenGL.GL as gl
 from numpy import degrees, identity, array
+
 from primitives import Primitives
 
 

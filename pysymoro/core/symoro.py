@@ -6,10 +6,13 @@ The core symbolic library is sympy.
 
 ECN - ARIA1 2013
 """
-import os
+
+
 import re
+import os
 from copy import copy
 from itertools import combinations
+
 from sympy import sin, cos, sign, pi
 from sympy import Symbol, Matrix, Expr, Integer
 from sympy import Mul, Add, factor, zeros, var, sympify, eye

@@ -1,5 +1,10 @@
 import re
-from pysymoro.core import symoro
+
+try:
+    from pysymoro.core import symoro
+except ImportError:
+    from core import symoro
+
 
 _keywords = ['ant', 'sigma', 'b', 'd', 'r',
              'gamma', 'alpha', 'mu', 'theta',

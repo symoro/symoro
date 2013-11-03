@@ -7,14 +7,25 @@ Needed modules : symoro.py, geometry.py, kinematics.py
 
 ECN - ARIA1 2013
 """
+
+
 import sympy
 from sympy import Matrix
 from copy import copy, deepcopy
-from pysymoro.core.symoro import Symoro, Init, hat, ZERO
-from pysymoro.core.geometry import compute_screw_transform
-from pysymoro.core.geometry import compute_rot_trans, Transform
-from pysymoro.core.kinematics import compute_speeds_accelerations
-from pysymoro.core.kinematics import compute_omega
+
+try:
+    from pysymoro.core.symoro import Symoro, Init, hat, ZERO
+    from pysymoro.core.geometry import compute_screw_transform
+    from pysymoro.core.geometry import compute_rot_trans, Transform
+    from pysymoro.core.kinematics import compute_speeds_accelerations
+    from pysymoro.core.kinematics import compute_omega
+except ImportError:
+    from core.symoro import Symoro, Init, hat, ZERO
+    from core.geometry import compute_screw_transform
+    from core.geometry import compute_rot_trans, Transform
+    from core.kinematics import compute_speeds_accelerations
+    from core.kinematics import compute_omega
+
 
 chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
 inert_names = ('XXR', 'XYR', 'XZR', 'YYR', 'YZR',

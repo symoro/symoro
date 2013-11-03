@@ -1,4 +1,5 @@
 __author__ = 'Izzat'
+
 import wx
 
 class DialogTrans(wx.Dialog):

@@ -11,8 +11,14 @@ ECN - ARIA1 2013
 from heapq import heapify, heappop
 from sympy import var, sin, cos, eye, atan2, sqrt, pi
 from sympy import Matrix, Symbol, Expr
-from pysymoro.core.symoro import Symoro, ZERO, ONE, get_max_coef
-from pysymoro.core.geometry import dgm
+
+try:
+    from pysymoro.core.symoro import Symoro, ZERO, ONE, get_max_coef
+    from pysymoro.core.geometry import dgm
+except ImportError:
+    from core.symoro import Symoro, ZERO, ONE, get_max_coef
+    from core.geometry import dgm
+
 
 EMPTY = var("EMPTY")
 

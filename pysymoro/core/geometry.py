@@ -9,7 +9,12 @@ ECN - ARIA1 2013
 """
 
 from sympy import Matrix, zeros, eye, sin, cos
-from pysymoro.core.symoro import Symoro, Init, hat
+
+try:
+    from pysymoro.core.symoro import Symoro, Init, hat
+except ImportError:
+    from core.symoro import Symoro, Init, hat
+
 
 Z_AXIS = Matrix([0, 0, 1])
 
