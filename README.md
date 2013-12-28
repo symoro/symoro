@@ -7,7 +7,7 @@ This is an open-source version of SYMORO software written in Python. Hence you d
 For more details on SYMORO, please see http://www.irccyn.ec-nantes.fr/spip.php?article601&lang=en
 
 ###Requirements
-+ python (>= 2.7, 3.* is not supported)
++ python (>= 2.7,   3.* is not supported)
 + sympy (>= 0.7.3)
 + numpy (>= 1.6.1)
 + wxPython (>= 2.8.12.1)
