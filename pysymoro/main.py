@@ -674,8 +674,15 @@ class MainFrame(wx.Frame):
                 return
         self.Destroy()
 
-app = wx.App(redirect=False)
-main = MainFrame()
-main.Show()
-app.MainLoop()
+
+def main():
+    app = wx.App(redirect=False)
+    frame = MainFrame()
+    frame.Show()
+    app.MainLoop()
+
+
+if __name__ == "__main__":
+    main()
+
 
