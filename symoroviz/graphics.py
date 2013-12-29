@@ -16,15 +16,11 @@ from wx.glcanvas import GLCanvas
 from numpy import sin, cos, radians, pi, inf, nan
 from sympy import Expr
 
+from pysymoro.symoro import Symoro, CLOSED_LOOP
+from pysymoro.invgeom import loop_solve
+from pysymoro.geometry import dgm
+
 from objects import Frame, RevoluteJoint, FixedJoint, PrismaticJoint
-try:
-    from pysymoro.core.symoro import Symoro, CLOSED_LOOP
-    from pysymoro.core.invgeom import loop_solve
-    from pysymoro.core.geometry import dgm
-except ImportError:
-    from core.symoro import Symoro, CLOSED_LOOP
-    from core.invgeom import loop_solve
-    from core.geometry import dgm
 
 #TODO: Fullscreen camera rotation bug
 #TODO: X-, Z-axis

@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 
 
+import os
 from setuptools import setup, find_packages
+
+
+BIN_FOLDER = 'bin'
 
 
 def readme():
@@ -15,7 +19,7 @@ setup(
     version='0.1alpha',
     description='SYmoblic MOdelling of RObots software',
     url='http://github.com/vijaravind/symoro',
-    scripts=['bin/symoro-bin'],
+    scripts=[os.path.join(BIN_FOLDER, 'symoro-bin')],
     packages=find_packages(),
     zip_safe=False
 )

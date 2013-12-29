@@ -15,12 +15,8 @@ from heapq import heapify, heappop
 from sympy import var, sin, cos, eye, atan2, sqrt, pi
 from sympy import Matrix, Symbol, Expr
 
-try:
-    from pysymoro.core.symoro import Symoro, ZERO, ONE, get_max_coef
-    from pysymoro.core.geometry import dgm
-except ImportError:
-    from core.symoro import Symoro, ZERO, ONE, get_max_coef
-    from core.geometry import dgm
+from pysymoro.symoro import Symoro, ZERO, ONE, get_max_coef
+from pysymoro.geometry import dgm
 
 
 EMPTY = var("EMPTY")

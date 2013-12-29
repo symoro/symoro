@@ -8,18 +8,11 @@ import os
 
 import wx
 
-try:
-    from pysymoro.core.symoro import Robot, FAIL
-    from pysymoro.core import geometry, kinematics, dynamics, invgeom
-    from pysymoro.visualize import graphics
-    from pysymoro.gui import ui_definition, ui_geometry, ui_kinematics
-    from pysymoro.core.parfile import readpar, writepar
-except ImportError:
-    from core.symoro import Robot, FAIL
-    from core import geometry, kinematics, dynamics, invgeom
-    from visualize import graphics
-    from gui import ui_definition, ui_geometry, ui_kinematics
-    from core.parfile import readpar, writepar
+from pysymoro.symoro import Robot, FAIL
+from pysymoro import geometry, kinematics, dynamics, invgeom
+from pysymoro.parfile import readpar, writepar
+from symoroviz import graphics
+from symoroui import ui_definition, ui_geometry, ui_kinematics
 
 
 PROG_NAME = 'SYMORO-Python'

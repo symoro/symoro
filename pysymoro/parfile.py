@@ -3,10 +3,7 @@
 
 import re
 
-try:
-    from pysymoro.core import symoro
-except ImportError:
-    from core import symoro
+from pysymoro import symoro
 
 
 _keywords = ['ant', 'sigma', 'b', 'd', 'r',

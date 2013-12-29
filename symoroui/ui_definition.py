@@ -8,10 +8,7 @@ import wx.lib.scrolledpanel as scrolled
 
 from sympy import Expr, Symbol
 
-try:
-    from pysymoro.core.symoro import SIMPLE, TREE, CLOSED_LOOP
-except ImportError:
-    from core.symoro import SIMPLE, TREE, CLOSED_LOOP
+from pysymoro.symoro import SIMPLE, TREE, CLOSED_LOOP
 
 #TODO: PROG_NAME
 
