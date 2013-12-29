@@ -11,22 +11,13 @@ from sympy import sympify, var, Matrix
 from sympy.abc import A, B, C, X, Y, Z
 from numpy import random, amax, matrix, eye, zeros
 
-try:
-    from pysymoro.core import symoro
-    from pysymoro.core import geometry
-    from pysymoro.core import kinematics
-    from pysymoro.core import invgeom
-    from pysymoro.core.geometry import Transform as trns
-    from pysymoro.core import dynamics
-    from pysymoro.core import parfile
-except ImportError:
-    from core import symoro
-    from core import geometry
-    from core import kinematics
-    from core import invgeom
-    from core.geometry import Transform as trns
-    from core import dynamics
-    from core import parfile
+from pysymoro import symoro
+from pysymoro import geometry
+from pysymoro.geometry import Transform as trns
+from pysymoro import kinematics
+from pysymoro import invgeom
+from pysymoro import dynamics
+from pysymoro import parfile
 
 
 class testMisc(unittest.TestCase):
@@ -360,3 +351,5 @@ if __name__ == '__main__':
 ##    suite.addTest(testSymoroTrig('test_trig_simp'))
     suite.addTest(testKinematics('test_jac'))
 #    unittest.TextTestRunner().run(suite)
+
+
