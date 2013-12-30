@@ -145,3 +145,5 @@ def readpar(directory, robo_name):
                 acc_line = ''
                 key = ''
     return robo, flag
+
+
