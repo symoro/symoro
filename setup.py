@@ -14,12 +14,23 @@ def readme():
         return f.read()
 
 
+def apply_folder_join(item):
+    return os.path.join(BIN_FOLDER, item)
+
+
+if os.name is 'nt':
+    bin_scripts = ['symoro-bin.py']
+else:
+    bin_scripts = ['symoro-bin']
+bin_scripts = map(apply_folder_join, bin_scripts)    
+
+
 setup(
     name='symoro',
     version='0.1alpha',
     description='SYmoblic MOdelling of RObots software',
     url='http://github.com/vijaravind/symoro',
-    scripts=[os.path.join(BIN_FOLDER, 'symoro-bin')],
+    scripts=bin_scripts,
     packages=find_packages(),
     zip_safe=False
 )
