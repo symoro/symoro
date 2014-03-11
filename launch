@@ -1,0 +1,7 @@
+#!/bin/sh
+
+DIR="$(dirname $0)"
+PYTHONPATH="$DIR"
+
+python "$DIR"/bin/symoro-bin.py
+
