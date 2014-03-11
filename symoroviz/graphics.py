@@ -28,7 +28,6 @@ from objects import Frame, RevoluteJoint, FixedJoint, PrismaticJoint
 #TODO: Random button
 
 class myGLCanvas(GLCanvas):
-
     def __init__(self, parent, robo, params, size=(600, 600)):
         super(myGLCanvas, self).__init__(parent, size=size)
         self.Bind(wx.EVT_PAINT, self.OnPaintAll)
@@ -61,7 +60,9 @@ class myGLCanvas(GLCanvas):
         pass
 
     def assign_mono_scale(self):
-        """ This function calculates coefficients which are used
+        """Sets the coefficients used to draw objects
+
+        This function calculates coefficients which are used
         to draw the objects (Joints, links, end-effectors)
         It computes the minimum and maximum r or d different from 0.
         Then uses those sizes to determine the reference
@@ -74,11 +75,11 @@ class myGLCanvas(GLCanvas):
                 minv = dist
         if minv == inf:
             minv = 1.
-        self.length = 0.4*minv
-        print self.length
+        self.length = 0.4 * minv
+        #print self.length
         for jnt in self.jnt_objs:
             if isinstance(jnt, PrismaticJoint):
-                jnt.r = 3.5*self.length
+                jnt.r = 3.5 * self.length
             jnt.set_length(self.length)
 
     def add_items_to_frame(self, frame, index, jnt_hier):
@@ -427,8 +428,8 @@ class MainWindow(wx.Frame):
                              increment=0.05, min_val=-10., max_val=10.)
             s.Bind(FS.EVT_FLOATSPIN, self.OnSetJointVar)
             s.SetDigits(2)
-#            if sym in self.canvas.q_pas_sym:
-#                s.Enable(False)
+            # if sym in self.canvas.q_pas_sym:
+            #     s.Enable(False)
             self.spin_ctrls[sym] = s
             gridJnts.Add(s, pos=(p_index, 1), flag=wx.ALIGN_CENTER_VERTICAL)
             p_index += 1
