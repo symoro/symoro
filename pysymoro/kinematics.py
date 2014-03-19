@@ -78,17 +78,17 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
     """
     Computes jacobian of frame n (with origin On in Oj) projected to frame i
     """
-#    symo.write_geom_param(robo, 'Jacobian')
+    #  symo.write_geom_param(robo, 'Jacobian')
     # TODO: Check projection frames, rewrite DGM call for higher efficiency
     M = []
     if chain is None:
         chain = robo.chain(n)
         chain.reverse()
-#    chain_ext = chain + [robo.ant[min(chain)]]
-#    if not i in chain_ext:
-#        i = min(chain_ext)
-#    if not j in chain_ext:
-#        j = max(chain_ext)
+    # chain_ext = chain + [robo.ant[min(chain)]]
+    # if not i in chain_ext:
+    #     i = min(chain_ext)
+    # if not j in chain_ext:
+    #     j = max(chain_ext)
     kTj_dict = dgm(robo, symo, chain[0], j, key='left', trig_subs=trig_subs)
     kTj_tmp = dgm(robo, symo, chain[-1], j, key='left', trig_subs=trig_subs)
     kTj_dict.update(kTj_tmp)
@@ -286,9 +286,9 @@ def jdot_qdot(robo):
 def jacobian(robo, n, i, j):
     symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'jac')
-    title = "Jacobian matrix for frame %s\n"
-    title += "Projection frame %s, intermediat frame %s"
-    symo.write_params_table(robo, title % (n, i, j))
+    title = "Jacobian matrix for frame {}\n"
+    title += "Projection frame {}, intermediate frame {}"
+    symo.write_params_table(robo, title.format(n, i, j))
     _jac(robo, symo, n, i, j, forced=True)
     symo.file_close()
     return symo
