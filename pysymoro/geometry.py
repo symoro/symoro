@@ -486,7 +486,7 @@ def direct_geometric_fast(robo, i, j):
     """
     symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'fgm')
-    symo.write_params_table(robo, 'Direct Geometrix model')
+    symo.write_params_table(robo, 'Direct Geometric model')
     dgm(robo, symo, i, j, fast_form=True, forced=True)
     symo.file_close()
     return symo
@@ -512,7 +512,7 @@ def direct_geometric(robo, frames, trig_subs):
     """
     symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'trm')
-    symo.write_params_table(robo, 'Direct Geometrix model')
+    symo.write_params_table(robo, 'Direct Geometric model')
     for i, j in frames:
         symo.write_line('Tramsformation matrix %s T %s' % (i, j))
         T = dgm(robo, symo, i, j, fast_form=False, trig_subs=trig_subs)

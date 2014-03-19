@@ -20,7 +20,7 @@ EMPTY = var("EMPTY")
 T_GENERAL = Matrix([var("s1,n1,a1,p1"), var("s2,n2,a2,p2"),
                     var("s3,n3,a3,p3"), [0, 0, 0, 1]])
 
-#dictionary for equation type classification
+# Dictionary for equation type classification.
 eq_dict = {(1, 0, 0): 0, (0, 1, 0): 1, (1, 1, 0): 2,
            (0, 2, 0): 3, (0, 2, 1): 4}
 
@@ -33,7 +33,7 @@ def _paul_solve(robo, symo, nTm, n, m, known_vars=None):
     chain = robo.loop_chain(m, n)
     th_all = set()
     r_all = set()
-    #create the set of all knowns symbols
+    # Create the set of all knowns symbols
     for i in chain:
         if i >= 0:
             if robo.sigma[i] == 0 and isinstance(robo.theta[i], Expr):
@@ -140,8 +140,8 @@ def _look_for_eq(symo, M_eq, knowns, th_all, r_all):
 
 
 def loop_solve(robo, symo, know=None):
-    #TODO: rewrite; Add parallelogram detection
-    q_vec = q_vec = [robo.get_q(i) for i in xrange(robo.NF)]
+    # TODO: rewrite; Add parallelogram detection
+    q_vec = [robo.get_q(i) for i in xrange(robo.NF)]
     loops = []
     if know is None:
         know = robo.q_active
@@ -167,13 +167,13 @@ def igm_Paul(robo, T_ref, n):
         T_ref = Matrix(4, 4, T_ref)
     symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'igm')
-    symo.write_params_table(robo, 'Inverse Geometrix Model for frame %s' % n)
+    symo.write_params_table(robo, 'Inverse Geometric Model for frame %s' % n)
     _paul_solve(robo, symo, T_ref, 0, n)
     symo.file_close()
     return symo
 
 
-#TODO: think about smarter way of matching
+# TODO: think about smarter way of matching
 def _try_solve_0(symo, eq_sys, knowns):
     res = False
     for eq, [r], th_names in eq_sys:
@@ -314,7 +314,7 @@ def _try_solve_3(symo, eq_sys, knowns):
     return False
 
 
-#TODO: make it with itertool
+# TODO: make it with itertool
 def _try_solve_4(symo, eq_sys, knowns):
     res = False
     for i in xrange(len(eq_sys)):
@@ -515,7 +515,7 @@ def _get_coefs(eq, A1, A2, *xs):
     eqe = eqe.xreplace({A1: tools.ZERO})
     Y = tools.get_max_coef(eqe, A2)
     Z = eqe.xreplace({A2: tools.ZERO})
-#    is_ok = not X.has(A2) and not X.has(A1) and not Y.has(A2)
+    # is_ok = not X.has(A2) and not X.has(A1) and not Y.has(A2)
     is_ok = True
     is_ok &= _check_const((X, Y, Z), *xs)
     return X, Y, Z, is_ok
