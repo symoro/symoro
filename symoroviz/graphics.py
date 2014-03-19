@@ -334,6 +334,7 @@ class myGLCanvas(GLCanvas):
         self.base.draw_frames()
         gl.glDisableClientState(gl.GL_VERTEX_ARRAY)
         gl.glDisableClientState(gl.GL_NORMAL_ARRAY)
+        gl.glFlush()
         self.SwapBuffers()
 
     def InitGL(self):
@@ -370,8 +371,8 @@ class myGLCanvas(GLCanvas):
 
 class MainWindow(wx.Frame):
     def __init__(self, prefix, robo, params=None, parent=None, identifier=-1):
-        wx.Frame.__init__(
-            self, parent, identifier, prefix + ': Robot representation',
+        super(MainWindow, self).__init__(
+            parent, identifier, prefix + ': Robot representation',
             style=wx.DEFAULT_FRAME_STYLE | wx.FULL_REPAINT_ON_RESIZE
         )
         self.robo = robo
