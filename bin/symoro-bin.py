@@ -16,14 +16,15 @@ from symoroviz import graphics
 from symoroui import ui_definition, ui_geometry, ui_kinematics
 
 
-PROG_NAME = 'SYMORO-Python'
+PROG_NAME = 'OpenSYMORO'
 
 
 class MainFrame(wx.Frame):
     def __init__(self):
-        main_title = PROG_NAME + ": SYmbolic MOdeling of RObots"
-        style = wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER ^ wx.MAXIMIZE_BOX
-        wx.Frame.__init__(self, None, title=main_title, size=(0, 0), style=style)
+        title = PROG_NAME + " - SYmbolic MOdeling of RObots"
+        size = wx.Size(-1, -1)
+        style = wx.DEFAULT_FRAME_STYLE ^ wx.MAXIMIZE_BOX ^ wx.RESIZE_BORDER
+        wx.Frame.__init__(self, None, title=title, size=size, style=style)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
         self.create_mnu()
@@ -34,11 +35,6 @@ class MainFrame(wx.Frame):
         self.statusbar = self.CreateStatusBar()
         self.p = wx.Panel(self)
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
-
-        m_text = wx.StaticText(self.p, -1, "SYmbolic MOdelling of RObots")
-        m_text.SetFont(wx.Font(14, wx.SWISS, wx.NORMAL, wx.BOLD))
-        m_text.SetSize(m_text.GetBestSize())
-        self.mainSizer.Add(m_text, 0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, 15)
 
         self.create_ui()
         self.p.SetSizerAndFit(self.mainSizer)
