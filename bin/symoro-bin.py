@@ -28,28 +28,32 @@ class MainFrame(wx.Frame):
         """Constructor : creates the UI and draws it on the screen."""
         wx.Frame.__init__(self, *args, **kwargs)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
-
-        self.create_mnu()
-        self.robo = Robot.RX90()
-        self.widgets = {}
-        self.par_dict = {}
-
+        # create status bar
         self.statusbar = self.CreateStatusBar()
-        self.p = wx.Panel(self)
-        self.mainSizer = wx.BoxSizer(wx.VERTICAL)
-
+        # create menu bar
+        self.create_menu()
+        # set default robot
+        self.robo = Robot.RX90()
+        # object to store different ui elements
+        self.widgets = {}
+        # object to store parameter values got from dialog box input
+        self.par_dict = {}
+        # setup panel and sizer for content
+        self.panel = wx.Panel(self)
+        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
         self.create_ui()
-        self.p.SetSizerAndFit(self.mainSizer)
+        self.panel.SetSizerAndFit(self.main_sizer)
         self.Fit()
+        # update fields with data
         self.feed_data()
 
     def params_grid(self, grid, rows, elems, handler=None, start_i=0, size=60):
         for i, name in enumerate(elems):
             horBox = wx.BoxSizer(wx.HORIZONTAL)
-            horBox.Add(wx.StaticText(self.p, label=name,
+            horBox.Add(wx.StaticText(self.panel, label=name,
                                      size=(40, -1), style=wx.ALIGN_RIGHT),
                        0, wx.ALL | wx.ALIGN_RIGHT, 5)
-            textBox = wx.TextCtrl(self.p, size=(size, -1), name=name, id=i%rows)
+            textBox = wx.TextCtrl(self.panel, size=(size, -1), name=name, id=i%rows)
             self.widgets[name] = textBox
             textBox.Bind(wx.EVT_KILL_FOCUS, handler)
             horBox.Add(textBox, 0, wx.ALL | wx.ALIGN_LEFT, 1)
@@ -58,17 +62,17 @@ class MainFrame(wx.Frame):
 
     def create_ui(self):
         descr_sizer = wx.StaticBoxSizer(
-            wx.StaticBox(self.p, label='Robot Description'), wx.HORIZONTAL)
+            wx.StaticBox(self.panel, label='Robot Description'), wx.HORIZONTAL)
         sizer1 = wx.BoxSizer(wx.VERTICAL)
         descr_sizer.AddSpacer(3)
         descr_sizer.Add(sizer1, 0, wx.ALL | wx.EXPAND, 5)
         sizer2 = wx.BoxSizer(wx.VERTICAL)
         descr_sizer.Add(sizer2, 0, wx.ALL | wx.EXPAND, 5)
-        self.mainSizer.Add(descr_sizer, 0, wx.ALL, 10)
+        self.main_sizer.Add(descr_sizer, 0, wx.ALL, 10)
 
         # Left Side of main window
         robot_type_sizer = wx.StaticBoxSizer(
-            wx.StaticBox(self.p, label='Robot Type'), wx.HORIZONTAL)
+            wx.StaticBox(self.panel, label='Robot Type'), wx.HORIZONTAL)
         grid = wx.GridBagSizer(12, 10)
 
         gen_info = [('Name of the robot:', 'name'),
@@ -78,9 +82,9 @@ class MainFrame(wx.Frame):
                     ('Number of closed loops:', 'loops')]
 
         for i, (lab, name) in enumerate(gen_info):
-            label = wx.StaticText(self.p, label=lab)
+            label = wx.StaticText(self.panel, label=lab)
             grid.Add(label, pos=(i, 0), flag=wx.LEFT, border=10)
-            label = wx.StaticText(self.p, size=(125, -1), name=name)
+            label = wx.StaticText(self.panel, size=(125, -1), name=name)
             self.widgets[name] = label
             grid.Add(label, pos=(i, 1), flag=wx.LEFT | wx.RIGHT, border=10)
 
@@ -90,11 +94,11 @@ class MainFrame(wx.Frame):
         ##### Gravity components
         sizer1.AddSpacer(8)
         sbs_gravity = wx.StaticBoxSizer(
-            wx.StaticBox(self.p, label='Gravity components'), wx.HORIZONTAL)
+            wx.StaticBox(self.panel, label='Gravity components'), wx.HORIZONTAL)
         for iden, name in enumerate(['GX', 'GY', 'GZ']):
             sbs_gravity.AddSpacer(5)
-            sbs_gravity.Add(wx.StaticText(self.p, label=name), 0, wx.ALL, 4)
-            text_box = wx.TextCtrl(self.p, name=name, size=(60, -1), id=iden)
+            sbs_gravity.Add(wx.StaticText(self.panel, label=name), 0, wx.ALL, 4)
+            text_box = wx.TextCtrl(self.panel, name=name, size=(60, -1), id=iden)
             self.widgets[name] = text_box
             text_box.Bind(wx.EVT_KILL_FOCUS, self.OnBaseTwistChanged)
             sbs_gravity.Add(text_box, 0, wx.ALL | wx.ALIGN_LEFT, 2)
@@ -103,13 +107,13 @@ class MainFrame(wx.Frame):
         ##### Location of the robot
         sizer1.AddSpacer(8)
         sbs_location = wx.StaticBoxSizer(
-            wx.StaticBox(self.p, label='Location of the robot'), wx.HORIZONTAL)
+            wx.StaticBox(self.panel, label='Location of the robot'), wx.HORIZONTAL)
         sizer1.Add(sbs_location, 0, wx.ALL | wx.EXPAND, 0)
         loc_tbl = wx.GridBagSizer(1, 1)
         for i in range(4):
-            ver_lbl = wx.StaticText(self.p, label='Z' + str(i + 1) + ':  ')
-            hor_lbl = wx.StaticText(self.p, label='Z - ' + str(i + 1))
-            botLab = wx.StaticText(self.p, label='  ' + str(0 if i < 3 else 1))
+            ver_lbl = wx.StaticText(self.panel, label='Z' + str(i + 1) + ':  ')
+            hor_lbl = wx.StaticText(self.panel, label='Z - ' + str(i + 1))
+            botLab = wx.StaticText(self.panel, label='  ' + str(0 if i < 3 else 1))
             loc_tbl.Add(ver_lbl, pos=(i + 1, 0), flag=wx.RIGHT, border=3)
             loc_tbl.Add(hor_lbl, pos=(0, i + 1),
                          flag=wx.ALIGN_CENTER_HORIZONTAL, border=3)
@@ -117,7 +121,7 @@ class MainFrame(wx.Frame):
             for j in range(3):
                 index = j*4+i
                 name = 'Z'+str(index)
-                text_box = wx.TextCtrl(self.p, name=name,
+                text_box = wx.TextCtrl(self.panel, name=name,
                                       size=(60, -1), id=index)
                 self.widgets[name] = text_box
                 text_box.Bind(wx.EVT_KILL_FOCUS, self.OnZParamChanged)
@@ -127,23 +131,23 @@ class MainFrame(wx.Frame):
 
         ##### Geometric Params
         sbs = wx.StaticBoxSizer(
-            wx.StaticBox(self.p, label='Geometric Params'), wx.HORIZONTAL)
+            wx.StaticBox(self.panel, label='Geometric Params'), wx.HORIZONTAL)
         grid = wx.GridBagSizer(0, 5)
         ver_sizer = wx.BoxSizer(wx.VERTICAL)
-        ver_sizer.Add(wx.StaticText(self.p, label='Frame'),
+        ver_sizer.Add(wx.StaticText(self.panel, label='Frame'),
                     0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 5)
-        combo_box = wx.ComboBox(self.p, style=wx.CB_READONLY,
+        combo_box = wx.ComboBox(self.panel, style=wx.CB_READONLY,
                                size=(60, -1), name='frame')
         self.widgets['frame'] = combo_box
         combo_box.Bind(wx.EVT_COMBOBOX, self.OnFrameChanged)
         ver_sizer.Add(combo_box)
         for i, name in enumerate(self.robo.get_geom_head()[1:4]):
             hor_box = wx.BoxSizer(wx.HORIZONTAL)
-            label = wx.StaticText(self.p, label=name, size=(40, -1),
+            label = wx.StaticText(self.panel, label=name, size=(40, -1),
                                   style=wx.ALIGN_RIGHT)
             self.widgets[name] = label
             hor_box.Add(label, 0, wx.ALL | wx.ALIGN_RIGHT, 5)
-            combo_box = wx.ComboBox(self.p, style=wx.CB_READONLY,
+            combo_box = wx.ComboBox(self.panel, style=wx.CB_READONLY,
                                    size=(60, -1), name=name)
             self.widgets[name] = combo_box
             combo_box.Bind(wx.EVT_COMBOBOX, self.OnGeoParamChanged)
@@ -161,12 +165,12 @@ class MainFrame(wx.Frame):
 
         ##### Dynamic Params and external forces
         lbl = 'Dynamic Params and external forces'
-        sbs = wx.StaticBoxSizer(wx.StaticBox(self.p, label=lbl), wx.HORIZONTAL)
+        sbs = wx.StaticBoxSizer(wx.StaticBox(self.panel, label=lbl), wx.HORIZONTAL)
         grid = wx.GridBagSizer(0, 0)
         ver_sizer = wx.BoxSizer(wx.VERTICAL)
-        ver_sizer.Add(wx.StaticText(self.p, label='Link'),
+        ver_sizer.Add(wx.StaticText(self.panel, label='Link'),
                     0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 5)
-        combo_box = wx.ComboBox(self.p, style=wx.CB_READONLY,
+        combo_box = wx.ComboBox(self.panel, style=wx.CB_READONLY,
                                size=(60, -1), name='link')
         combo_box.Bind(wx.EVT_COMBOBOX, self.OnLinkChanged)
         self.widgets['link'] = combo_box
@@ -185,7 +189,7 @@ class MainFrame(wx.Frame):
 
         ##### Speed and acceleration of the base
         lbl = 'Speed and acceleration of the base'
-        sbs = wx.StaticBoxSizer(wx.StaticBox(self.p, label=lbl), wx.HORIZONTAL)
+        sbs = wx.StaticBoxSizer(wx.StaticBox(self.panel, label=lbl), wx.HORIZONTAL)
         grid = wx.GridBagSizer(0, 0)
         sbs.Add(grid)
         hor_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -201,11 +205,11 @@ class MainFrame(wx.Frame):
 
         ##### Joints velocity and acceleration
         lbl = 'Joint velocity and acceleration'
-        sbs2 = wx.StaticBoxSizer(wx.StaticBox(self.p, label=lbl), wx.VERTICAL)
+        sbs2 = wx.StaticBoxSizer(wx.StaticBox(self.panel, label=lbl), wx.VERTICAL)
         sbs2.AddSpacer(5)
         grid = wx.GridBagSizer(5, 5)
         sbs2.Add(grid)
-        combo_box = wx.ComboBox(self.p, size=(70, -1),
+        combo_box = wx.ComboBox(self.panel, size=(70, -1),
                                style=wx.CB_READONLY, name='joint')
         self.widgets['joint'] = combo_box
         combo_box.Bind(wx.EVT_COMBOBOX, self.OnJointChanged)
@@ -213,11 +217,11 @@ class MainFrame(wx.Frame):
                  flag=wx.ALIGN_CENTER_HORIZONTAL, border=0)
         names = ['Joint'] + self.robo.get_ext_dynam_head()[-3:]
         for i, name in enumerate(names):
-            label = wx.StaticText(self.p, label=name,
+            label = wx.StaticText(self.panel, label=name,
                                   size=(55, -1), style=wx.ALIGN_RIGHT)
             grid.Add(label, pos=(i, 0), flag=wx.TOP | wx.RIGHT, border=3)
             if i > 0:
-                text_box = wx.TextCtrl(self.p, name=name, size=(70, -1))
+                text_box = wx.TextCtrl(self.panel, name=name, size=(70, -1))
                 self.widgets[name] = text_box
                 text_box.Bind(wx.EVT_KILL_FOCUS, self.OnSpeedChanged)
                 grid.Add(text_box, pos=(i, 1))
@@ -225,56 +229,56 @@ class MainFrame(wx.Frame):
         hor_sizer.Add(sbs2, 1, wx.ALL | wx.EXPAND, 0)
         sizer2.AddSpacer(8)
         sizer2.Add(hor_sizer, 1, wx.ALL | wx.EXPAND, 0)
-        self.mainSizer.AddSpacer(10)
+        self.main_sizer.AddSpacer(10)
         #sizer2.Add(sbs, 0, wx.ALL | wx.EXPAND, 0)
 
-    def Change(self, index, name, evtObject):
+    def Change(self, index, name, event_object):
         prev_value = str(self.robo.get_val(index, name))
-        if evtObject.Value != prev_value:
-            if self.robo.put_val(index, name, evtObject.Value) == FAIL:
+        if event_object.Value != prev_value:
+            if self.robo.put_val(index, name, event_object.Value) == FAIL:
                 message = "Unacceptable value '%s' has been input in %s%s" \
-                          % (evtObject.Value, name, index)
+                          % (event_object.Value, name, index)
                 self.message_error(message)
-                evtObject.Value = prev_value
+                event_object.Value = prev_value
             else:
                 self.changed = True
 
-    def OnGeoParamChanged(self, evt):
+    def OnGeoParamChanged(self, event):
         frame_index = int(self.widgets['frame'].Value)
-        self.Change(frame_index, evt.EventObject.Name, evt.EventObject)
-        if evt.EventObject.Name == 'ant':
+        self.Change(frame_index, event.EventObject.Name, event.EventObject)
+        if event.EventObject.Name == 'ant':
             self.widgets['type'].SetLabel(self.robo.structure)
-        if evt.EventObject.Name == 'sigma':
+        if event.EventObject.Name == 'sigma':
             self.update_geo_params()
 
-    def OnDynParamChanged(self, evt):
+    def OnDynParamChanged(self, event):
         link_index = int(self.widgets['link'].Value)
-        self.Change(link_index, evt.EventObject.Name, evt.EventObject)
-        # print type(self.robo.get_val(link_index, evt.EventObject.Name))
+        self.Change(link_index, event.EventObject.Name, event.EventObject)
+        # print type(self.robo.get_val(link_index, event.EventObject.Name))
 
-    def OnSpeedChanged(self, evt):
+    def OnSpeedChanged(self, event):
         joint_index = int(self.widgets['joint'].Value)
-        self.Change(joint_index, evt.EventObject.Name, evt.EventObject)
+        self.Change(joint_index, event.EventObject.Name, event.EventObject)
 
-    def OnBaseTwistChanged(self, evt):
-        index = int(evt.EventObject.Id)
-        name = evt.EventObject.Name[:-1]
-        self.Change(index, name, evt.EventObject)
+    def OnBaseTwistChanged(self, event):
+        index = int(event.EventObject.Id)
+        name = event.EventObject.Name[:-1]
+        self.Change(index, name, event.EventObject)
 
-    def OnZParamChanged(self, evt):
-        index = int(evt.EventObject.Id)
-        self.Change(index, 'Z', evt.EventObject)
+    def OnZParamChanged(self, event):
+        index = int(event.EventObject.Id)
+        self.Change(index, 'Z', event.EventObject)
 
-    def OnFrameChanged(self, evt):
-        frame_index = int(evt.EventObject.Value)
+    def OnFrameChanged(self, event):
+        frame_index = int(event.EventObject.Value)
         cmb = self.widgets['ant']
         cmb.SetItems([str(i) for i in range(frame_index)])
         self.update_geo_params()
 
-    def OnLinkChanged(self, _):
+    def OnLinkChanged(self, event):
         self.update_dyn_params()
 
-    def OnJointChanged(self, _):
+    def OnJointChanged(self, event):
         self.update_vel_params()
 
     def update_params(self, index, pars):
@@ -343,124 +347,162 @@ class MainFrame(wx.Frame):
         self.changed = False
         self.par_dict = {}
 
-    def create_mnu(self):
-        mnu_bar = wx.MenuBar()
-
-        ##### FILE
-        file_mnu = wx.Menu()
-        m_new = file_mnu.Append(wx.ID_NEW, '&New...')
-        self.Bind(wx.EVT_MENU, self.OnNew, m_new)
-        m_open = file_mnu.Append(wx.ID_OPEN, '&Open...')
-        self.Bind(wx.EVT_MENU, self.OnOpen, m_open)
-        m_save = file_mnu.Append(wx.ID_SAVE, '&Save...')
-        self.Bind(wx.EVT_MENU, self.OnSave, m_save)
-        m_save_as = file_mnu.Append(wx.ID_SAVEAS, '&Save As...')
-        self.Bind(wx.EVT_MENU, self.OnSaveAs, m_save_as)
-        file_mnu.Append(wx.ID_PREFERENCES, '&Preferences...')
-        file_mnu.AppendSeparator()
-
-        m_exit = file_mnu.Append(wx.ID_EXIT, "E&xit\tAlt-X",
-                                 "Close window and exit program.")
-        self.Bind(wx.EVT_MENU, self.OnClose, m_exit)
-        mnu_bar.Append(file_mnu, "&File")
-
-        ##### GEOMETRIC
-        geo_mnu = wx.Menu()
-        m_trans_matrix = wx.MenuItem(geo_mnu, wx.ID_ANY,
-                                     "Transformation matrix...")
-        self.Bind(wx.EVT_MENU, self.OnTransformationMatrix, m_trans_matrix)
-        geo_mnu.AppendItem(m_trans_matrix)
-        fast_dgm = wx.MenuItem(geo_mnu, wx.ID_ANY, "Fast geometric model...")
-        self.Bind(wx.EVT_MENU, self.OnFastGeometricModel, fast_dgm)
-        geo_mnu.AppendItem(fast_dgm)
-        igm_paul = wx.MenuItem(geo_mnu, wx.ID_ANY, "I.G.M. Paul method...")
-        self.Bind(wx.EVT_MENU, self.OnIGMPaul, igm_paul)
-        geo_mnu.AppendItem(igm_paul)
-        constr_geom = wx.MenuItem(geo_mnu, wx.ID_ANY,
-                                  "Constraint geometric equations of loops")
-        self.Bind(wx.EVT_MENU, self.OnConstraintGeoEq, constr_geom)
-        geo_mnu.AppendItem(constr_geom)
-
-        mnu_bar.Append(geo_mnu, "&Geometric")
-
-        ##### KINEMATIC
-        kin_mnu = wx.Menu()
-        jac_matrix = wx.MenuItem(kin_mnu, wx.ID_ANY, "Jacobian matrix...")
-        self.Bind(wx.EVT_MENU, self.OnJacobianMatrix, jac_matrix)
-        kin_mnu.AppendItem(jac_matrix)
-        determ = wx.MenuItem(kin_mnu, wx.ID_ANY, "Determinant of a Jacobian...")
-        self.Bind(wx.EVT_MENU, self.OnDeterminant, determ)
-        kin_mnu.AppendItem(determ)
-        #TODO: add the dialog, ask for projection frame
-        ckel = wx.MenuItem(kin_mnu, wx.ID_ANY, "Kinematic constraints")
-        self.Bind(wx.EVT_MENU, self.OnCkel, ckel)
-        kin_mnu.AppendItem(ckel)
-        vels = wx.MenuItem(kin_mnu, wx.ID_ANY, "Velocities")
-        self.Bind(wx.EVT_MENU, self.OnVelocities, vels)
-        kin_mnu.AppendItem(vels)
-        accel = wx.MenuItem(kin_mnu, wx.ID_ANY, "Accelerations")
-        self.Bind(wx.EVT_MENU, self.OnAccelerations, accel)
-        kin_mnu.AppendItem(accel)
-        jpqp = wx.MenuItem(kin_mnu, wx.ID_ANY, "Jpqp")
-        self.Bind(wx.EVT_MENU, self.OnJpqp, jpqp)
-        kin_mnu.AppendItem(jpqp)
-
-        mnu_bar.Append(kin_mnu, "&Kinematic")
-
-        ##### DYNAMIC
-        dyn_mnu = wx.Menu()
-        dyn_submnu = wx.MenuItem(dyn_mnu, wx.ID_ANY, 'Inverse dynamic model')
-        self.Bind(wx.EVT_MENU, self.OnInverseDynamic, dyn_submnu)
-        dyn_mnu.AppendItem(dyn_submnu)
-        dyn_submnu = wx.MenuItem(dyn_mnu, wx.ID_ANY, 'Inertia Matrix')
-        self.Bind(wx.EVT_MENU, self.OnInertiaMatrix, dyn_submnu)
-        dyn_mnu.AppendItem(dyn_submnu)
-        dyn_submnu = wx.MenuItem(dyn_mnu, wx.ID_ANY,
-                                 'Centrifugal, Coriolis & Gravity torques')
-        self.Bind(wx.EVT_MENU, self.OnCentrCoriolGravTorq, dyn_submnu)
-        dyn_mnu.AppendItem(dyn_submnu)
-        dyn_submnu = wx.MenuItem(dyn_mnu, wx.ID_ANY, 'Direct Dynamic Model')
-        self.Bind(wx.EVT_MENU, self.OnDirectDynamicModel, dyn_submnu)
-        dyn_mnu.AppendItem(dyn_submnu)
-
-        mnu_bar.Append(dyn_mnu, "&Dynamic")
-
-        ##### IDENTIFICATION
-        iden = wx.Menu()
-        base_inert = wx.MenuItem(
-            iden, wx.ID_ANY, 
-            'Base inertial parameters (symbolic or numeric)'
+    def create_menu(self):
+        """Method to create the menu bar"""
+        menu_bar = wx.MenuBar()
+        # menu item - file 
+        file_menu = wx.Menu()
+        m_new = wx.MenuItem(
+            file_menu, wx.ID_NEW, ui_labels.FILE_MENU['m_new']
         )
-        self.Bind(wx.EVT_MENU, self.OnBaseInertialParams, base_inert)
-        iden.AppendItem(base_inert)
-        dyn_iden_model = wx.MenuItem(iden, wx.ID_ANY,
-                                     'Dynamic identification model')
-        self.Bind(wx.EVT_MENU, self.OnDynIdentifModel, dyn_iden_model)
-        iden.AppendItem(dyn_iden_model)
+        self.Bind(wx.EVT_MENU, self.OnNew, m_new)
+        file_menu.AppendItem(m_new)
+        m_open = wx.MenuItem(
+            file_menu, wx.ID_OPEN, ui_labels.FILE_MENU['m_open']
+        )
+        self.Bind(wx.EVT_MENU, self.OnOpen, m_open)
+        file_menu.AppendItem(m_open)
+        m_save = wx.MenuItem(
+            file_menu, wx.ID_SAVE, ui_labels.FILE_MENU['m_save']
+        )
+        self.Bind(wx.EVT_MENU, self.OnSave, m_save)
+        file_menu.AppendItem(m_save)
+        m_save_as = wx.MenuItem(
+            file_menu, wx.ID_SAVEAS, ui_labels.FILE_MENU['m_save_as']
+        )
+        self.Bind(wx.EVT_MENU, self.OnSaveAs, m_save_as)
+        file_menu.AppendItem(m_save_as)
+        m_pref = wx.MenuItem(
+            file_menu, wx.ID_ANY, ui_labels.FILE_MENU['m_pref']
+        )
+        file_menu.AppendItem(m_pref)
+        file_menu.AppendSeparator()
+        m_exit = wx.MenuItem(
+            file_menu, wx.ID_EXIT, ui_labels.FILE_MENU['m_exit']
+        )
+        self.Bind(wx.EVT_MENU, self.OnClose, m_exit)
+        file_menu.AppendItem(m_exit)
+        menu_bar.Append(file_menu, ui_labels.MAIN_MENU['file_menu'])
+        # menu item - geometric
+        geom_menu = wx.Menu()
+        m_trans_matrix = wx.MenuItem(
+            geom_menu, wx.ID_ANY, ui_labels.GEOM_MENU['m_trans_matrix']
+        )
+        self.Bind(
+            wx.EVT_MENU, self.OnTransformationMatrix, m_trans_matrix
+        )
+        geom_menu.AppendItem(m_trans_matrix)
+        m_fast_dgm = wx.MenuItem(
+            geom_menu, wx.ID_ANY, ui_labels.GEOM_MENU['m_fast_dgm']
+        )
+        self.Bind(wx.EVT_MENU, self.OnFastGeometricModel, m_fast_dgm)
+        geom_menu.AppendItem(m_fast_dgm)
+        m_igm_paul = wx.MenuItem(
+            geom_menu, wx.ID_ANY, ui_labels.GEOM_MENU['m_igm_paul']
+        )
+        self.Bind(wx.EVT_MENU, self.OnIgmPaul, m_igm_paul)
+        geom_menu.AppendItem(m_igm_paul)
+        m_geom_constraint = wx.MenuItem(
+            geom_menu, wx.ID_ANY, ui_labels.GEOM_MENU['m_geom_constraint']
+        )
+        self.Bind(wx.EVT_MENU, self.OnConstraintGeoEq, m_geom_constraint)
+        geom_menu.AppendItem(m_geom_constraint)
+        menu_bar.Append(geom_menu, ui_labels.MAIN_MENU['geom_menu'])
+        # menu item - kinematic
+        kin_menu = wx.Menu()
+        m_jac_matrix = wx.MenuItem(
+            kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_jac_matrix']
+        )
+        self.Bind(wx.EVT_MENU, self.OnJacobianMatrix, m_jac_matrix)
+        kin_menu.AppendItem(m_jac_matrix)
+        m_determinant = wx.MenuItem(
+            kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_determinant']
+        )
+        self.Bind(wx.EVT_MENU, self.OnDeterminant, m_determinant)
+        kin_menu.AppendItem(m_determinant)
+        #TODO: add the dialog, ask for projection frame
+        m_kin_constraint = wx.MenuItem(
+            kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_kin_constraint']
+        )
+        self.Bind(wx.EVT_MENU, self.OnCkel, m_kin_constraint)
+        kin_menu.AppendItem(m_kin_constraint)
+        m_vel = wx.MenuItem(
+            kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_vel']
+        )
+        self.Bind(wx.EVT_MENU, self.OnVelocities, m_vel)
+        kin_menu.AppendItem(m_vel)
+        m_acc = wx.MenuItem(
+            kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_acc']
+        )
+        self.Bind(wx.EVT_MENU, self.OnAccelerations, m_acc)
+        kin_menu.AppendItem(m_acc)
+        m_jpqp = wx.MenuItem(
+            kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_jpqp']
+        )
+        self.Bind(wx.EVT_MENU, self.OnJpqp, m_jpqp)
+        kin_menu.AppendItem(m_jpqp)
+        menu_bar.Append(kin_menu, ui_labels.MAIN_MENU['kin_menu'])
+        # menu item - dynamic
+        dyn_menu = wx.Menu()
+        m_idym = wx.MenuItem(
+            dyn_menu, wx.ID_ANY, ui_labels.DYN_MENU['m_idym']
+        )
+        self.Bind(wx.EVT_MENU, self.OnInverseDynamic, m_idym)
+        dyn_menu.AppendItem(m_idym)
+        m_inertia_matrix = wx.MenuItem(
+            dyn_menu, wx.ID_ANY, ui_labels.DYN_MENU['m_inertia_matrix']
+        )
+        self.Bind(wx.EVT_MENU, self.OnInertiaMatrix, m_inertia_matrix)
+        dyn_menu.AppendItem(m_inertia_matrix)
+        m_h_term = wx.MenuItem(
+            dyn_menu, wx.ID_ANY, ui_labels.DYN_MENU['m_h_term']
+        )
+        self.Bind(wx.EVT_MENU, self.OnCentrCoriolGravTorq, m_h_term)
+        dyn_menu.AppendItem(m_h_term)
+        m_ddym = wx.MenuItem(
+            dyn_menu, wx.ID_ANY, ui_labels.DYN_MENU['m_ddym']
+        )
+        self.Bind(wx.EVT_MENU, self.OnDirectDynamicModel, m_ddym)
+        dyn_menu.AppendItem(m_ddym)
+        menu_bar.Append(dyn_menu, ui_labels.MAIN_MENU['dyn_menu'])
+        # menu item - identification
+        iden_menu = wx.Menu()
+        m_base_inertial_params = wx.MenuItem(
+            iden_menu, wx.ID_ANY, 
+            ui_labels.IDEN_MENU['m_base_inertial_params']
+        )
+        self.Bind(
+            wx.EVT_MENU, self.OnBaseInertialParams, m_base_inertial_params
+        )
+        iden_menu.AppendItem(m_base_inertial_params)
+        m_dyn_iden_model = wx.MenuItem(
+            iden_menu, wx.ID_ANY, ui_labels.IDEN_MENU['m_dyn_iden_model']
+        )
+        self.Bind(wx.EVT_MENU, self.OnDynIdentifModel, m_dyn_iden_model)
+        iden_menu.AppendItem(m_dyn_iden_model)
+        m_energy_iden_model = wx.MenuItem(
+            iden_menu, wx.ID_ANY, 
+            ui_labels.IDEN_MENU['m_energy_iden_model']
+        )
+#        self.Bind(
+#            wx.EVT_MENU, self.OnEnergyIdentifModel, m_energy_iden_model
+#        )
+        iden_menu.AppendItem(m_energy_iden_model)
+        menu_bar.Append(iden_menu, ui_labels.MAIN_MENU['iden_menu'])
+        # menu item - visualisation
+        viz_menu = wx.Menu()
+        m_viz = wx.MenuItem(
+            viz_menu, wx.ID_ANY, ui_labels.VIZ_MENU['m_viz']
+        )
+        self.Bind(wx.EVT_MENU, self.OnVisualisation, m_viz)
+        viz_menu.AppendItem(m_viz)
+        menu_bar.Append(viz_menu, ui_labels.MAIN_MENU['viz_menu'])
+        # set menu bar
+        self.SetMenuBar(menu_bar)
 
-        mnu_bar.Append(iden, "&Identification")
-
-        ##### OPTIMIZER
-        # optMenu = wx.Menu()
-        # jac_matrix = wx.MenuItem(optMenu, wx.ID_ANY, "Jacobian matrix...")
-        # self.Bind(wx.EVT_MENU, self.OnJacobianMatrix, jac_matrix)
-        # optMenu.AppendItem(jac_matrix)
-        #
-        # menuBar.Append(optMenu, "&Optimizer")
-
-        ##### VISUALIZATION
-        vis_mnu = wx.Menu()
-        vis_menu = wx.MenuItem(vis_mnu, wx.ID_ANY, "Visualisation")
-        self.Bind(wx.EVT_MENU, self.OnVisualisation, vis_menu)
-        vis_mnu.AppendItem(vis_menu)
-
-        mnu_bar.Append(vis_mnu, "&Visualization")
-
-        self.SetMenuBar(mnu_bar)
-
-    def OnNew(self, _):
+    def OnNew(self, event):
         dialog = ui_definition.DialogDefinition(
-            ui_labels.MAINWIN['prog_name'], 
+            ui_labels.MAIN_WIN['prog_name'], 
             self.robo.name, self.robo.nl,
             self.robo.nj, self.robo.structure, self.robo.is_mobile
         )
@@ -590,7 +632,7 @@ class MainFrame(wx.Frame):
 
     def OnTransformationMatrix(self, _):
         dialog = ui_geometry.DialogTrans(
-            ui_labels.MAINWIN['prog_name'], self.robo.NF
+            ui_labels.MAIN_WIN['prog_name'], self.robo.NF
         )
         if dialog.ShowModal() == wx.ID_OK:
             frames, trig_subs = dialog.GetValues()
@@ -600,7 +642,7 @@ class MainFrame(wx.Frame):
 
     def OnFastGeometricModel(self, _):
         dialog = ui_geometry.DialogFast(
-            ui_labels.MAINWIN['prog_name'], self.robo.NF
+            ui_labels.MAIN_WIN['prog_name'], self.robo.NF
         )
         if dialog.ShowModal() == wx.ID_OK:
             i, j = dialog.GetValues()
@@ -608,9 +650,9 @@ class MainFrame(wx.Frame):
             self.model_success('fgm')
         dialog.Destroy()
 
-    def OnIGMPaul(self, _):
+    def OnIgmPaul(self, _):
         dialog = ui_geometry.DialogPaul(
-            ui_labels.MAINWIN['prog_name'], 
+            ui_labels.MAIN_WIN['prog_name'], 
             self.robo.endeffectors,
             str(invgeom.EMPTY)
         )
@@ -625,7 +667,7 @@ class MainFrame(wx.Frame):
 
     def OnJacobianMatrix(self, _):
         dialog = ui_kinematics.DialogJacobian(
-            ui_labels.MAINWIN['prog_name'], self.robo
+            ui_labels.MAIN_WIN['prog_name'], self.robo
         )
         if dialog.ShowModal() == wx.ID_OK:
             n, i, j = dialog.get_values()
@@ -635,7 +677,7 @@ class MainFrame(wx.Frame):
 
     def OnDeterminant(self, _):
         dialog = ui_kinematics.DialogDeterminant(
-            ui_labels.MAINWIN['prog_name'], self.robo
+            ui_labels.MAIN_WIN['prog_name'], self.robo
         )
         if dialog.ShowModal() == wx.ID_OK:
             kinematics.jacobian_determinant(self.robo, *dialog.get_values())
@@ -686,22 +728,22 @@ class MainFrame(wx.Frame):
 
     def OnVisualisation(self, _):
         dialog = ui_definition.DialogConversion(
-            ui_labels.MAINWIN['prog_name'], self.robo, self.par_dict
+            ui_labels.MAIN_WIN['prog_name'], self.robo, self.par_dict
         )
         if dialog.has_syms():
             if dialog.ShowModal() == wx.ID_OK:
                 self.par_dict = dialog.get_values()
                 graphics.MainWindow(
-                    ui_labels.MAINWIN['prog_name'], self.robo, 
+                    ui_labels.MAIN_WIN['prog_name'], self.robo, 
                     self.par_dict, self
                 )
         else:
             graphics.MainWindow(
-                ui_labels.MAINWIN['prog_name'], self.robo, 
+                ui_labels.MAIN_WIN['prog_name'], self.robo, 
                 self.par_dict, self
             )
 
-    def OnClose(self, _):
+    def OnClose(self, event):
         if self.changed:
             result = wx.MessageBox(
                 'Do you want to save changes?', 'Please confirm',
@@ -719,7 +761,8 @@ def main():
     style = wx.DEFAULT_FRAME_STYLE ^ wx.MAXIMIZE_BOX ^ wx.RESIZE_BORDER
     frame = MainFrame(
         parent=None, 
-        title=ui_labels.MAINWIN['window_title'], 
+        id=wx.ID_ANY,
+        title=ui_labels.MAIN_WIN['window_title'], 
         size=(-1, -1), 
         style=style
     )
