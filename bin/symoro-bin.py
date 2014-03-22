@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 
-__author__ = 'Izzat'
+"""
+This module create the main window user interface and draws the
+interface on the screen for the SYMORO package. 
+"""
 
 
 import os
@@ -13,18 +16,19 @@ from pysymoro.symoro import Robot, FAIL
 from pysymoro import geometry, kinematics, dynamics, invgeom
 from pysymoro.parfile import readpar, writepar
 from symoroviz import graphics
-from symoroui import ui_definition, ui_geometry, ui_kinematics
+from symoroui import definition as ui_definition
+from symoroui import geometry as ui_geometry
+from symoroui import kinematics as ui_kinematics
 
 
-PROG_NAME = 'OpenSYMORO'
+PROG_NAME = "OpenSYMORO"
 
 
 class MainFrame(wx.Frame):
-    def __init__(self):
-        title = PROG_NAME + " - SYmbolic MOdeling of RObots"
-        size = wx.Size(-1, -1)
-        style = wx.DEFAULT_FRAME_STYLE ^ wx.MAXIMIZE_BOX ^ wx.RESIZE_BORDER
-        wx.Frame.__init__(self, None, title=title, size=size, style=style)
+    """This Frame contains the main window for SYMORO"""
+    def __init__(self, *args, **kwargs):
+        """Constructor : creates the UI and draws it on the screen."""
+        wx.Frame.__init__(self, *args, **kwargs)
         self.Bind(wx.EVT_CLOSE, self.OnClose)
 
         self.create_mnu()
@@ -667,7 +671,14 @@ class MainFrame(wx.Frame):
 
 def main():
     app = wx.App(redirect=False)
-    frame = MainFrame()
+    title = PROG_NAME + " - SYmbolic MOdeling of RObots"
+    style = wx.DEFAULT_FRAME_STYLE ^ wx.MAXIMIZE_BOX ^ wx.RESIZE_BORDER
+    frame = MainFrame(
+        parent=None, 
+        title=title, 
+        size=(-1, -1), 
+        style=style
+    )
     frame.Show()
     app.MainLoop()
 
