@@ -3,7 +3,7 @@
 
 
 """
-This module create the main window user interface and draws the
+This module creates the main window user interface and draws the
 interface on the screen for the SYMORO package. 
 """
 
@@ -19,9 +19,7 @@ from symoroviz import graphics
 from symoroui import definition as ui_definition
 from symoroui import geometry as ui_geometry
 from symoroui import kinematics as ui_kinematics
-
-
-PROG_NAME = "OpenSYMORO"
+from symoroui import labels as ui_labels
 
 
 class MainFrame(wx.Frame):
@@ -430,7 +428,9 @@ class MainFrame(wx.Frame):
         ##### IDENTIFICATION
         iden = wx.Menu()
         base_inert = wx.MenuItem(
-            iden, wx.ID_ANY, 'Base inertial parameters (symbolic or numeric)')
+            iden, wx.ID_ANY, 
+            'Base inertial parameters (symbolic or numeric)'
+        )
         self.Bind(wx.EVT_MENU, self.OnBaseInertialParams, base_inert)
         iden.AppendItem(base_inert)
         dyn_iden_model = wx.MenuItem(iden, wx.ID_ANY,
@@ -460,8 +460,10 @@ class MainFrame(wx.Frame):
 
     def OnNew(self, _):
         dialog = ui_definition.DialogDefinition(
-            PROG_NAME, self.robo.name, self.robo.nl,
-            self.robo.nj, self.robo.structure, self.robo.is_mobile)
+            ui_labels.MAINWIN['prog_name'], 
+            self.robo.name, self.robo.nl,
+            self.robo.nj, self.robo.structure, self.robo.is_mobile
+        )
         if dialog.ShowModal() == wx.ID_OK:
             result = dialog.get_values()
             new_robo = Robot(*result['init_pars'])
@@ -502,16 +504,28 @@ class MainFrame(wx.Frame):
         dialog.Destroy()
 
     def message_error(self, message):
-        wx.MessageDialog(None, message,
-                         'Error', wx.OK | wx.ICON_ERROR).ShowModal()
+        wx.MessageDialog(
+            None, 
+            message,
+            'Error', 
+            wx.OK | wx.ICON_ERROR
+        ).ShowModal()
 
     def message_warning(self, message):
-        wx.MessageDialog(None, message,
-                         'Error', wx.OK | wx.ICON_WARNING).ShowModal()
+        wx.MessageDialog(
+            None, 
+            message,
+            'Error', 
+            wx.OK | wx.ICON_WARNING
+        ).ShowModal()
 
     def message_info(self, message):
-        wx.MessageDialog(None, message, 'Information',
-                         wx.OK | wx.ICON_INFORMATION).ShowModal()
+        wx.MessageDialog(
+            None, 
+            message, 
+            'Information',
+            wx.OK | wx.ICON_INFORMATION
+        ).ShowModal()
 
     def model_success(self, model_name):
         msg = 'The model has been saved in %s\\%s_%s.txt' % \
@@ -520,26 +534,36 @@ class MainFrame(wx.Frame):
 
     def OnOpen(self, _):
         if self.changed:
-            dialog_res = wx.MessageBox('Do you want to save changes?',
-                                       'Please confirm',
-                                       wx.ICON_QUESTION |
-                                       wx.YES_NO | wx.CANCEL,
-                                       self)
+            dialog_res = wx.MessageBox(
+                'Do you want to save changes?',
+                'Please confirm',
+                wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL,
+                self
+            )
             if dialog_res == wx.CANCEL:
                 return
             elif dialog_res == wx.YES:
                 if self.OnSave(None) == FAIL:
                     return
-        dialog = wx.FileDialog(self, message="Choose PAR file", style=wx.OPEN,
-                               wildcard='*.par', defaultFile='*.par')
+        dialog = wx.FileDialog(
+            self, 
+            message="Choose PAR file", 
+            style=wx.OPEN,
+            wildcard='*.par', 
+            defaultFile='*.par'
+        )
         if dialog.ShowModal() == wx.ID_OK:
-            new_robo, flag = readpar(dialog.GetDirectory(),
-                                     dialog.GetFilename()[:-4])
+            new_robo, flag = readpar(
+                dialog.GetDirectory(),
+                dialog.GetFilename()[:-4]
+            )
             if new_robo is None:
                 self.message_error('File could not be read!')
             else:
                 if flag == FAIL:
-                    self.message_warning('While reading file an error occured.')
+                    self.message_warning(
+                        "While reading file an error occured."
+                    )
                 self.robo = new_robo
                 self.feed_data()
 
@@ -548,10 +572,13 @@ class MainFrame(wx.Frame):
         self.changed = False
 
     def OnSaveAs(self, _):
-        dialog = wx.FileDialog(self, message="Save PAR file",
-                               defaultFile=self.robo.name+'.par',
-                               defaultDir=self.robo.directory,
-                               wildcard='*.par')
+        dialog = wx.FileDialog(
+            self, 
+            message="Save PAR file",
+            defaultFile=self.robo.name+'.par',
+            defaultDir=self.robo.directory,
+            wildcard='*.par'
+        )
         if dialog.ShowModal() == wx.ID_CANCEL:
             return FAIL
 
@@ -562,7 +589,9 @@ class MainFrame(wx.Frame):
         self.changed = False
 
     def OnTransformationMatrix(self, _):
-        dialog = ui_geometry.DialogTrans(PROG_NAME, self.robo.NF)
+        dialog = ui_geometry.DialogTrans(
+            ui_labels.MAINWIN['prog_name'], self.robo.NF
+        )
         if dialog.ShowModal() == wx.ID_OK:
             frames, trig_subs = dialog.GetValues()
             geometry.direct_geometric(self.robo, frames, trig_subs)
@@ -570,7 +599,9 @@ class MainFrame(wx.Frame):
         dialog.Destroy()
 
     def OnFastGeometricModel(self, _):
-        dialog = ui_geometry.DialogFast(PROG_NAME, self.robo.NF)
+        dialog = ui_geometry.DialogFast(
+            ui_labels.MAINWIN['prog_name'], self.robo.NF
+        )
         if dialog.ShowModal() == wx.ID_OK:
             i, j = dialog.GetValues()
             geometry.direct_geometric_fast(self.robo, i, j)
@@ -578,8 +609,11 @@ class MainFrame(wx.Frame):
         dialog.Destroy()
 
     def OnIGMPaul(self, _):
-        dialog = ui_geometry.DialogPaul(PROG_NAME, self.robo.endeffectors,
-                                        str(invgeom.EMPTY))
+        dialog = ui_geometry.DialogPaul(
+            ui_labels.MAINWIN['prog_name'], 
+            self.robo.endeffectors,
+            str(invgeom.EMPTY)
+        )
         if dialog.ShowModal() == wx.ID_OK:
             lst_T, n = dialog.get_values()
             invgeom.igm_Paul(self.robo, lst_T, n)
@@ -590,7 +624,9 @@ class MainFrame(wx.Frame):
         pass
 
     def OnJacobianMatrix(self, _):
-        dialog = ui_kinematics.DialogJacobian(PROG_NAME, self.robo)
+        dialog = ui_kinematics.DialogJacobian(
+            ui_labels.MAINWIN['prog_name'], self.robo
+        )
         if dialog.ShowModal() == wx.ID_OK:
             n, i, j = dialog.get_values()
             kinematics.jacobian(self.robo, n, i, j)
@@ -598,7 +634,9 @@ class MainFrame(wx.Frame):
         dialog.Destroy()
 
     def OnDeterminant(self, _):
-        dialog = ui_kinematics.DialogDeterminant(PROG_NAME, self.robo)
+        dialog = ui_kinematics.DialogDeterminant(
+            ui_labels.MAINWIN['prog_name'], self.robo
+        )
         if dialog.ShowModal() == wx.ID_OK:
             kinematics.jacobian_determinant(self.robo, *dialog.get_values())
             self.model_success('det')
@@ -647,14 +685,21 @@ class MainFrame(wx.Frame):
         self.model_success('dim')
 
     def OnVisualisation(self, _):
-        dialog = ui_definition.DialogConversion(PROG_NAME,
-                                                self.robo, self.par_dict)
+        dialog = ui_definition.DialogConversion(
+            ui_labels.MAINWIN['prog_name'], self.robo, self.par_dict
+        )
         if dialog.has_syms():
             if dialog.ShowModal() == wx.ID_OK:
                 self.par_dict = dialog.get_values()
-                graphics.MainWindow(PROG_NAME, self.robo, self.par_dict, self)
+                graphics.MainWindow(
+                    ui_labels.MAINWIN['prog_name'], self.robo, 
+                    self.par_dict, self
+                )
         else:
-            graphics.MainWindow(PROG_NAME, self.robo, self.par_dict, self)
+            graphics.MainWindow(
+                ui_labels.MAINWIN['prog_name'], self.robo, 
+                self.par_dict, self
+            )
 
     def OnClose(self, _):
         if self.changed:
@@ -671,11 +716,10 @@ class MainFrame(wx.Frame):
 
 def main():
     app = wx.App(redirect=False)
-    title = PROG_NAME + " - SYmbolic MOdeling of RObots"
     style = wx.DEFAULT_FRAME_STYLE ^ wx.MAXIMIZE_BOX ^ wx.RESIZE_BORDER
     frame = MainFrame(
         parent=None, 
-        title=title, 
+        title=ui_labels.MAINWIN['window_title'], 
         size=(-1, -1), 
         style=style
     )
