@@ -11,10 +11,54 @@ same place.
 """
 
 
+from collections import namedtuple
+from collections import OrderedDict
+
+
+# main window
+
 MAIN_WIN = dict(
-    prog_name = "OpenSYMORO",
-    window_title = "OpenSYMORO - SYmbolic MOdelling of RObots"
+    prog_name = "SYMORO",
+    window_title = "SYMORO - SYmbolic MOdelling of RObots"
 )
+
+
+# interface contents
+
+BOX_TITLES = dict(
+    robot_des = "Robot Description",
+    robot_type = "Robot Type",
+    gravity = "Gravity Components",
+    location = "Robot Location",
+    geom_params = "Geometric Parameters",
+    dyn_params = "Dynamic Parameters and External Forces",
+    vel_acc_base = "Velocity and Acceleration of the base",
+    joint_vel_acc = "Joint Velocity and Acceleration"
+)
+
+FieldEntry = namedtuple('FieldEntry', ['label', 'name'])
+
+ROBOT_TYPE = dict(
+    name = FieldEntry('Name of the robot:', 'name'),
+    num_links = FieldEntry('Number of moving links:', 'NL'),
+    num_joints = FieldEntry('Number of joints:', 'NJ'), 
+    num_frames = FieldEntry('Number of frames:', 'NF'),
+    structure = FieldEntry('Type of structure:', 'type'), 
+    is_mobile = FieldEntry('Is Mobile:', 'mobile'),
+    num_loops = FieldEntry('Number of closed loops:', 'loops')
+)
+
+GRAVITY_CMPNTS = OrderedDict(
+    sorted(
+        dict(
+            gx = FieldEntry('GX', 'GX'),
+            gy = FieldEntry('GY', 'GY'),
+            gz = FieldEntry('GZ', 'GZ')
+        ).items(), key=lambda t: t[0]
+    )
+)
+
+# menu bar
 
 MAIN_MENU = dict(
     file_menu = "&File",
@@ -62,7 +106,8 @@ FILE_MENU = dict(
     m_open = "&Open",
     m_save = "&Save",
     m_save_as = "Save &As",
-    m_pref = "Preferences\t(unavailable)",
+    m_pref = "Preferences -- (unavailable)",
     m_exit = "E&xit"
 )
+
 

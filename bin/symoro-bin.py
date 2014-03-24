@@ -40,12 +40,14 @@ class MainFrame(wx.Frame):
         self.par_dict = {}
         # setup panel and sizer for content
         self.panel = wx.Panel(self)
-        self.main_sizer = wx.BoxSizer(wx.VERTICAL)
+        self.szr_topmost = wx.BoxSizer(wx.VERTICAL)
         self.create_ui()
-        self.panel.SetSizerAndFit(self.main_sizer)
+        self.panel.SetSizerAndFit(self.szr_topmost)
         self.Fit()
         # update fields with data
         self.feed_data()
+        # set status bar to Ready
+        self.statusbar.SetStatusText("Ready")
 
     def params_grid(self, grid, rows, elems, handler=None, start_i=0, size=60):
         for i, name in enumerate(elems):
@@ -61,77 +63,114 @@ class MainFrame(wx.Frame):
                      flag=wx.ALL, border=2)
 
     def create_ui(self):
-        descr_sizer = wx.StaticBoxSizer(
-            wx.StaticBox(self.panel, label='Robot Description'), wx.HORIZONTAL)
-        sizer1 = wx.BoxSizer(wx.VERTICAL)
-        descr_sizer.AddSpacer(3)
-        descr_sizer.Add(sizer1, 0, wx.ALL | wx.EXPAND, 5)
-        sizer2 = wx.BoxSizer(wx.VERTICAL)
-        descr_sizer.Add(sizer2, 0, wx.ALL | wx.EXPAND, 5)
-        self.main_sizer.Add(descr_sizer, 0, wx.ALL, 10)
-
-        # Left Side of main window
-        robot_type_sizer = wx.StaticBoxSizer(
-            wx.StaticBox(self.panel, label='Robot Type'), wx.HORIZONTAL)
-        grid = wx.GridBagSizer(12, 10)
-
-        gen_info = [('Name of the robot:', 'name'),
-                    ('Number of moving links:', 'NL'),
-                    ('Number of joints:', 'NJ'), ('Number of frames:', 'NF'),
-                    ('Type of structure:', 'type'), ('Is Mobile:', 'mobile'),
-                    ('Number of closed loops:', 'loops')]
-
-        for i, (lab, name) in enumerate(gen_info):
-            label = wx.StaticText(self.panel, label=lab)
-            grid.Add(label, pos=(i, 0), flag=wx.LEFT, border=10)
-            label = wx.StaticText(self.panel, size=(125, -1), name=name)
-            self.widgets[name] = label
-            grid.Add(label, pos=(i, 1), flag=wx.LEFT | wx.RIGHT, border=10)
-
-        robot_type_sizer.Add(grid, 0, wx.TOP | wx.BOTTOM | wx.EXPAND, 6)
-        sizer1.Add(robot_type_sizer)
-
-        ##### Gravity components
-        sizer1.AddSpacer(8)
-        sbs_gravity = wx.StaticBoxSizer(
-            wx.StaticBox(self.panel, label='Gravity components'), wx.HORIZONTAL)
-        for iden, name in enumerate(['GX', 'GY', 'GZ']):
-            sbs_gravity.AddSpacer(5)
-            sbs_gravity.Add(wx.StaticText(self.panel, label=name), 0, wx.ALL, 4)
-            text_box = wx.TextCtrl(self.panel, name=name, size=(60, -1), id=iden)
-            self.widgets[name] = text_box
-            text_box.Bind(wx.EVT_KILL_FOCUS, self.OnBaseTwistChanged)
-            sbs_gravity.Add(text_box, 0, wx.ALL | wx.ALIGN_LEFT, 2)
-        sizer1.Add(sbs_gravity, 0, wx.ALL | wx.EXPAND, 0)
-
-        ##### Location of the robot
-        sizer1.AddSpacer(8)
-        sbs_location = wx.StaticBoxSizer(
-            wx.StaticBox(self.panel, label='Location of the robot'), wx.HORIZONTAL)
-        sizer1.Add(sbs_location, 0, wx.ALL | wx.EXPAND, 0)
-        loc_tbl = wx.GridBagSizer(1, 1)
+        """Method to create the contents of the user interface"""
+        # main box - robot description box
+        szr_robot_des = wx.StaticBoxSizer(
+            wx.StaticBox(
+                self.panel, label=ui_labels.BOX_TITLES['robot_des']
+            ), wx.HORIZONTAL
+        )
+        szr_robot_des.AddSpacer(3)
+        szr_left_col = wx.BoxSizer(wx.VERTICAL)
+        szr_right_col = wx.BoxSizer(wx.VERTICAL)
+        szr_robot_des.Add(szr_left_col, 0, wx.ALL | wx.EXPAND, 5)
+        szr_robot_des.Add(szr_right_col, 0, wx.ALL | wx.EXPAND, 5)
+        self.szr_topmost.Add(szr_robot_des, 0, wx.ALL, 10)
+        # left col - robot type box
+        szr_robot_type = wx.StaticBoxSizer(
+            wx.StaticBox(
+                self.panel, label=ui_labels.BOX_TITLES['robot_type']
+            ), wx.HORIZONTAL
+        )
+        szr_grd_robot_type = wx.GridBagSizer(12, 10)
+        for idx, key in enumerate(ui_labels.ROBOT_TYPE):
+            label = ui_labels.ROBOT_TYPE[key].label
+            name = ui_labels.ROBOT_TYPE[key].name
+            self.widgets[name] = wx.StaticText(
+                self.panel, size=(125, -1),
+                name=ui_labels.ROBOT_TYPE[key].name
+            )
+            szr_grd_robot_type.Add(
+                wx.StaticText(self.panel, label=label), 
+                pos=(idx, 0), flag=wx.LEFT, border=10
+            )
+            szr_grd_robot_type.Add(
+                self.widgets[name], pos=(idx, 1), 
+                flag=wx.LEFT | wx.RIGHT, border=10
+            )
+        szr_robot_type.Add(
+            szr_grd_robot_type, 0, wx.TOP | wx.BOTTOM | wx.EXPAND, 6
+        )
+        szr_left_col.Add(szr_robot_type)
+        szr_left_col.AddSpacer(8)
+        # left col - gravity components box
+        szr_gravity = wx.StaticBoxSizer(
+            wx.StaticBox(
+                self.panel, label=ui_labels.BOX_TITLES['gravity']
+            ), wx.HORIZONTAL
+        )
+        for idx, key in enumerate(ui_labels.GRAVITY_CMPNTS):
+            label = ui_labels.GRAVITY_CMPNTS[key].label
+            name = ui_labels.GRAVITY_CMPNTS[key].name
+            txt_gravity = wx.TextCtrl(
+                self.panel, name=name, size=(60, -1)
+            )
+            self.widgets[name] = txt_gravity
+            szr_gravity.AddSpacer(5)
+            txt_gravity.Bind(wx.EVT_KILL_FOCUS, self.OnBaseTwistChanged)
+            szr_gravity.Add(
+                wx.StaticText(self.panel, label=label), 0, wx.ALL, 4
+            )
+            szr_gravity.Add(txt_gravity, 0, wx.ALL | wx.ALIGN_LEFT, 2)
+        szr_left_col.Add(szr_gravity, 0, wx.ALL | wx.EXPAND, 0)
+        szr_left_col.AddSpacer(8)
+        # left col - location of the robot box
+        # NOTE: the columns of the T matrix are filled first
+        szr_location = wx.StaticBoxSizer(
+            wx.StaticBox(
+                self.panel, label=ui_labels.BOX_TITLES['location']
+            ), wx.HORIZONTAL
+        )
+        szr_grd_loc = wx.GridBagSizer(1, 1)
         for i in range(4):
-            ver_lbl = wx.StaticText(self.panel, label='Z' + str(i + 1) + ':  ')
-            hor_lbl = wx.StaticText(self.panel, label='Z - ' + str(i + 1))
-            botLab = wx.StaticText(self.panel, label='  ' + str(0 if i < 3 else 1))
-            loc_tbl.Add(ver_lbl, pos=(i + 1, 0), flag=wx.RIGHT, border=3)
-            loc_tbl.Add(hor_lbl, pos=(0, i + 1),
-                         flag=wx.ALIGN_CENTER_HORIZONTAL, border=3)
-            loc_tbl.Add(botLab, pos=(4, i+1), flag=wx.ALIGN_LEFT, border=3)
             for j in range(3):
-                index = j*4+i
-                name = 'Z'+str(index)
-                text_box = wx.TextCtrl(self.panel, name=name,
-                                      size=(60, -1), id=index)
-                self.widgets[name] = text_box
-                text_box.Bind(wx.EVT_KILL_FOCUS, self.OnZParamChanged)
-                loc_tbl.Add(text_box, pos=(j + 1, i + 1),
-                             flag=wx.ALIGN_LEFT, border=5)
-        sbs_location.Add(loc_tbl, 0, wx.ALL | wx.EXPAND, 5)
-
-        ##### Geometric Params
+                idx = j*4+i
+                name = 'Z'+str(idx)
+                txt_z_element = wx.TextCtrl(
+                    self.panel, name=name, size=(60, -1)
+                )
+                self.widgets[name] = txt_z_element
+                txt_z_element.Bind(
+                    wx.EVT_KILL_FOCUS, self.OnZParamChanged
+                )
+                szr_grd_loc.Add(
+                    txt_z_element, pos=(j + 1, i + 1), 
+                    flag=wx.ALIGN_LEFT, border=5
+                )
+            lbl_row = wx.StaticText(self.panel, label='Z'+str(i + 1))
+            lbl_col = wx.StaticText(self.panel, label='Z'+str(i + 1))
+            lbl_last_row = wx.StaticText(
+                self.panel, label='  '+str(0 if i < 3 else 1)
+            )
+            szr_grd_loc.Add(
+                lbl_row, pos=(i+1, 0), flag=wx.RIGHT, border=3
+            )
+            szr_grd_loc.Add(
+                lbl_col, pos=(0, i+1), 
+                flag=wx.ALIGN_CENTER_HORIZONTAL, border=3
+            )
+            szr_grd_loc.Add(
+                lbl_last_row, pos=(4, i+1), 
+                flag=wx.ALIGN_LEFT, border=3
+            )
+        szr_location.Add(szr_grd_loc, 0, wx.ALL | wx.EXPAND, 5)
+        szr_left_col.Add(szr_location, 0, wx.ALL | wx.EXPAND, 0)
+        # right col - geometric params box
         sbs = wx.StaticBoxSizer(
-            wx.StaticBox(self.panel, label='Geometric Params'), wx.HORIZONTAL)
+            wx.StaticBox(
+                self.panel, label=ui_labels.BOX_TITLES['geom_params']
+            ), wx.HORIZONTAL
+        )
         grid = wx.GridBagSizer(0, 5)
         ver_sizer = wx.BoxSizer(wx.VERTICAL)
         ver_sizer.Add(wx.StaticText(self.panel, label='Frame'),
@@ -153,19 +192,18 @@ class MainFrame(wx.Frame):
             combo_box.Bind(wx.EVT_COMBOBOX, self.OnGeoParamChanged)
             hor_box.Add(combo_box, 0, wx.ALL | wx.ALIGN_LEFT, 1)
             grid.Add(hor_box, pos=(i, 1), flag=wx.ALL, border=2)
-
         grid.Add(ver_sizer, pos=(0, 0), flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
                  span=(3, 1), border=5)
-
         self.params_grid(grid, 2, self.robo.get_geom_head()[4:],
                                    self.OnGeoParamChanged, 2, 111)
-
         sbs.Add(grid)
-        sizer2.Add(sbs, 0, wx.ALL | wx.EXPAND, 0)
-
-        ##### Dynamic Params and external forces
-        lbl = 'Dynamic Params and external forces'
-        sbs = wx.StaticBoxSizer(wx.StaticBox(self.panel, label=lbl), wx.HORIZONTAL)
+        szr_right_col.Add(sbs, 0, wx.ALL | wx.EXPAND, 0)
+        # right col - dynamic params and external forces box
+        sbs = wx.StaticBoxSizer(
+            wx.StaticBox(
+                self.panel, label=ui_labels.BOX_TITLES['dyn_params']
+            ), wx.HORIZONTAL
+        )
         grid = wx.GridBagSizer(0, 0)
         ver_sizer = wx.BoxSizer(wx.VERTICAL)
         ver_sizer.Add(wx.StaticText(self.panel, label='Link'),
@@ -177,35 +215,35 @@ class MainFrame(wx.Frame):
         ver_sizer.Add(combo_box)
         grid.Add(ver_sizer, pos=(0, 0), flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
                  span=(5, 1), border=5)
-
         params = self.robo.get_dynam_head()[1:]
         params += self.robo.get_ext_dynam_head()[1:-3]
         self.params_grid(grid, 4, params, self.OnDynParamChanged, 1)
-
         sbs.Add(grid)
         sbs.AddSpacer(4)
-        sizer2.AddSpacer(8)
-        sizer2.Add(sbs, 0, wx.ALL | wx.EXPAND, 0)
-
-        ##### Speed and acceleration of the base
-        lbl = 'Speed and acceleration of the base'
-        sbs = wx.StaticBoxSizer(wx.StaticBox(self.panel, label=lbl), wx.HORIZONTAL)
+        szr_right_col.AddSpacer(8)
+        szr_right_col.Add(sbs, 0, wx.ALL | wx.EXPAND, 0)
+        # right col - velocity and acceleration of the base box
+        sbs = wx.StaticBoxSizer(
+            wx.StaticBox(
+                self.panel, label=ui_labels.BOX_TITLES['vel_acc_base']
+            ), wx.HORIZONTAL
+        )
         grid = wx.GridBagSizer(0, 0)
         sbs.Add(grid)
         hor_sizer = wx.BoxSizer(wx.HORIZONTAL)
         hor_sizer.Add(sbs)
         hor_sizer.AddSpacer(8)
-
         params = []
         for name in self.robo.get_base_vel_head()[1:-1]:
             for c in ['X', 'Y', 'Z']:
                 params.append(name + c)
-
         self.params_grid(grid, 3, params, self.OnBaseTwistChanged, 0)
-
-        ##### Joints velocity and acceleration
-        lbl = 'Joint velocity and acceleration'
-        sbs2 = wx.StaticBoxSizer(wx.StaticBox(self.panel, label=lbl), wx.VERTICAL)
+        # right col - joint velocity and acceleration box
+        sbs2 = wx.StaticBoxSizer(
+            wx.StaticBox(
+                self.panel, label=ui_labels.BOX_TITLES['joint_vel_acc']
+            ), wx.HORIZONTAL
+        )
         sbs2.AddSpacer(5)
         grid = wx.GridBagSizer(5, 5)
         sbs2.Add(grid)
@@ -225,12 +263,11 @@ class MainFrame(wx.Frame):
                 self.widgets[name] = text_box
                 text_box.Bind(wx.EVT_KILL_FOCUS, self.OnSpeedChanged)
                 grid.Add(text_box, pos=(i, 1))
-
         hor_sizer.Add(sbs2, 1, wx.ALL | wx.EXPAND, 0)
-        sizer2.AddSpacer(8)
-        sizer2.Add(hor_sizer, 1, wx.ALL | wx.EXPAND, 0)
-        self.main_sizer.AddSpacer(10)
-        #sizer2.Add(sbs, 0, wx.ALL | wx.EXPAND, 0)
+        szr_right_col.AddSpacer(8)
+        szr_right_col.Add(hor_sizer, 1, wx.ALL | wx.EXPAND, 0)
+        self.szr_topmost.AddSpacer(10)
+        #szr_right_col.Add(sbs, 0, wx.ALL | wx.EXPAND, 0)
 
     def Change(self, index, name, event_object):
         prev_value = str(self.robo.get_val(index, name))
