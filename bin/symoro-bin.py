@@ -49,17 +49,53 @@ class MainFrame(wx.Frame):
         # set status bar to Ready
         self.statusbar.SetStatusText("Ready")
 
-    def params_grid(self, grid, rows, elems, handler=None, start_i=0, size=60):
-        for i, name in enumerate(elems):
+    def params_in_grid(
+            self, szr_grd, elements, rows, cols, elplace,
+            handler=None, start=0, width=60):
+        """Method to display a set of fields in a grid."""
+        for idx, key in enumerate(elements):
+            label = elements[key].label
+            name = elements[key].name
+            control = elements[key].control
+            if control is 'cmb':
+                ctrl = wx.ComboBox(
+                    self.panel, style=wx.CB_READONLY, 
+                    size=(width, -1), name=name
+                )
+                ctrl.Bind(wx.EVT_COMBOBOX, handler)
+            else:
+                ctrl = wx.TextCtrl(
+                    self.panel, size=(width, -1), name=name
+                )
+                ctrl.Bind(wx.EVT_KILL_FOCUS, handler)
+            self.widgets[name] = ctrl
+            szr_ele = wx.BoxSizer(wx.HORIZONTAL)
+            szr_ele.Add(
+                wx.StaticText(
+                    self.panel, label=label, style=wx.ALIGN_RIGHT
+                ), proportion=0, flag=wx.ALL | wx.ALIGN_RIGHT, border=5
+            )
+            szr_ele.Add(
+                ctrl, proportion=0, 
+                flag=wx.ALL | wx.ALIGN_LEFT, border=1
+            )
+            szr_grd.Add(
+                szr_ele, pos=(elplace[idx][0], elplace[idx][1]), 
+                flag=wx.ALL | wx.ALIGN_RIGHT, border=2
+            )
+
+    def params_grid(self, grid, elements, cols, handler=None, start_i=0, size=60):
+        for i, name in enumerate(elements):
             horBox = wx.BoxSizer(wx.HORIZONTAL)
             horBox.Add(wx.StaticText(self.panel, label=name,
                                      size=(40, -1), style=wx.ALIGN_RIGHT),
                        0, wx.ALL | wx.ALIGN_RIGHT, 5)
-            textBox = wx.TextCtrl(self.panel, size=(size, -1), name=name, id=i%rows)
+            textBox = wx.TextCtrl(self.panel, size=(size, -1),
+                    name=name, id=i%cols)
             self.widgets[name] = textBox
             textBox.Bind(wx.EVT_KILL_FOCUS, handler)
             horBox.Add(textBox, 0, wx.ALL | wx.ALIGN_LEFT, 1)
-            grid.Add(horBox, pos=(i/rows, i % rows + start_i),
+            grid.Add(horBox, pos=(i/cols, i % cols + start_i),
                      flag=wx.ALL, border=2)
 
     def create_ui(self):
@@ -166,38 +202,22 @@ class MainFrame(wx.Frame):
         szr_location.Add(szr_grd_loc, 0, wx.ALL | wx.EXPAND, 5)
         szr_left_col.Add(szr_location, 0, wx.ALL | wx.EXPAND, 0)
         # right col - geometric params box
-        sbs = wx.StaticBoxSizer(
+        szr_geom_params = wx.StaticBoxSizer(
             wx.StaticBox(
                 self.panel, label=ui_labels.BOX_TITLES['geom_params']
             ), wx.HORIZONTAL
         )
-        grid = wx.GridBagSizer(0, 5)
-        ver_sizer = wx.BoxSizer(wx.VERTICAL)
-        ver_sizer.Add(wx.StaticText(self.panel, label='Frame'),
-                    0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 5)
-        combo_box = wx.ComboBox(self.panel, style=wx.CB_READONLY,
-                               size=(60, -1), name='frame')
-        self.widgets['frame'] = combo_box
-        combo_box.Bind(wx.EVT_COMBOBOX, self.OnFrameChanged)
-        ver_sizer.Add(combo_box)
-        for i, name in enumerate(self.robo.get_geom_head()[1:4]):
-            hor_box = wx.BoxSizer(wx.HORIZONTAL)
-            label = wx.StaticText(self.panel, label=name, size=(40, -1),
-                                  style=wx.ALIGN_RIGHT)
-            self.widgets[name] = label
-            hor_box.Add(label, 0, wx.ALL | wx.ALIGN_RIGHT, 5)
-            combo_box = wx.ComboBox(self.panel, style=wx.CB_READONLY,
-                                   size=(60, -1), name=name)
-            self.widgets[name] = combo_box
-            combo_box.Bind(wx.EVT_COMBOBOX, self.OnGeoParamChanged)
-            hor_box.Add(combo_box, 0, wx.ALL | wx.ALIGN_LEFT, 1)
-            grid.Add(hor_box, pos=(i, 1), flag=wx.ALL, border=2)
-        grid.Add(ver_sizer, pos=(0, 0), flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL,
-                 span=(3, 1), border=5)
-        self.params_grid(grid, 2, self.robo.get_geom_head()[4:],
-                                   self.OnGeoParamChanged, 2, 111)
-        sbs.Add(grid)
-        szr_right_col.Add(sbs, 0, wx.ALL | wx.EXPAND, 0)
+        szr_grd_geom = wx.GridBagSizer(0, 5)
+        self.params_in_grid(
+            szr_grd_geom, elements=ui_labels.GEOM_PARAMS, 
+            rows=2, cols=5, handler=self.OnGeoParamChanged, 
+            elplace=[
+                (0,0), (1,0), (0,1), (1,1), (0,2), (1,2), 
+                (0,3), (1,3), (0,4), (1,4)
+            ], start=0, width=70
+        )
+        szr_geom_params.Add(szr_grd_geom)
+        szr_right_col.Add(szr_geom_params, 0, wx.ALL | wx.EXPAND, 0)
         # right col - dynamic params and external forces box
         sbs = wx.StaticBoxSizer(
             wx.StaticBox(
@@ -217,7 +237,7 @@ class MainFrame(wx.Frame):
                  span=(5, 1), border=5)
         params = self.robo.get_dynam_head()[1:]
         params += self.robo.get_ext_dynam_head()[1:-3]
-        self.params_grid(grid, 4, params, self.OnDynParamChanged, 1)
+        self.params_grid(grid, params, 4, self.OnDynParamChanged, 1)
         sbs.Add(grid)
         sbs.AddSpacer(4)
         szr_right_col.AddSpacer(8)
@@ -237,7 +257,7 @@ class MainFrame(wx.Frame):
         for name in self.robo.get_base_vel_head()[1:-1]:
             for c in ['X', 'Y', 'Z']:
                 params.append(name + c)
-        self.params_grid(grid, 3, params, self.OnBaseTwistChanged, 0)
+        self.params_grid(grid, params, 3, self.OnBaseTwistChanged, 0)
         # right col - joint velocity and acceleration box
         sbs2 = wx.StaticBoxSizer(
             wx.StaticBox(

@@ -36,27 +36,36 @@ BOX_TITLES = dict(
     joint_vel_acc = "Joint Velocity and Acceleration"
 )
 
-FieldEntry = namedtuple('FieldEntry', ['label', 'name'])
+FieldEntry = namedtuple('FieldEntry', ['label', 'name', 'control'])
 
-ROBOT_TYPE = dict(
-    name = FieldEntry('Name of the robot:', 'name'),
-    num_links = FieldEntry('Number of moving links:', 'NL'),
-    num_joints = FieldEntry('Number of joints:', 'NJ'), 
-    num_frames = FieldEntry('Number of frames:', 'NF'),
-    structure = FieldEntry('Type of structure:', 'type'), 
-    is_mobile = FieldEntry('Is Mobile:', 'mobile'),
-    num_loops = FieldEntry('Number of closed loops:', 'loops')
-)
+GEOM_PARAMS = OrderedDict([
+    ('frame', FieldEntry('Frame', 'frame', 'cmb')),
+    ('ant', FieldEntry('ant', 'ant', 'cmb')),
+    ('sigma', FieldEntry('sigma', 'sigma', 'cmb')),
+    ('mu', FieldEntry('mu', 'mu', 'cmb')),
+    ('gamma', FieldEntry('gamma', 'gamma', 'txt')),
+    ('b', FieldEntry('b', 'b', 'txt')),
+    ('alpha', FieldEntry('alpha', 'alpha', 'txt')),
+    ('d', FieldEntry('d', 'd', 'txt')),
+    ('theta', FieldEntry('theta', 'theta', 'txt')),
+    ('r', FieldEntry('r', 'r', 'txt'))
+])
 
-GRAVITY_CMPNTS = OrderedDict(
-    sorted(
-        dict(
-            gx = FieldEntry('GX', 'GX'),
-            gy = FieldEntry('GY', 'GY'),
-            gz = FieldEntry('GZ', 'GZ')
-        ).items(), key=lambda t: t[0]
-    )
-)
+GRAVITY_CMPNTS = OrderedDict([
+    ('gx', FieldEntry('GX', 'GX', 'txt')),
+    ('gy', FieldEntry('GY', 'GY', 'txt')),
+    ('gz', FieldEntry('GZ', 'GZ', 'txt'))
+])
+
+ROBOT_TYPE = OrderedDict([
+    ('name', FieldEntry('Name of the robot:', 'name', 'lbl')),
+    ('num_links', FieldEntry('Number of moving links:', 'NL', 'lbl')),
+    ('num_joints', FieldEntry('Number of joints:', 'NJ', 'lbl')), 
+    ('num_frames', FieldEntry('Number of frames:', 'NF', 'lbl')),
+    ('structure', FieldEntry('Type of structure:', 'type', 'lbl')),
+    ('is_mobile', FieldEntry('Is Mobile:', 'mobile', 'lbl')),
+    ('num_loops', FieldEntry('Number of closed loops:', 'loops', 'lbl'))
+])
 
 # menu bar
 
