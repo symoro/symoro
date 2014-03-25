@@ -16,15 +16,12 @@ from collections import OrderedDict
 
 
 # main window
-
 MAIN_WIN = dict(
     prog_name = "SYMORO",
     window_title = "SYMORO - SYmbolic MOdelling of RObots"
 )
 
-
 # interface contents
-
 BOX_TITLES = dict(
     robot_des = "Robot Description",
     robot_type = "Robot Type",
@@ -32,12 +29,73 @@ BOX_TITLES = dict(
     location = "Robot Location",
     geom_params = "Geometric Parameters",
     dyn_params = "Dynamic Parameters and External Forces",
-    vel_acc_base = "Velocity and Acceleration of the base",
+    base_vel_acc = "Velocity and Acceleration of the base",
     joint_vel_acc = "Joint Velocity and Acceleration"
 )
-
+# named tuple to hold the content field entries
 FieldEntry = namedtuple('FieldEntry', ['label', 'name', 'control'])
-
+# joint velocity and acceleration params
+JOINT_VEL_ACC = OrderedDict([
+    ('joint', FieldEntry('Joint', 'joint', 'cmb')),
+    ('qp', FieldEntry('QP', 'QP', 'txt')),
+    ('qdp', FieldEntry('QDP', 'QDP', 'txt')),
+    ('gam', FieldEntry('GAM', 'GAM', 'txt')),
+])
+# base velocity and acceleration params
+BASE_VEL_ACC = OrderedDict([
+    ('wx', FieldEntry('W0X', 'W0X', 'txt')),
+    ('wy', FieldEntry('W0Y', 'W0Y', 'txt')),
+    ('wz', FieldEntry('W0Z', 'W0Z', 'txt')),
+    ('wpx', FieldEntry('WP0X', 'WP0X', 'txt')),
+    ('wpy', FieldEntry('WP0Y', 'WP0Y', 'txt')),
+    ('wpz', FieldEntry('WP0Z', 'WP0Z', 'txt')),
+    ('vx', FieldEntry('V0X', 'V0X', 'txt')),
+    ('vy', FieldEntry('V0Y', 'V0Y', 'txt')),
+    ('vz', FieldEntry('V0Z', 'V0Z', 'txt')),
+    ('vpx', FieldEntry('VP0X', 'VP0X', 'txt')),
+    ('vpy', FieldEntry('VP0Y', 'VP0Y', 'txt')),
+    ('vpz', FieldEntry('VP0Z', 'VP0Z', 'txt'))
+])
+# inertial params
+DYN_PARAMS_I = OrderedDict([
+    ('xx', FieldEntry('XX', 'XX', 'txt')),
+    ('xy', FieldEntry('XY', 'XY', 'txt')),
+    ('xz', FieldEntry('XZ', 'XZ', 'txt')),
+    ('yy', FieldEntry('YY', 'YY', 'txt')),
+    ('yz', FieldEntry('YZ', 'YZ', 'txt')),
+    ('zz', FieldEntry('ZZ', 'ZZ', 'txt'))
+])
+# mass tensor params
+DYN_PARAMS_M = OrderedDict([
+    ('mx', FieldEntry('MX', 'MX', 'txt')),
+    ('my', FieldEntry('MY', 'MY', 'txt')),
+    ('mz', FieldEntry('MZ', 'MZ', 'txt')),
+    ('m', FieldEntry('M', 'M', 'txt'))
+])
+# friction and rotor inertia params
+DYN_PARAMS_X = OrderedDict([
+    ('ia', FieldEntry('IA', 'IA', 'txt')),
+    ('fc', FieldEntry('FS', 'FS', 'txt')),
+    ('fv', FieldEntry('FV', 'FV', 'txt'))
+])
+# external force, moments params
+DYN_PARAMS_F = OrderedDict([
+    ('ex_fx', FieldEntry('FX', 'FX', 'txt')),
+    ('ex_fy', FieldEntry('FY', 'FY', 'txt')),
+    ('ex_fz', FieldEntry('FZ', 'FZ', 'txt')),
+    ('ex_mx', FieldEntry('CX', 'CX', 'txt')),
+    ('ex_my', FieldEntry('CY', 'CY', 'txt')),
+    ('ex_mz', FieldEntry('CZ', 'CZ', 'txt'))
+])
+# dynamic params got by concatenation
+DYN_PARAMS = OrderedDict(
+    [('link', FieldEntry('Link', 'link', 'cmb'))] + \
+    DYN_PARAMS_I.items() + \
+    DYN_PARAMS_M.items() + \
+    DYN_PARAMS_X.items() + \
+    DYN_PARAMS_F.items()
+)
+# geometric params
 GEOM_PARAMS = OrderedDict([
     ('frame', FieldEntry('Frame', 'frame', 'cmb')),
     ('ant', FieldEntry('ant', 'ant', 'cmb')),
@@ -50,13 +108,13 @@ GEOM_PARAMS = OrderedDict([
     ('theta', FieldEntry('theta', 'theta', 'txt')),
     ('r', FieldEntry('r', 'r', 'txt'))
 ])
-
+# gravity component params
 GRAVITY_CMPNTS = OrderedDict([
     ('gx', FieldEntry('GX', 'GX', 'txt')),
     ('gy', FieldEntry('GY', 'GY', 'txt')),
     ('gz', FieldEntry('GZ', 'GZ', 'txt'))
 ])
-
+# robot type params
 ROBOT_TYPE = OrderedDict([
     ('name', FieldEntry('Name of the robot:', 'name', 'lbl')),
     ('num_links', FieldEntry('Number of moving links:', 'NL', 'lbl')),
@@ -68,7 +126,6 @@ ROBOT_TYPE = OrderedDict([
 ])
 
 # menu bar
-
 MAIN_MENU = dict(
     file_menu = "&File",
     geom_menu = "&Geometric",
@@ -78,22 +135,18 @@ MAIN_MENU = dict(
     optim_menu = "&Optimiser",
     viz_menu = "&Visualisation"
 )
-
 VIZ_MENU = dict(m_viz = "Visualisation")
-
 IDEN_MENU = dict(
     m_base_inertial_params = "Base Inertial parameters",
     m_dyn_iden_model = "Dynamic Identification Model",
     m_energy_iden_model = "Energy Identification Model"
 )
-
 DYN_MENU = dict(
     m_idym = "Inverse Dynamic Model",
     m_inertia_matrix = "Inertia matrix",
     m_h_term = "Centrifugal, Coriolis & Gravity torques",
     m_ddym = "Direct Dynamic Model"
 )
-
 KIN_MENU = dict(
     m_jac_matrix = "Jacobian matrix",
     m_determinant = "Determinant of a Jacobian",
@@ -102,14 +155,12 @@ KIN_MENU = dict(
     m_acc = "Accelerations",
     m_jpqp = "Jpqp"
 )
-
 GEOM_MENU = dict(
     m_trans_matrix = "Transformation matrix",
     m_fast_dgm = "Fast Geometric model",
     m_igm_paul = "IGM - Paul method",
     m_geom_constraint = "Geometric constraint equation of loops"
 )
-
 FILE_MENU = dict(
     m_new = "&New",
     m_open = "&Open",
