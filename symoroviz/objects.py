@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__author__ = 'Izzat'
+
 import OpenGL.GL as gL
+
 from numpy import degrees, identity, array
 
 from primitives import Primitives
@@ -234,3 +235,5 @@ class FixedJoint(JointObject):
         self.sph_vertices, self.sph_indices, self.sph_normals = \
             Primitives.sph_array(new_length)
         super(FixedJoint, self).set_length(new_length)
+
+

@@ -1,11 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__author__ = 'Izzat'
+
+"""
+This module creates the dialog boxes to specify parameters for
+geometric model calculations.
+"""
+
 
 import wx
 
+
 class DialogTrans(wx.Dialog):
+    """Creates the dialog box for transformation matrix selection."""
     def __init__(self, prefix, nf, parent=None):
         super(DialogTrans, self).__init__(parent, style=wx.SYSTEM_MENU |
                            wx.CAPTION | wx.CLOSE_BOX | wx.CLIP_CHILDREN)
@@ -17,7 +24,6 @@ class DialogTrans(wx.Dialog):
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         hor_sizer = wx.BoxSizer(wx.HORIZONTAL)
         main_sizer.Add(hor_sizer, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 25)
-
         # Insert, Delete buttons and comboboxes
         grid = wx.GridBagSizer(hgap=40, vgap=11)
         lab_top = wx.StaticText(self, label='Original frame')
@@ -41,7 +47,6 @@ class DialogTrans(wx.Dialog):
         grid.Add(insert_btn, pos=(1, 1))
         grid.Add(delete_btn, pos=(3, 1))
         hor_sizer.Add(grid)
-
         # Transformations label and list
         ver_sizer = wx.BoxSizer(wx.VERTICAL)
         hor_sizer.AddSpacer(40)
@@ -52,11 +57,9 @@ class DialogTrans(wx.Dialog):
         self.listbox = wx.ListBox(self, size=(80, 120), style=wx.LB_SINGLE)
         self.result = set()
         ver_sizer.Add(self.listbox)
-
         self.check_short = wx.CheckBox(self, label='Trigonometric short form')
         main_sizer.Add(self.check_short, 0, wx.LEFT | wx.ALIGN_LEFT, 25)
         main_sizer.AddSpacer(15)
-
         # OK Cancel
         hor_sizer2 = wx.BoxSizer(wx.HORIZONTAL)
         main_sizer.Add(hor_sizer2, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 12)
@@ -67,7 +70,6 @@ class DialogTrans(wx.Dialog):
         hor_sizer2.Add(ok_btn)
         hor_sizer2.AddSpacer(22)
         hor_sizer2.Add(cancel_btn)
-
         self.SetSizerAndFit(main_sizer)
 
     def OnOK(self, _):
@@ -94,6 +96,7 @@ class DialogTrans(wx.Dialog):
 
 
 class DialogFast(wx.Dialog):
+    """Creates the dialog box Fast Geometric model parameters."""
     def __init__(self, prefix, nf, parent=None):
         super(DialogFast, self).__init__(parent, style=wx.SYSTEM_MENU |
                           wx.CAPTION | wx.CLOSE_BOX | wx.CLIP_CHILDREN)
@@ -103,10 +106,8 @@ class DialogFast(wx.Dialog):
 
     def init_ui(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
-
         #title
         label_main = wx.StaticText(self, label="Calculation of iTj")
-
         #input
         grid = wx.GridBagSizer(hgap=25, vgap=5)
         lab_left = wx.StaticText(self, label='Frame i')
@@ -129,14 +130,12 @@ class DialogFast(wx.Dialog):
         cancel_btn.Bind(wx.EVT_BUTTON, self.OnCancel)
         grid.Add(cancel_btn, pos=(2, 1))
         grid.Add(ok_btn, pos=(2, 0))
-
         mainSizer.AddSpacer(30)
         mainSizer.Add(label_main, 0,
                       wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER_HORIZONTAL, 60)
         mainSizer.AddSpacer(30)
         mainSizer.Add(grid, flag=wx.ALIGN_CENTER)
         mainSizer.AddSpacer(20)
-
         self.SetSizerAndFit(mainSizer)
 
     def OnOK(self, _):
@@ -150,6 +149,7 @@ class DialogFast(wx.Dialog):
 
 
 class DialogPaul(wx.Dialog):
+    """Creates the dialog box to specify Paul method parameters."""
     def __init__(self, prefix, endeffs, EMPTY, parent=None):
         super(DialogPaul, self).__init__(parent, style=wx.SYSTEM_MENU |
                           wx.CAPTION | wx.CLOSE_BOX | wx.CLIP_CHILDREN)
@@ -159,7 +159,6 @@ class DialogPaul(wx.Dialog):
 
     def init_ui(self, EMPTY):
         main_sizer = wx.BoxSizer(wx.VERTICAL)
-
         #title
         label_cmb = wx.StaticText(self, label="For frame :")
         main_sizer.Add(label_cmb, 0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, 20)
@@ -170,7 +169,6 @@ class DialogPaul(wx.Dialog):
         main_sizer.Add(self.cmb, 0, wx.BOTTOM | wx.ALIGN_CENTER_HORIZONTAL, 10)
         lbl = wx.StaticText(self, label="Components taken into account :")
         main_sizer.Add(lbl, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 20)
-
         #input
         grid = wx.GridBagSizer(hgap=15, vgap=15)
         names = ['S', 'N', 'A', 'P']
@@ -192,10 +190,8 @@ class DialogPaul(wx.Dialog):
             label = wx.StaticText(self,
                                   label=(' 1' if i == 3 else ' 0'), id=12 + i)
             grid.Add(label, pos=(4, i))
-
         main_sizer.Add(grid, 0, wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT, 35)
         main_sizer.AddSpacer(20)
-
         #buttons
         hor_sizer = wx.BoxSizer(wx.HORIZONTAL)
         ok_btn = wx.Button(self, wx.ID_OK, "OK")
@@ -205,7 +201,6 @@ class DialogPaul(wx.Dialog):
         hor_sizer.Add(ok_btn, 0, wx.ALL, 15)
         hor_sizer.Add(cancel_btn, 0, wx.ALL, 15)
         main_sizer.Add(hor_sizer, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
-
         self.SetSizerAndFit(main_sizer)
 
     def OnOK(self, _):
@@ -236,3 +231,5 @@ class DialogPaul(wx.Dialog):
             else:
                 lst.append(widget.LabelText)
         return lst, int(self.cmb.Value)
+
+

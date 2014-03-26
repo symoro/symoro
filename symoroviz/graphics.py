@@ -1,19 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__author__ = 'Izzat'
 
 from math import atan2
 
-import OpenGL.GL as gl
-import OpenGL.GLU as glu
 import wx
 import wx.lib.agw.floatspin as FS
+from wx.glcanvas import GLCanvas
+
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
-from objects import Frame, RevoluteJoint, FixedJoint, PrismaticJoint
-from wx.glcanvas import GLCanvas
+
 from numpy import sin, cos, radians, pi, inf, nan
+
 from sympy import Expr
 
 from pysymoro.symoro import Symoro, CLOSED_LOOP

@@ -3,12 +3,7 @@
 
 """
 This module of SYMORO package provides symbolic
-modeling of robots' dynamics.
-
-The core symbolic library is sympy.
-Needed modules : symoro.py, geometry.py, kinematics.py
-
-ECN - ARIA1 2013
+modeling of robot dynamics.
 """
 
 
@@ -806,3 +801,5 @@ def group_param_prism_spec(robo, symo, j, antRj, antPj):
     for i in to_replace:
         Kj[i] = symo.replace(Kj[i], inert_names[i], j)
     robo.put_inert_param(Kj, j)
+
+

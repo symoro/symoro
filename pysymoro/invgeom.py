@@ -4,11 +4,6 @@
 """
 This module of SYMORO package provides symbolic
 solutions for inverse geompetric problem.
-
-The core symbolic library is sympy.
-Needed modules : symoro.py, geometry.py
-
-ECN - ARIA1 2013
 """
 
 from heapq import heapify, heappop
@@ -496,3 +491,5 @@ def _get_coefs(eq, A1, A2, *xs):
 #        print eq, 'i', A1, 'i', A2
 #        print xs
     return X, Y, Z, is_ok
+
+

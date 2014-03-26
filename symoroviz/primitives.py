@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__author__ = 'Izzat'
 
 from itertools import product
+
 from numpy import sin, cos, pi
 
 
@@ -133,3 +133,5 @@ class Primitives:
             vertices, indices, normals
         """
         return create_arrow_array(length)
+
+

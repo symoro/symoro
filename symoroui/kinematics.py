@@ -1,25 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-__author__ = 'Izzat'
+
+"""
+This module creates the dialog box for differrent kinematic model
+parameters.
+"""
+
 
 import wx
 
+
 class DialogJacobian(wx.Dialog):
+    """
+    Creates the dialog box to specify parameters for the calculation
+    of the Jacobian matrix.
+    """
     def __init__(self, prefix, robo, parent=None):
         super(DialogJacobian, self).__init__(parent, style=wx.SYSTEM_MENU |
                               wx.CAPTION | wx.CLOSE_BOX | wx.CLIP_CHILDREN)
         self.robo = robo
-        self.InitUI()
+        self.init_ui()
         self.SetTitle(prefix + ": Jacobian matrix (jac)")
 
-    def InitUI(self):
+    def init_ui(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
-
         #title
         label_main = wx.StaticText(self, label="Calculation of i Jr j")
         sizer.Add(label_main, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 25)
-
         #input
         choices = [str(i) for i in range(self.robo.NF)]
         label = wx.StaticText(self, label='Frame number ( r )')
@@ -29,7 +37,6 @@ class DialogJacobian(wx.Dialog):
         self.cmb_frame.SetSelection(len(choices)-1)
         self.cmb_frame.Bind(wx.EVT_COMBOBOX, self.OnFrameChanged)
         sizer.Add(self.cmb_frame, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 10)
-
         chain = self.robo.chain(int(self.cmb_frame.Value))
         choices = [str(i) for i in reversed(chain + [0])]
         label = wx.StaticText(self, label='Projection frame ( i )')
@@ -38,7 +45,6 @@ class DialogJacobian(wx.Dialog):
                                      choices=choices, style=wx.CB_READONLY)
         self.cmb_inter.SetSelection(0)
         sizer.Add(self.cmb_inter, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 10)
-
         label = wx.StaticText(self, label='Intermediate frame ( j )')
         sizer.Add(label, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
         self.cmb_proj = wx.ComboBox(self, size=(50, -1),
@@ -46,7 +52,6 @@ class DialogJacobian(wx.Dialog):
         self.cmb_proj.SetSelection(len(choices)-1)
         self.cmb_proj.SetSelection(0)
         sizer.Add(self.cmb_proj, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 10)
-
         hor_sizer = wx.BoxSizer(wx.HORIZONTAL)
         ok_btn = wx.Button(self, wx.ID_OK, "OK")
         ok_btn.Bind(wx.EVT_BUTTON, self.OnOK)
@@ -55,7 +60,6 @@ class DialogJacobian(wx.Dialog):
         hor_sizer.Add(ok_btn, 0, wx.ALL, 25)
         hor_sizer.Add(cancel_btn, 0, wx.ALL, 25)
         sizer.Add(hor_sizer)
-
         self.SetSizerAndFit(sizer)
 
     def OnFrameChanged(self, _):
@@ -76,21 +80,24 @@ class DialogJacobian(wx.Dialog):
         return int(self.cmb_frame.Value), \
                int(self.cmb_proj.Value), int(self.cmb_inter.Value)
 
+
 class DialogDeterminant(wx.Dialog):
+    """
+    Creates the dialog box to specify parameters for the
+    calculation of the determinant of a Jacobian.
+    """
     def __init__(self, prefix, robo, parent=None):
         super(DialogDeterminant, self).__init__(parent, style=wx.SYSTEM_MENU |
                                 wx.CAPTION | wx.CLOSE_BOX | wx.CLIP_CHILDREN)
         self.robo = robo
-        self.InitUI()
+        self.init_ui()
         self.SetTitle(prefix + ": Determinant of a jacobian matrix (det)")
 
-    def InitUI(self):
+    def init_ui(self):
         mainSizer = wx.BoxSizer(wx.HORIZONTAL)
-
         #title
         mainSizer.AddSpacer(10)
         grid = wx.GridBagSizer(5, 15)
-
         choices = [str(i) for i in range(self.robo.NF)]
         label = wx.StaticText(self, label='Frame number ( r )')
         grid.Add(label, pos=(0, 0), span=(1, 2),
@@ -101,7 +108,6 @@ class DialogDeterminant(wx.Dialog):
         self.cmb_frame.Bind(wx.EVT_COMBOBOX, self.OnFrameChanged)
         grid.Add(self.cmb_frame, pos=(1, 0), span=(1, 2),
                  flag=wx.ALIGN_CENTER_HORIZONTAL | wx.BOTTOM, border=15)
-
         chain = self.robo.chain(int(self.cmb_frame.Value))
         choices = [str(i) for i in reversed(chain + [0])]
         label = wx.StaticText(self, label='Projection frame ( i )')
@@ -112,7 +118,6 @@ class DialogDeterminant(wx.Dialog):
         self.cmb_inter.SetSelection(0)
         grid.Add(self.cmb_inter, pos=(3, 0), span=(1, 2),
                  flag=wx.ALIGN_CENTER_HORIZONTAL | wx.BOTTOM, border=15)
-
         label = wx.StaticText(self, label='Intermediate frame ( j )')
         grid.Add(label, pos=(4, 0), span=(1, 2),
                  flag=wx.ALIGN_CENTER_HORIZONTAL | wx.ALL)
@@ -122,7 +127,6 @@ class DialogDeterminant(wx.Dialog):
         self.cmb_proj.SetSelection(0)
         grid.Add(self.cmb_proj, pos=(5, 0), span=(1, 2),
                  flag=wx.ALIGN_CENTER_HORIZONTAL | wx.BOTTOM, border=15)
-
         label_main = wx.StaticText(self, label="Definition of sub-matrix")
         grid.Add(label_main, pos=(6, 0), span=(1, 2),
                  flag=wx.ALIGN_CENTER_HORIZONTAL | wx.ALL)
@@ -130,7 +134,6 @@ class DialogDeterminant(wx.Dialog):
                      label="(Select rows and columns to be deleted)")
         grid.Add(label_main, pos=(7, 0), span=(1, 2),
                  flag=wx.ALIGN_CENTER_HORIZONTAL | wx.BOTTOM, border=5)
-
         #input
         label_row = wx.StaticText(self, label="Rows:")
         label_col = wx.StaticText(self, label="Columns:")
@@ -150,7 +153,6 @@ class DialogDeterminant(wx.Dialog):
                  flag=wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, border=5)
         grid.Add(cancel_btn, pos=(10, 1),
                  flag=wx.ALIGN_CENTER_HORIZONTAL | wx.ALL, border=5)
-
         mainSizer.Add(grid, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 15)
         self.SetSizerAndFit(mainSizer)
         self.OnFrameChanged(None)
@@ -178,3 +180,5 @@ class DialogDeterminant(wx.Dialog):
                         if not self.box_col.IsChecked(i)]
         return int(self.cmb_frame.Value), int(self.cmb_proj.Value),\
                int(self.cmb_inter.Value), row_selected, col_selected
+
+

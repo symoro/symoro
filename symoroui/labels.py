@@ -22,6 +22,7 @@ MAIN_WIN = dict(
 )
 
 # interface contents
+# TODO: add event handlers to dict entries as well
 BOX_TITLES = dict(
     robot_des = "Robot Description",
     robot_type = "Robot Type",
@@ -126,6 +127,7 @@ ROBOT_TYPE = OrderedDict([
 ])
 
 # menu bar
+# TODO: add event handlers to dict entries as well
 MAIN_MENU = dict(
     file_menu = "&File",
     geom_menu = "&Geometric",

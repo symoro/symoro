@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
+import os
 import re
 
 from pysymoro import symoro
@@ -99,7 +101,7 @@ def readpar(directory, robo_name):
         robo: an instance of Robot, read from file
         flag: indicates if any errors accured. (symoro.FAIL)
     """
-    fname = '%s\\%s.par' % (directory, robo_name)
+    fname = os.path.join(directory, robo_name)
     with open(fname, 'r') as f:
         #initialize the Robot instance
         f.seek(0)

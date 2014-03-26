@@ -359,7 +359,6 @@ class MainFrame(wx.Frame):
     def OnDynParamChanged(self, event):
         link_index = int(self.widgets['link'].Value)
         self.Change(link_index, event.EventObject.Name, event.EventObject)
-        # print type(self.robo.get_val(link_index, event.EventObject.Name))
 
     def OnSpeedChanged(self, event):
         joint_index = int(self.widgets['joint'].Value)
@@ -672,8 +671,8 @@ class MainFrame(wx.Frame):
         ).ShowModal()
 
     def model_success(self, model_name):
-        msg = 'The model has been saved in %s\\%s_%s.txt' % \
-              (self.robo.directory, self.robo.name, model_name)
+        msg = 'The model has been saved in %s_%s.txt' % \
+              (os.path.joint(self.robo.directory, self.robo.name), model_name)
         self.message_info(msg)
 
     def OnOpen(self, _):
@@ -829,7 +828,7 @@ class MainFrame(wx.Frame):
         self.model_success('dim')
 
     def OnVisualisation(self, _):
-        dialog = ui_definition.DialogConversion(
+        dialog = ui_definition.DialogVisualisation(
             ui_labels.MAIN_WIN['prog_name'], self.robo, self.par_dict
         )
         if dialog.has_syms():

@@ -2,13 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This module of SYMORO package provides geometric models' computation.
-
-The core symbolic library is sympy.
-
-Needed modules: symoro.py
-
-ECN - ARIA1 2013
+This module of SYMORO package computes the geometric models.
 """
 
 from sympy import Matrix, zeros, eye, sin, cos
@@ -489,3 +483,5 @@ def direct_geometric(robo, frames, trig_subs):
         symo.write_line()
     symo.file_close()
     return symo
+
+

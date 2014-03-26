@@ -2,13 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-This module of SYMORO package provides kinematic models' computation.
-
-The core symbolic library is sympy.
-
-Needed modules : symoro.py, geometry.py
-
-ECN - ARIA1 2013
+This module of SYMORO package computes the kinematic models.
 """
 
 
