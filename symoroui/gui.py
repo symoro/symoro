@@ -49,14 +49,14 @@ class MainFrame(wx.Frame):
         # set status bar to Ready
         self.statusbar.SetStatusText("Ready")
 
-    def params_in_grid(
-            self, szr_grd, elements, rows, cols, elplace,
-            handler=None, start=0, width=60):
+    def params_in_grid(self, szr_grd, elements, rows, cols, width=70):
         """Method to display a set of fields in a grid."""
         for idx, key in enumerate(elements):
             label = elements[key].label
             name = elements[key].name
             control = elements[key].control
+            place = elements[key].place
+            handler = getattr(self, elements[key].handler)
             if control is 'cmb':
                 ctrl = wx.ComboBox(
                     self.panel, style=wx.CB_READONLY, 
@@ -84,7 +84,7 @@ class MainFrame(wx.Frame):
                 flag=wx.ALL | wx.ALIGN_LEFT, border=1
             )
             szr_grd.Add(
-                szr_ele, pos=(elplace[idx][0], elplace[idx][1]), 
+                szr_ele, pos=(place[0], place[1]), 
                 flag=wx.ALL | wx.ALIGN_RIGHT, border=2
             )
 
@@ -138,8 +138,7 @@ class MainFrame(wx.Frame):
         szr_grd_gravity = wx.GridBagSizer(5, 5)
         self.params_in_grid(
             szr_grd_gravity, elements=ui_labels.GRAVITY_CMPNTS, 
-            rows=1, cols=3, handler=self.OnBaseTwistChanged, 
-            elplace=[(0,0), (0,1), (0,2)], start=0, width=70
+            rows=1, cols=3, width=70, 
         )
         szr_gravity.Add(szr_grd_gravity)
         szr_left_col.Add(szr_gravity, 0, wx.ALL | wx.EXPAND, 0)
@@ -191,35 +190,10 @@ class MainFrame(wx.Frame):
                 self.panel, label=ui_labels.BOX_TITLES['geom_params']
             ), wx.HORIZONTAL
         )
-        cmb_frame = wx.ComboBox(
-            self.panel, size=(70, -1), style=wx.CB_READONLY, 
-            name=ui_labels.GEOM_PARAMS['frame'].name
-        )
-        cmb_frame.Bind(wx.EVT_COMBOBOX, self.OnFrameChanged)
-        self.widgets[ui_labels.GEOM_PARAMS['frame'].name] = cmb_frame
-        szr_frame = wx.BoxSizer(wx.HORIZONTAL)
-        szr_frame.Add(
-            wx.StaticText(
-                self.panel, style=wx.ALIGN_RIGHT,
-                label=ui_labels.GEOM_PARAMS['frame'].label, 
-            ), proportion=0, flag=wx.ALL | wx.ALIGN_RIGHT, border=5
-        )
-        szr_frame.Add(
-            cmb_frame, proportion=0, 
-            flag=wx.ALL | wx.ALIGN_LEFT, border=1
-        )
         szr_grd_geom = wx.GridBagSizer(0, 5)
-        szr_grd_geom.Add(
-            szr_frame, pos=(0, 0), flag=wx.ALL | wx.ALIGN_RIGHT, border=2
-        )
-        elements = OrderedDict(ui_labels.GEOM_PARAMS.items()[1:])
         self.params_in_grid(
-            szr_grd_geom, elements=elements, 
-            rows=2, cols=5, handler=self.OnGeoParamChanged, 
-            elplace=[
-                (1,0), (0,1), (1,1), (0,2), (1,2), 
-                (0,3), (1,3), (0,4), (1,4)
-            ], start=0, width=70
+            szr_grd_geom, elements=ui_labels.GEOM_PARAMS, 
+            rows=2, cols=5, width=70
         )
         szr_geom_params.Add(szr_grd_geom)
         szr_right_col.Add(szr_geom_params, 0, wx.ALL | wx.EXPAND, 0)
@@ -234,7 +208,10 @@ class MainFrame(wx.Frame):
             self.panel, style=wx.CB_READONLY, size=(100, -1),
             name=ui_labels.DYN_PARAMS['link'].name
         )
-        cmb_link.Bind(wx.EVT_COMBOBOX, self.OnLinkChanged)
+        cmb_link.Bind(
+            wx.EVT_COMBOBOX, 
+            getattr(self, ui_labels.DYN_PARAMS['link'].handler)
+        )
         self.widgets['link'] = cmb_link
         szr_link = wx.BoxSizer(wx.HORIZONTAL)
         szr_link.Add(
@@ -247,31 +224,10 @@ class MainFrame(wx.Frame):
         szr_link.Add(cmb_link, flag=wx.ALL | wx.ALIGN_RIGHT)
         szr_dyn_params.Add(szr_link, flag=wx.ALL | wx.ALIGN_CENTER)
         szr_grd_dyn = wx.GridBagSizer(0, 0)
-        # add inertial params to the grid
+        # add dynamic params to the grid
+        elements = OrderedDict(ui_labels.DYN_PARAMS.items()[1:])
         self.params_in_grid(
-            szr_grd_dyn, elements=ui_labels.DYN_PARAMS_I, 
-            rows=1, cols=6, handler=self.OnDynParamChanged, 
-            elplace=[(0,0), (0,1), (0,2), (0,3), (0,4), (0,5)], 
-            start=0, width=75
-        )
-        # add mass tensor params to the grid
-        self.params_in_grid(
-            szr_grd_dyn, elements=ui_labels.DYN_PARAMS_M, 
-            rows=1, cols=4, handler=self.OnDynParamChanged, 
-            elplace=[(1,0), (1,1), (1,2), (1,3)], start=0, width=75
-        )
-        # add friction params to the grid
-        self.params_in_grid(
-            szr_grd_dyn, elements=ui_labels.DYN_PARAMS_X, 
-            rows=1, cols=3, handler=self.OnDynParamChanged, 
-            elplace=[(2,0), (2,1), (2,2)], start=0, width=75
-        )
-        # add external force params to the grid
-        self.params_in_grid(
-            szr_grd_dyn, elements=ui_labels.DYN_PARAMS_F, 
-            rows=1, cols=6, handler=self.OnDynParamChanged, 
-            elplace=[(3,0), (3,1), (3,2), (3,3), (3,4), (3,5)], 
-            start=0, width=75
+            szr_grd_dyn, elements=elements, rows=4, cols=6, width=75
         )
         szr_dyn_params.Add(szr_grd_dyn)
         szr_dyn_params.AddSpacer(4)
@@ -288,11 +244,7 @@ class MainFrame(wx.Frame):
         szr_grd_base_velacc = wx.GridBagSizer(0, 0)
         self.params_in_grid(
             szr_grd_base_velacc, elements=ui_labels.BASE_VEL_ACC, 
-            rows=3, cols=4, handler=self.OnBaseTwistChanged,
-            elplace=[
-                (0,0), (1,0), (2,0), (0,1), (1,1), (2,1), 
-                (0,2), (1,2), (2,2), (0,3), (1,3), (2,3)
-            ], start=0, width=60
+            rows=3, cols=4, width=60
         )
         szr_base_velacc.Add(szr_grd_base_velacc)
         szr_velacc.Add(szr_base_velacc)
@@ -303,32 +255,10 @@ class MainFrame(wx.Frame):
                 self.panel, label=ui_labels.BOX_TITLES['joint_vel_acc']
             ), wx.HORIZONTAL
         )
-        cmb_joint = wx.ComboBox(
-            self.panel, size=(70, -1), style=wx.CB_READONLY, 
-            name=ui_labels.JOINT_VEL_ACC['joint'].name
-        )
-        cmb_joint.Bind(wx.EVT_COMBOBOX, self.OnJointChanged)
-        self.widgets[ui_labels.JOINT_VEL_ACC['joint'].name] = cmb_joint
-        szr_joint = wx.BoxSizer(wx.HORIZONTAL)
-        szr_joint.Add(
-            wx.StaticText(
-                self.panel, style=wx.ALIGN_RIGHT,
-                label=ui_labels.JOINT_VEL_ACC['joint'].label, 
-            ), proportion=0, flag=wx.ALL | wx.ALIGN_RIGHT, border=5
-        )
-        szr_joint.Add(
-            cmb_joint, proportion=0, 
-            flag=wx.ALL | wx.ALIGN_LEFT, border=1
-        )
         szr_grd_joint_velacc = wx.GridBagSizer(5, 5)
-        szr_grd_joint_velacc.Add(
-            szr_joint, pos=(0, 0), flag=wx.ALL | wx.ALIGN_RIGHT, border=2
-        )
-        elements = OrderedDict(ui_labels.JOINT_VEL_ACC.items()[1:])
         self.params_in_grid(
-            szr_grd_joint_velacc, elements=elements, 
-            rows=3, cols=1, handler=self.OnSpeedChanged, 
-            elplace=[(1,0), (2,0), (3,0), (4,0)], start=0, width=75
+            szr_grd_joint_velacc, elements=ui_labels.JOINT_VEL_ACC, 
+            rows=3, cols=1, width=75, 
         )
         szr_joint_velacc.Add(szr_grd_joint_velacc, 
             flag=wx.ALL | wx.ALIGN_CENTER, border=2
