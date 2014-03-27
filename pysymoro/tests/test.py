@@ -17,7 +17,7 @@ from pysymoro.geometry import Transform as trns
 from pysymoro import kinematics
 from pysymoro import invgeom
 from pysymoro import dynamics
-from pysymoro import parfile
+from symoroutils import parfile
 
 
 class testMisc(unittest.TestCase):

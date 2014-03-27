@@ -2,6 +2,12 @@
 # -*- coding: utf-8 -*-
 
 
+"""
+This module performs writing and reading data into PAR file. PAR is a
+plain text file used to represent the different parameters of the robot.
+"""
+
+
 import os
 import re
 

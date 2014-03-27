@@ -14,7 +14,7 @@ import wx
 
 from pysymoro.symoro import Robot, FAIL
 from pysymoro import geometry, kinematics, dynamics, invgeom
-from pysymoro.parfile import readpar, writepar
+from symoroutils import parfile
 from symoroviz import graphics
 from symoroui import definition as ui_definition
 from symoroui import geometry as ui_geometry
@@ -626,7 +626,7 @@ class MainFrame(wx.Frame):
             defaultFile='*.par'
         )
         if dialog.ShowModal() == wx.ID_OK:
-            new_robo, flag = readpar(
+            new_robo, flag = parfile.readpar(
                 dialog.GetDirectory(),
                 dialog.GetFilename()[:-4]
             )
@@ -641,7 +641,7 @@ class MainFrame(wx.Frame):
                 self.feed_data()
 
     def OnSave(self, _):
-        writepar(self.robo)
+        parfile.writepar(self.robo)
         self.changed = False
 
     def OnSaveAs(self, _):
@@ -657,7 +657,7 @@ class MainFrame(wx.Frame):
 
         self.robo.directory = dialog.GetDirectory()
         self.robo.name = dialog.GetFilename()[:-4]
-        writepar(self.robo)
+        parfile.writepar(self.robo)
         self.widgets['name'].SetLabel(self.robo.name)
         self.changed = False
 
