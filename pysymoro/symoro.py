@@ -20,6 +20,9 @@ from sympy import sin, cos, sign, pi
 from sympy import Symbol, Matrix, Expr, Integer
 from sympy import Mul, Add, factor, zeros, var, sympify, eye
 
+from symoroutils import filemgr
+
+
 ZERO = Integer(0)
 ONE = Integer(1)
 CLOSED_LOOP = 'Closed loop'
@@ -749,7 +752,7 @@ class Init:
 
 
 def hat(v):
-    """Generates vectorial preproduct matrix
+    """skew-symmetry : Generates vectorial preproduct matrix
 
     Parameters
     ==========
@@ -811,17 +814,6 @@ def get_max_coef_list(sym, x):
 
 def get_max_coef(sym, x):
     return Add.fromiter(get_max_coef_mul(s, x) for s in Add.make_args(sym))
-
-
-def make_fname(robo, ext=None):
-    if ext is None:
-        fname = '%s.par' % robo.name
-    else:
-        fname = '%s_%s.txt' % (robo.name, ext)
-    full_name = '%s\\%s' % (robo.directory, fname)
-    if not os.path.exists(robo.directory):
-        os.makedirs(robo.directory)
-    return full_name
 
 
 def get_max_coef_mul(sym, x):
@@ -1330,7 +1322,7 @@ class Symoro:
         ext: string
             provides the file name extention
         """
-        fname = make_fname(robo, ext)
+        fname = filemgr.make_file_path(robo, ext)
         self.file_out = open(fname, 'w')
 
     def file_close(self):
@@ -1488,3 +1480,5 @@ class Symoro:
 #        print fun_string
 #  TODO:       print is for debug pupuses, to be removed
         return eval('%s_func' % name)
+
+

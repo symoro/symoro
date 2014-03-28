@@ -15,6 +15,7 @@ import wx
 from pysymoro.symoro import Robot, FAIL
 from pysymoro import geometry, kinematics, dynamics, invgeom
 from symoroutils import parfile
+from symoroutils import filemgr
 from symoroviz import graphics
 from symoroui import definition as ui_definition
 from symoroui import geometry as ui_geometry
@@ -569,10 +570,7 @@ class MainFrame(wx.Frame):
                 new_robo.vdot0 = self.robo.vdot0
                 new_robo.G = self.robo.G
             self.robo = new_robo
-            directory = os.path.join('robots', self.robo.name)
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            self.robo.directory = directory
+            self.robo.directory = filemgr.get_folder_path(self.robo.name)
             self.feed_data()
         dialog.Destroy()
 
@@ -601,11 +599,12 @@ class MainFrame(wx.Frame):
         ).ShowModal()
 
     def model_success(self, model_name):
-        msg = 'The model has been saved in %s_%s.txt' % \
-              (os.path.joint(self.robo.directory, self.robo.name), model_name)
+        msg = 'The model has been saved in %s_%s.txt' % (
+            os.path.join(self.robo.directory, self.robo.name), model_name
+        )
         self.message_info(msg)
 
-    def OnOpen(self, _):
+    def OnOpen(self, event):
         if self.changed:
             dialog_res = wx.MessageBox(
                 'Do you want to save changes?',
@@ -627,8 +626,7 @@ class MainFrame(wx.Frame):
         )
         if dialog.ShowModal() == wx.ID_OK:
             new_robo, flag = parfile.readpar(
-                dialog.GetDirectory(),
-                dialog.GetFilename()[:-4]
+                dialog.GetFilename()[:-4], dialog.GetPath()
             )
             if new_robo is None:
                 self.message_error('File could not be read!')
@@ -640,28 +638,26 @@ class MainFrame(wx.Frame):
                 self.robo = new_robo
                 self.feed_data()
 
-    def OnSave(self, _):
+    def OnSave(self, event):
         parfile.writepar(self.robo)
         self.changed = False
 
-    def OnSaveAs(self, _):
+    def OnSaveAs(self, event):
         dialog = wx.FileDialog(
-            self, 
-            message="Save PAR file",
+            self, message="Save PAR file",
             defaultFile=self.robo.name+'.par',
             defaultDir=self.robo.directory,
             wildcard='*.par'
         )
         if dialog.ShowModal() == wx.ID_CANCEL:
             return FAIL
-
         self.robo.directory = dialog.GetDirectory()
         self.robo.name = dialog.GetFilename()[:-4]
         parfile.writepar(self.robo)
         self.widgets['name'].SetLabel(self.robo.name)
         self.changed = False
 
-    def OnTransformationMatrix(self, _):
+    def OnTransformationMatrix(self, event):
         dialog = ui_geometry.DialogTrans(
             ui_labels.MAIN_WIN['prog_name'], self.robo.NF
         )
@@ -671,7 +667,7 @@ class MainFrame(wx.Frame):
             self.model_success('trm')
         dialog.Destroy()
 
-    def OnFastGeometricModel(self, _):
+    def OnFastGeometricModel(self, event):
         dialog = ui_geometry.DialogFast(
             ui_labels.MAIN_WIN['prog_name'], self.robo.NF
         )
@@ -681,7 +677,7 @@ class MainFrame(wx.Frame):
             self.model_success('fgm')
         dialog.Destroy()
 
-    def OnIgmPaul(self, _):
+    def OnIgmPaul(self, event):
         dialog = ui_geometry.DialogPaul(
             ui_labels.MAIN_WIN['prog_name'], 
             self.robo.endeffectors,
@@ -693,10 +689,10 @@ class MainFrame(wx.Frame):
             self.model_success('igm')
         dialog.Destroy()
 
-    def OnConstraintGeoEq(self, _):
+    def OnConstraintGeoEq(self, event):
         pass
 
-    def OnJacobianMatrix(self, _):
+    def OnJacobianMatrix(self, event):
         dialog = ui_kinematics.DialogJacobian(
             ui_labels.MAIN_WIN['prog_name'], self.robo
         )
@@ -706,7 +702,7 @@ class MainFrame(wx.Frame):
             self.model_success('jac')
         dialog.Destroy()
 
-    def OnDeterminant(self, _):
+    def OnDeterminant(self, event):
         dialog = ui_kinematics.DialogDeterminant(
             ui_labels.MAIN_WIN['prog_name'], self.robo
         )
@@ -715,49 +711,49 @@ class MainFrame(wx.Frame):
             self.model_success('det')
         dialog.Destroy()
 
-    def OnCkel(self, _):
+    def OnCkel(self, event):
         if kinematics.kinematic_constraints(self.robo) == FAIL:
             self.message_warning('There are no loops')
         else:
             self.model_success('ckel')
 
-    def OnVelocities(self, _):
+    def OnVelocities(self, event):
         kinematics.velocities(self.robo)
         self.model_success('vlct')
 
-    def OnAccelerations(self, _):
+    def OnAccelerations(self, event):
         kinematics.accelerations(self.robo)
         self.model_success('aclr')
 
-    def OnJpqp(self, _):
+    def OnJpqp(self, event):
         kinematics.jdot_qdot(self.robo)
         self.model_success('jpqp')
 
-    def OnInverseDynamic(self, _):
+    def OnInverseDynamic(self, event):
         dynamics.inverse_dynamic_NE(self.robo)
         self.model_success('idm')
 
-    def OnInertiaMatrix(self, _):
+    def OnInertiaMatrix(self, event):
         dynamics.inertia_matrix(self.robo)
         self.model_success('inm')
 
-    def OnCentrCoriolGravTorq(self, _):
+    def OnCentrCoriolGravTorq(self, event):
         dynamics.pseudo_force_NE(self.robo)
         self.model_success('ccg')
 
-    def OnDirectDynamicModel(self, _):
+    def OnDirectDynamicModel(self, event):
         dynamics.direct_dynamic_NE(self.robo)
         self.model_success('ddm')
 
-    def OnBaseInertialParams(self, _):
+    def OnBaseInertialParams(self, event):
         dynamics.base_paremeters(self.robo)
         self.model_success('regp')
 
-    def OnDynIdentifModel(self, _):
+    def OnDynIdentifModel(self, event):
         dynamics.dynamic_identification_NE(self.robo)
         self.model_success('dim')
 
-    def OnVisualisation(self, _):
+    def OnVisualisation(self, event):
         dialog = ui_definition.DialogVisualisation(
             ui_labels.MAIN_WIN['prog_name'], self.robo, self.par_dict
         )

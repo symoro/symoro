@@ -5,6 +5,7 @@
 Unit tests for SYMORO modules
 """
 
+
 import unittest
 
 from sympy import sympify, var, Matrix
@@ -25,9 +26,9 @@ class testMisc(unittest.TestCase):
         print "######## test_readwrite ##########"
         original_robo = symoro.Robot.RX90()
         parfile.writepar(original_robo)
-        d_name = original_robo.directory
-        new_robo, flag = parfile.readpar(d_name,
-                                         original_robo.name)
+        fname = '%s.par' % original_robo.name
+        file_path = os.path.join(original_robo.directory, fname)
+        new_robo, flag = parfile.readpar(original_robo.name, file_path)
         self.assertEqual(flag, symoro.OK)
         l1 = original_robo.get_geom_head()
         l2 = original_robo.get_dynam_head()

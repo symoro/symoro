@@ -11,6 +11,7 @@ plain text file used to represent the different parameters of the robot.
 import os
 import re
 
+from symoroutils import filemgr
 from pysymoro import symoro
 
 
@@ -71,7 +72,7 @@ def _write_par_list(robo, f, key, N0, N):
 
 
 def writepar(robo):
-    fname = symoro.make_fname(robo)
+    fname = filemgr.make_file_path(robo)
     with open(fname, 'w') as f:
         f.write('(* Robotname = \'%s\' *)\n' % robo.name)
         f.write('NL = %s\n' % robo.nl)
@@ -102,13 +103,12 @@ def writepar(robo):
         f.write('\n(* End of definition *)\n')
 
 
-def readpar(directory, robo_name):
+def readpar(robo_name, file_path):
     """Return:
         robo: an instance of Robot, read from file
         flag: indicates if any errors accured. (symoro.FAIL)
     """
-    fname = os.path.join(directory, robo_name)
-    with open(fname, 'r') as f:
+    with open(file_path, 'r') as f:
         #initialize the Robot instance
         f.seek(0)
         d = {}
@@ -127,7 +127,7 @@ def readpar(directory, robo_name):
         NF = d['NJ']*2 - d['NL']
         robo = symoro.Robot(robo_name, d['NL'], d['NJ'], NF,
                             is_mobile, symoro.TYPES[d['Type']])
-        robo.directory = directory
+        robo.directory = os.path.dirname(file_path)
         #fitting the data
         acc_line = ''
         key = ''
