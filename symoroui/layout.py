@@ -47,10 +47,13 @@ class MainFrame(wx.Frame):
         self.Fit()
         # update fields with data
         self.feed_data()
-        # set status bar to Ready
+        # configure status bar
+        self.statusbar.SetFieldsCount(number=2)
+        self.statusbar.SetStatusWidths(widths=[-1, -1])
+        self.statusbar.SetStatusText(text="Ready", number=0)
         self.statusbar.SetStatusText(
-            "Ready. The location of robot files is %s" 
-            % filemgr.get_base_path()
+            text="Location of robot files is %s" 
+            % filemgr.get_base_path(), number = 1
         )
 
     def params_in_grid(self, szr_grd, elements, rows, cols, width=70):
