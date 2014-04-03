@@ -48,7 +48,10 @@ class MainFrame(wx.Frame):
         # update fields with data
         self.feed_data()
         # set status bar to Ready
-        self.statusbar.SetStatusText("Ready")
+        self.statusbar.SetStatusText(
+            "Ready. The location of robot files is %s" 
+            % filemgr.get_base_path()
+        )
 
     def params_in_grid(self, szr_grd, elements, rows, cols, width=70):
         """Method to display a set of fields in a grid."""

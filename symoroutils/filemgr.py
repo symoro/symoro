@@ -2,13 +2,24 @@
 # -*- coding: utf-8 -*-
 
 
-"""
-This module aids with file management operations for the SYMORO
-package.
-"""
+"""Perform file management operations for the SYMORO package."""
 
 
 import os
+
+
+SYMORO_ROBOTS_FOLDER = "symoro-robots"
+
+
+def get_base_path():
+    """
+    Return the base path for storing all SYMORO robot files.
+
+    Returns:
+        A string specifying the base folder path.
+    """
+    home_folder = os.path.expanduser("~")
+    return os.path.join(home_folder, SYMORO_ROBOTS_FOLDER)
 
 
 def make_folders(folder_path):
@@ -34,7 +45,7 @@ def get_folder_path(robot_name):
     Returns:
         A string specifying the folder path.
     """
-    folder_path = os.path.join('robots', robot_name)
+    folder_path = os.path.join(get_base_path(), robot_name)
     make_folders(folder_path)
     return folder_path
 
