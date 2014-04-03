@@ -22,6 +22,23 @@ def get_base_path():
     return os.path.join(home_folder, SYMORO_ROBOTS_FOLDER)
 
 
+def get_clean_name(name, char='-'):
+    """
+    Return a string that is lowercase and all whitespaces are replaced
+    by a specified character.
+
+    Args:
+        name: The string to be cleaned up.
+        char: The character to replace all whitespaces. The default
+            character is "-" (hyphen).
+
+    Returns:
+        A string that is fully lowercase and all whitespaces replaced by
+        the specified character.
+    """
+    return name.lower().replace(' ', char)
+
+
 def make_folders(folder_path):
     """
     Check if a specified folder path exists and create the folder path
@@ -45,6 +62,7 @@ def get_folder_path(robot_name):
     Returns:
         A string specifying the folder path.
     """
+    robot_name = get_clean_name(robot_name)
     folder_path = os.path.join(get_base_path(), robot_name)
     make_folders(folder_path)
     return folder_path
@@ -64,9 +82,9 @@ def make_file_path(robot, ext=None):
         The file path (string) created.
     """
     if ext is None:
-        fname = '%s.par' % robot.name
+        fname = '%s.par' % get_clean_name(robot.name)
     else:
-        fname = '%s_%s.txt' % (robot.name, ext)
+        fname = '%s_%s.txt' % (get_clean_name(robot.name), ext)
     file_path = os.path.join(robot.directory, fname)
     make_folders(robot.directory)
     return file_path

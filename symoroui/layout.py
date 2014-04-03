@@ -8,6 +8,7 @@ interface on the screen for the SYMORO package.
 """
 
 
+import os
 from collections import OrderedDict
 
 import wx
