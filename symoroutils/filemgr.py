@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 
@@ -17,6 +16,9 @@ def get_base_path():
 
     Returns:
         A string specifying the base folder path.
+
+    >>> get_base_path()
+    '/home/aravind/symoro-robots'
     """
     home_folder = os.path.expanduser("~")
     return os.path.join(home_folder, SYMORO_ROBOTS_FOLDER)
@@ -35,6 +37,11 @@ def get_clean_name(name, char='-'):
     Returns:
         A string that is fully lowercase and all whitespaces replaced by
         the specified character.
+
+    >>> get_clean_name('Random teXt')
+    'random-text'
+    >>> get_clean_name('Random teXt', '#')
+    'random#text'
     """
     return name.lower().replace(' ', char)
 
@@ -57,10 +64,15 @@ def get_folder_path(robot_name):
     folders if they are not already present.
     
     Args:
-        robot_name: The name of the robot.
+        robot_name: The name of the robot (string).
 
     Returns:
         A string specifying the folder path.
+
+    >>> get_folder_path('RX 90')
+    '/home/aravind/symoro-robots/rx-90'
+    >>> get_folder_path('RX90')
+    '/home/aravind/symoro-robots/rx90'
     """
     robot_name = get_clean_name(robot_name)
     folder_path = os.path.join(get_base_path(), robot_name)
@@ -88,5 +100,10 @@ def make_file_path(robot, ext=None):
     file_path = os.path.join(robot.directory, fname)
     make_folders(robot.directory)
     return file_path
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
 
 
