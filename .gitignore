@@ -1,3 +1,12 @@
+# Generated files
+robots/AKR3000/*.txt
+robots/RX90/*.txt
+robots/SR400/*.txt
+robots/Stanford/*.txt
+robots/Stanford4/*.txt
+robots/testLoop/*.txt
+robots/TwoLoops/*.txt
+
 # tmp files 
 *.swp
 *.tmp
