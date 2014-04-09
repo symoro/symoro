@@ -65,19 +65,21 @@ class MainFrame(wx.Frame):
             control = elements[key].control
             place = elements[key].place
             handler = getattr(self, elements[key].handler)
+            field_id = int(elements[key].id)
             if control is 'cmb':
                 ctrl = wx.ComboBox(
-                    self.panel, style=wx.CB_READONLY, 
+                    parent=self.panel, style=wx.CB_READONLY, 
                     size=(width, -1), name=name
                 )
                 ctrl.Bind(wx.EVT_COMBOBOX, handler)
             elif control is 'lbl':
                 ctrl = wx.StaticText(
-                    self.panel, size=(width, -1), name=name
+                    parent=self.panel, size=(width, -1), name=name
                 )
             else:
                 ctrl = wx.TextCtrl(
-                    self.panel, size=(width, -1), name=name
+                    parent=self.panel, size=(width, -1), 
+                    name=name, id=field_id
                 )
                 ctrl.Bind(wx.EVT_KILL_FOCUS, handler)
             self.widgets[name] = ctrl
@@ -161,10 +163,11 @@ class MainFrame(wx.Frame):
         szr_grd_loc = wx.GridBagSizer(1, 1)
         for i in range(4):
             for j in range(3):
-                idx = j*4+i
+                idx = (j*4) + i
                 name = 'Z'+str(idx)
                 txt_z_element = wx.TextCtrl(
-                    self.panel, name=name, size=(60, -1)
+                    parent=self.panel, name=name, 
+                    id=idx, size=(60, -1)
                 )
                 self.widgets[name] = txt_z_element
                 txt_z_element.Bind(
