@@ -15,9 +15,10 @@ from numpy import sin, cos, radians, pi, inf, nan
 
 from sympy import Expr
 
-from pysymoro.symoro import Symoro, CLOSED_LOOP
+from pysymoro.symoro import CLOSED_LOOP
 from pysymoro.invgeom import loop_solve
 from pysymoro.geometry import dgm
+from symoroutils import symbolmgr
 
 from objects import Frame, RevoluteJoint, FixedJoint, PrismaticJoint
 
@@ -167,7 +168,7 @@ class myGLCanvas(GLCanvas):
             if i > 0 and jnt.r == 0 and jnt.d == 0 and jnt.b == 0:
                 self.dgms[i] = self.dgm_for_frame(self.robo.ant[i])
             else:
-                symo = Symoro(sydi=self.pars_num)
+                symo = symbolmgr.SymbolManager(sydi=self.pars_num)
                 T = dgm(self.robo, symo, 0, i, fast_form=True, trig_subs=True)
                 self.dgms[i] = symo.gen_func('dgm_generated', T, self.q_sym)
         return self.dgms[i]
@@ -210,7 +211,7 @@ class myGLCanvas(GLCanvas):
         self.find_solution(qs_act, qs_pas)
 
     def generate_loop_fcn(self):
-        symo = Symoro(sydi=self.pars_num)
+        symo = symbolmgr.SymbolManager(sydi=self.pars_num)
         loop_solve(self.robo, symo)
         self.l_solver = symo.gen_func('IGM_gen', self.q_pas_sym,
                                       self.q_act_sym, multival=True)

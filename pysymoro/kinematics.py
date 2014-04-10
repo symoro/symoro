@@ -8,10 +8,11 @@ This module of SYMORO package computes the kinematic models.
 
 from sympy import Matrix, zeros
 
-from pysymoro.symoro import Symoro, Init, hat
+from pysymoro.symoro import Init, hat
 from pysymoro.symoro import FAIL, ZERO
 from pysymoro.geometry import dgm, Transform
 from pysymoro.geometry import compute_rot_trans, Z_AXIS
+from symoroutils import symbolmgr
 
 
 TERMINAL = 0
@@ -207,7 +208,7 @@ def compute_vel_acc(robo, symo, antRj, antPj, forced=False, gravity=True):
     ==========
     robo : Robot
         Instance of robot description container
-    symo : Symoro
+    symo : symbolmgr.SymbolManager
         Instance of symbolic manager
     """
     #init velocities and accelerations
@@ -230,7 +231,7 @@ def compute_vel_acc(robo, symo, antRj, antPj, forced=False, gravity=True):
 
 
 def velocities(robo):
-    symo = Symoro(None)
+    symo = symbolmgr.SymbolManager(None)
     symo.file_open(robo, 'vel')
     symo.write_params_table(robo, 'Link velocities')
     antRj, antPj = compute_rot_trans(robo, symo)
@@ -248,7 +249,7 @@ def velocities(robo):
 
 
 def accelerations(robo):
-    symo = Symoro(None)
+    symo = symbolmgr.SymbolManager(None)
     symo.file_open(robo, 'acc')
     symo.write_params_table(robo, 'Link accelerations')
     antRj, antPj = compute_rot_trans(robo, symo)
@@ -259,7 +260,7 @@ def accelerations(robo):
 
 #very simial to comute_vel_acc
 def jdot_qdot(robo):
-    symo = Symoro(None)
+    symo = symbolmgr.SymbolManager(None)
     symo.file_open(robo, 'jpqp')
     symo.write_params_table(robo, 'JdotQdot')
     antRj, antPj = compute_rot_trans(robo, symo)
@@ -282,7 +283,7 @@ def jdot_qdot(robo):
 
 
 def jacobian(robo, n, i, j):
-    symo = Symoro()
+    symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'jac')
     title = "Jacobian matrix for frame %s\n"
     title += "Projection frame %s, intermediat frame %s"
@@ -293,7 +294,7 @@ def jacobian(robo, n, i, j):
 
 
 def jacobian_determinant(robo, n, i, j, rows, cols):
-    symo = Symoro(None)
+    symo = symbolmgr.SymbolManager(None)
     J, L = _jac(robo, symo, n, i, j, trig_subs=False)
     J_reduced = zeros(len(rows), len(cols))
     for i, i_old in enumerate(rows):
@@ -307,7 +308,7 @@ def jacobian_determinant(robo, n, i, j, rows, cols):
 
 
 def kinematic_constraints(robo):
-    symo = Symoro(None)
+    symo = symbolmgr.SymbolManager(None)
     res = _kinematic_loop_constraints(robo, symo)
     if res == FAIL:
         return FAIL
@@ -333,8 +334,9 @@ def kinematic_constraints(robo):
     return symo
 
 
-#symo = Symoro()
-#from symoro import Symoro, Robot
+#symo = symbolmgr.SymbolManager()
+#from symoro import Robot
+#from symoroutils import symbolmgr
 #kinematic_constraints(Robot.SR400())
 ##jacobian_determinant(robo, 6, range(6), range(6))
 ###print _jac(robo, symo, 2, 5, 5)
@@ -346,7 +348,7 @@ def kinematic_constraints(robo):
 ###print _jac_inv(Robot.RX90(), symo, 2, 5, 5)
 ##
 #def b():
-#    symo = Symoro()
+#    symo = symbolmgr.SymbolManager()
 #    print _jac_inv(Robot.RX90(), symo, 6, 3, 3)
 ####from timeit import timeit
 #####print timeit(a, number=10)

@@ -10,8 +10,9 @@ from heapq import heapify, heappop
 from sympy import var, sin, cos, eye, atan2, sqrt, pi
 from sympy import Matrix, Symbol, Expr
 
-from pysymoro.symoro import Symoro, ZERO, ONE, get_max_coef
+from pysymoro.symoro import ZERO, ONE, get_max_coef
 from pysymoro.geometry import dgm
+from symoroutils import symbolmgr
 
 
 EMPTY = var("EMPTY")
@@ -123,7 +124,7 @@ def loop_solve(robo, symo, knowns=None):
 def igm_Paul(robo, T_ref, n):
     if isinstance(T_ref, list):
         T_ref = Matrix(4, 4, T_ref)
-    symo = Symoro()
+    symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'igm')
     symo.write_params_table(robo, 'Inverse Geometrix Model for frame %s' % n)
     _paul_solve(robo, symo, T_ref, 0, n)

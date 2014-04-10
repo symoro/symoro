@@ -7,7 +7,8 @@ This module of SYMORO package computes the geometric models.
 
 from sympy import Matrix, zeros, eye, sin, cos
 
-from pysymoro.symoro import Symoro, Init, hat
+from pysymoro.symoro import Init, hat
+from symoroutils import symbolmgr
 
 
 Z_AXIS = Matrix([0, 0, 1])
@@ -303,8 +304,8 @@ def dgm(robo, symo, i, j, key='one', fast_form=True, forced=False,
 
      Parameters
     ==========
-    symo: Symoro
-        Instance of Symoro. All the substitutions will
+    symo: symbolmgr.SymbolManager
+        Instance of symbolmgr.SymbolManager. All the substitutions will
         be put into symo.sydi
     i: int
         To-frame index.
@@ -444,10 +445,10 @@ def direct_geometric_fast(robo, i, j):
 
     Returns
     =======
-    symo: Symoro
+    symo: symbolmgr.SymbolManager
         Instance that contains all the relations of the computed model
     """
-    symo = Symoro()
+    symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'fgm')
     symo.write_params_table(robo, 'Direct Geometrix model')
     dgm(robo, symo, i, j, fast_form=True, forced=True)
@@ -470,10 +471,10 @@ def direct_geometric(robo, frames, trig_subs):
 
     Returns
     =======
-    symo: Symoro
+    symo: symbolmgr.SymbolManager
         Instance that contains all the relations of the computed model
     """
-    symo = Symoro()
+    symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'trm')
     symo.write_params_table(robo, 'Direct Geometrix model')
     for i, j in frames:

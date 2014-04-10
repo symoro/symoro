@@ -19,6 +19,7 @@ from pysymoro import kinematics
 from pysymoro import invgeom
 from pysymoro import dynamics
 from symoroutils import parfile
+from symoroutils import symbolmgr
 
 
 class testMisc(unittest.TestCase):
@@ -71,7 +72,7 @@ class testMisc(unittest.TestCase):
 
 class testSymoroTrig(unittest.TestCase):
     def setUp(self):
-        self.symo = symoro.Symoro()
+        self.symo = symbolmgr.SymbolManager()
 
     def test_GetMaxCoef(self):
         print "######## test_GetMaxCoef ##########"
@@ -186,7 +187,7 @@ class testSymoroTrig(unittest.TestCase):
 class testGeometry(unittest.TestCase):
 
     def setUp(self):
-        self.symo = symoro.Symoro()
+        self.symo = symbolmgr.SymbolManager()
         self.robo = symoro.Robot.RX90()
 
 #    def test_misc(self):
@@ -277,7 +278,7 @@ class testGeometry(unittest.TestCase):
 
 class testKinematics(unittest.TestCase):
     def setUp(self):
-        self.symo = symoro.Symoro()
+        self.symo = symbolmgr.SymbolManager()
         self.robo = symoro.Robot.RX90()
 
     def test_speeds(self):

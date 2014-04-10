@@ -11,11 +11,12 @@ import sympy
 from sympy import Matrix
 from copy import copy, deepcopy
 
-from pysymoro.symoro import Symoro, Init, hat, ZERO
+from pysymoro.symoro import Init, hat, ZERO
 from pysymoro.geometry import compute_screw_transform
 from pysymoro.geometry import compute_rot_trans, Transform
 from pysymoro.kinematics import compute_vel_acc
 from pysymoro.kinematics import compute_omega
+from symoroutils import symbolmgr
 
 
 chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
@@ -31,7 +32,7 @@ def Newton_Euler(robo, symo):
     ==========
     robo : Robot
         Instance of robot description container
-    symo : Symoro
+    symo : symbolmgr.SymbolManager
         Instance of symbolic manager
     """
     # init external forces
@@ -74,7 +75,7 @@ def dynamic_identification_NE(robo):
     Fjnt = Init.init_vec(robo)
     Njnt = Init.init_vec(robo)
     # init file output, writing the robot description
-    symo = Symoro()
+    symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'dim')
     title = "Dynamic identification model using Newton - Euler Algorith"
     symo.write_params_table(robo, title, inert=True, dynam=True)
@@ -152,7 +153,7 @@ def direct_dynamic_NE(robo):
     Tau = Init.init_scalar(robo)
     grandVp = Init.init_vec(robo, 6)
     grandVp.append(Matrix([robo.vdot0 - robo.G, robo.w0]))
-    symo = Symoro()
+    symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'ddm')
     title = 'Direct dynamic model using Newton - Euler Algorith'
     symo.write_params_table(robo, title, inert=True, dynam=True)
@@ -203,7 +204,7 @@ def inertia_matrix(robo):
     f = Init.init_vec(robo, ext=1)
     n = Init.init_vec(robo, ext=1)
     A = sympy.zeros(robo.NL, robo.NL)
-    symo = Symoro()
+    symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'inm')
     title = 'Inertia Matrix using composite links'
     symo.write_params_table(robo, title, inert=True, dynam=True)
@@ -243,7 +244,7 @@ def inverse_dynamic_NE(robo):
     symo.sydi : dictionary
         Dictionary with the information of all the sybstitution
     """
-    symo = Symoro()
+    symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'idm')
     title = 'Inverse dynamic model using Newton - Euler Algorith'
     symo.write_params_table(robo, title, inert=True, dynam=True)
@@ -268,7 +269,7 @@ def pseudo_force_NE(robo):
     """
     robo_pseudo = deepcopy(robo)
     robo_pseudo.qddot = sympy.zeros(robo_pseudo.NL, 1)
-    symo = Symoro()
+    symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'ccg')
     title = 'Pseudo forces using Newton - Euler Algorith'
     symo.write_params_table(robo, title, inert=True, dynam=True)
@@ -330,7 +331,7 @@ def compute_joint_torque_deriv(symo, param, arg, index):
 
     Parameters
     ==========
-    symo : Symoro
+    symo : symbolmgr.SymbolManager
         symbol manager
     param : var
         Dynamic parameter
@@ -547,7 +548,7 @@ def base_paremeters(robo_orig):
     """
     robo = copy(robo_orig)
     lam = [0 for i in xrange(robo.NL)]
-    symo = Symoro()
+    symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'regp')
     title = 'Base parameters computation'
     symo.write_params_table(robo, title, inert=True, dynam=True)
