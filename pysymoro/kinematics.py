@@ -8,11 +8,12 @@ This module of SYMORO package computes the kinematic models.
 
 from sympy import Matrix, zeros
 
-from pysymoro.symoro import Init, hat
+from pysymoro.symoro import Init
 from pysymoro.symoro import FAIL, ZERO
 from pysymoro.geometry import dgm, Transform
 from pysymoro.geometry import compute_rot_trans, Z_AXIS
 from symoroutils import symbolmgr
+from symoroutils import tools
 
 
 TERMINAL = 0
@@ -30,13 +31,13 @@ def _omega_ij(robo, j, jRant, w, qdj):
 def _omega_dot_j(robo, j, jRant, w, wi, wdot, qdj, qddj):
     wdot[j] = jRant*wdot[robo.ant[j]]
     if robo.sigma[j] == 0:    # revolute joint
-        wdot[j] += (qddj + hat(wi)*qdj)
+        wdot[j] += (qddj + tools.skew(wi)*qdj)
     return wdot[j]
 
 
 def _v_j(robo, j, antPj, jRant, v, w, qdj, forced=False):
     ant = robo.ant[j]
-    v[j] = jRant*(hat(w[ant])*antPj[j] + v[ant])
+    v[j] = jRant*(tools.skew(w[ant])*antPj[j] + v[ant])
     if robo.sigma[j] == 1:     # prismatic joint
         v[j] += qdj
     return v[j]
@@ -48,13 +49,13 @@ def _v_dot_j(robo, symo, j, jRant, antPj, w, wi, wdot, U, vdot, qdj, qddj):
     hatw_hatw = Matrix([[-DV[3]-DV[5], DV[1], DV[2]],
                         [DV[1], -DV[5]-DV[0], DV[4]],
                         [DV[2], DV[4], -DV[3]-DV[0]]])
-    U[j] = hatw_hatw + hat(wdot[j])
+    U[j] = hatw_hatw + tools.skew(wdot[j])
     symo.mat_replace(U[j], 'U', j)
     vsp = vdot[robo.ant[j]] + U[robo.ant[j]]*antPj[j]
     symo.mat_replace(vsp, 'VSP', j)
     vdot[j] = jRant*vsp
     if robo.sigma[j] == 1:    # prismatic joint
-        vdot[j] += qddj + 2*hat(wi)*qdj
+        vdot[j] += qddj + 2*tools.skew(wi)*qdj
     return vdot[j]
 
 
@@ -113,7 +114,7 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
     iRj = Transform.R(iTk_dict[i, j])
     jTn = dgm(robo, symo, j, n, fast_form=False, trig_subs=trig_subs)
     jPn = Transform.P(jTn)
-    L = -hat(iRj*jPn)
+    L = -tools.skew(iRj*jPn)
     if forced:
         symo.mat_replace(Jac, 'J', '', forced)
         L = symo.mat_replace(L, 'L', '', forced)

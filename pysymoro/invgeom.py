@@ -10,9 +10,10 @@ from heapq import heapify, heappop
 from sympy import var, sin, cos, eye, atan2, sqrt, pi
 from sympy import Matrix, Symbol, Expr
 
-from pysymoro.symoro import ZERO, ONE, get_max_coef
+from pysymoro.symoro import ZERO, ONE
 from pysymoro.geometry import dgm
 from symoroutils import symbolmgr
+from symoroutils import tools
 
 
 EMPTY = var("EMPTY")
@@ -136,7 +137,7 @@ def igm_Paul(robo, T_ref, n):
 def _try_solve_0(symo, eq_sys, known):
     res = False
     for eq, [r], th_names in eq_sys:
-        X = get_max_coef(eq, r)
+        X = tools.get_max_coef(eq, r)
         if X != 0:
             Y = X*r - eq
             print "type 1"
@@ -479,9 +480,9 @@ def _check_const(consts, *xs):
 
 def _get_coefs(eq, A1, A2, *xs):
     eqe = eq.expand()
-    X = get_max_coef(eqe, A1)
+    X = tools.get_max_coef(eqe, A1)
     eqe = eqe.xreplace({A1: ZERO})
-    Y = get_max_coef(eqe, A2)
+    Y = tools.get_max_coef(eqe, A2)
     Z = eqe.xreplace({A2: ZERO})
 #    is_ok = not X.has(A2) and not X.has(A1) and not Y.has(A2)
     is_ok = True

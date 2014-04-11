@@ -20,6 +20,7 @@ from pysymoro import invgeom
 from pysymoro import dynamics
 from symoroutils import parfile
 from symoroutils import symbolmgr
+from symoroutils import tools
 
 
 class testMisc(unittest.TestCase):
@@ -78,35 +79,35 @@ class testSymoroTrig(unittest.TestCase):
         print "######## test_GetMaxCoef ##########"
         expr1 = A*B*X + C**2 - X
         expr2 = Y*Z - B
-        self.assertEqual(symoro.get_max_coef(expr1*X + expr2, X), expr1)
+        self.assertEqual(tools.get_max_coef(expr1*X + expr2, X), expr1)
         expr3 = -A**3*B**2*X**5*(X-Y)**7
         expr3x = -A**3*B**2*X**5*(-X-Y)**7
         expr3y = -A**3*B**2*X**5*(-X+Y)**7
         expr4 = B*X**2*(X-Y)**3
-        self.assertEqual(symoro.get_max_coef(expr3*expr4, expr4), expr3)
-        self.assertEqual(symoro.get_max_coef(expr3x, expr4), symoro.ZERO)
-        res = symoro.get_max_coef(expr3y, expr4)*expr4-expr3y
+        self.assertEqual(tools.get_max_coef(expr3*expr4, expr4), expr3)
+        self.assertEqual(tools.get_max_coef(expr3x, expr4), symoro.ZERO)
+        res = tools.get_max_coef(expr3y, expr4)*expr4-expr3y
         self.assertEqual(res.expand(), symoro.ZERO)
 
     def test_name_extraction(self):
         print "######## test_name_extraction ##########"
         expr1 = sympify("C2*S3*R + S2*C3*R")
-        self.assertEqual(symoro.get_trig_couple_names(expr1), {'2', '3'})
+        self.assertEqual(tools.get_trig_couple_names(expr1), {'2', '3'})
         expr2 = sympify("CG2*S3*R + SG2*C1*R")
-        self.assertEqual(symoro.get_trig_couple_names(expr2), {'G2'})
+        self.assertEqual(tools.get_trig_couple_names(expr2), {'G2'})
         expr2 = sympify("CA2*SA3*R + SG2*C3*R")
-        self.assertEqual(symoro.get_trig_couple_names(expr2), set())
+        self.assertEqual(tools.get_trig_couple_names(expr2), set())
         expr3 = sympify("C2*S3*R + S1*C4*R")
-        self.assertEqual(symoro.get_trig_couple_names(expr3), set())
+        self.assertEqual(tools.get_trig_couple_names(expr3), set())
 
     def test_name_operations(self):
         print "######## test_name_operations ##########"
-        self.assertEqual(symoro.reduce_str('12', '13'), ('2', '3'))
-        self.assertEqual(symoro.reduce_str('124', '123'), ('4', '3'))
-        self.assertEqual(symoro.reduce_str('124', '134'), ('2', '3'))
-        self.assertEqual(symoro.reduce_str('12', '124'), ('', '4'))
-        self.assertEqual(symoro.reduce_str('1G2', 'G24'), ('1', '4'))
-        self.assertEqual(symoro.reduce_str('1G2G4', '13G4'), ('G2', '3'))
+        self.assertEqual(tools.reduce_str('12', '13'), ('2', '3'))
+        self.assertEqual(tools.reduce_str('124', '123'), ('4', '3'))
+        self.assertEqual(tools.reduce_str('124', '134'), ('2', '3'))
+        self.assertEqual(tools.reduce_str('12', '124'), ('', '4'))
+        self.assertEqual(tools.reduce_str('1G2', 'G24'), ('1', '4'))
+        self.assertEqual(tools.reduce_str('1G2G4', '13G4'), ('G2', '3'))
 
     def test_try_opt(self):
         print "######## test_try_opt ##########"

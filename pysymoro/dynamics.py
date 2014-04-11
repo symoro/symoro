@@ -11,12 +11,13 @@ import sympy
 from sympy import Matrix
 from copy import copy, deepcopy
 
-from pysymoro.symoro import Init, hat, ZERO
+from pysymoro.symoro import Init, ZERO
 from pysymoro.geometry import compute_screw_transform
 from pysymoro.geometry import compute_rot_trans, Transform
 from pysymoro.kinematics import compute_vel_acc
 from pysymoro.kinematics import compute_omega
 from symoroutils import symbolmgr
+from symoroutils import tools
 
 
 chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
@@ -289,7 +290,7 @@ def compute_wrench(robo, symo, j, w, wdot, U, vdot, F, N):
     F[j] = robo.M[j]*vdot[j] + U[j]*robo.MS[j]
     symo.mat_replace(F[j], 'F', j)
     Psi = symo.mat_replace(robo.J[j]*w[j], 'PSI', j)
-    N[j] = robo.J[j]*wdot[j] + hat(w[j])*Psi
+    N[j] = robo.J[j]*wdot[j] + tools.skew(w[j])*Psi
     symo.mat_replace(N[j], 'No', j)
 
 
@@ -303,12 +304,12 @@ def compute_joint_wrench(robo, symo, j, antRj, antPj, vdot,
     Fjnt, Njnt, Fex, Nex are the output parameters
     """
     Fjnt[j] = symo.mat_replace(F[j] + Fex[j], 'E', j)
-    Njnt[j] = N[j] + Nex[j] + hat(robo.MS[j])*vdot[j]
+    Njnt[j] = N[j] + Nex[j] + tools.skew(robo.MS[j])*vdot[j]
     symo.mat_replace(Njnt[j], 'N', j)
     f_ant = symo.mat_replace(antRj[j]*Fjnt[j], 'FDI', j)
     if robo.ant[j] != - 1:
         Fex[robo.ant[j]] += f_ant
-        Nex[robo.ant[j]] += antRj[j]*Njnt[j] + hat(antPj[j])*f_ant
+        Nex[robo.ant[j]] += antRj[j]*Njnt[j] + tools.skew(antPj[j])*f_ant
 
 
 def compute_torque(robo, symo, j, Fjnt, Njnt, name='GAM'):
@@ -322,7 +323,7 @@ def compute_torque(robo, symo, j, Fjnt, Njnt, name='GAM'):
 
 
 def inertia_spatial(J, MS, M):
-    return Matrix([(M*sympy.eye(3)).row_join(hat(MS).T), hat(MS).row_join(J)])
+    return Matrix([(M*sympy.eye(3)).row_join(tools.skew(MS).T), tools.skew(MS).row_join(J)])
 
 
 def compute_joint_torque_deriv(symo, param, arg, index):
@@ -354,9 +355,9 @@ def compute_beta(robo, symo, j, w, beta_star):
     beta_star is the output parameter
     """
     E1 = symo.mat_replace(robo.J[j]*w[j], 'JW', j)
-    E2 = symo.mat_replace(hat(w[j])*E1, 'KW', j)
-    E3 = hat(w[j])*robo.MS[j]
-    E4 = symo.mat_replace(hat(w[j])*E3, 'SW', j)
+    E2 = symo.mat_replace(tools.skew(w[j])*E1, 'KW', j)
+    E3 = tools.skew(w[j])*robo.MS[j]
+    E4 = symo.mat_replace(tools.skew(w[j])*E3, 'SW', j)
     E5 = -robo.Nex[j] - E2
     E6 = -robo.Fex[j] - E4
     beta_star[j] = Matrix([E6, E5])
@@ -370,12 +371,12 @@ def compute_link_acc(robo, symo, j, antRj, antPj, link_acc, w, wi):
     =====
     link_acc is the output parameter
     """
-    E1 = symo.mat_replace(hat(wi[j])*Matrix([0, 0, robo.qdot[j]]),
+    E1 = symo.mat_replace(tools.skew(wi[j])*Matrix([0, 0, robo.qdot[j]]),
                           'WQ', j)
     E2 = (1 - robo.sigma[j])*E1
     E3 = 2*robo.sigma[j]*E1
-    E4 = hat(w[robo.ant[j]])*antPj[j]
-    E5 = hat(w[robo.ant[j]])*E4
+    E4 = tools.skew(w[robo.ant[j]])*antPj[j]
+    E5 = tools.skew(w[robo.ant[j]])*E4
     E6 = antRj[j].T*E5
     E7 = symo.mat_replace(E6 + E3, 'LW', j)
     link_acc[j] = Matrix([E7, E2])
@@ -474,12 +475,12 @@ def compute_Jplus(robo, symo, j, antRj, antPj, Jplus, MSplus, Mplus, AJE1):
     =====
     Jplus, MSplus, Mplus are the output parameters
     """
-    hat_antPj = hat(antPj[j])
+    hat_antPj = tools.skew(antPj[j])
     antMSj = symo.mat_replace(antRj[j]*MSplus[j], 'AS', j)
     E1 = symo.mat_replace(antRj[j]*Jplus[j], 'AJ', j)
     AJE1[j] = E1[:, 2]
     E2 = symo.mat_replace(E1*antRj[j].T, 'AJA', j)
-    E3 = symo.mat_replace(hat_antPj*hat(antMSj), 'PAS', j)
+    E3 = symo.mat_replace(hat_antPj*tools.skew(antMSj), 'PAS', j)
     Jplus[robo.ant[j]] += E2 - (E3 + E3.T) + hat_antPj*hat_antPj.T*Mplus[j]
     MSplus[robo.ant[j]] += antMSj + antPj[j]*Mplus[j]
     Mplus[robo.ant[j]] += Mplus[j]
@@ -515,9 +516,9 @@ def compute_A_triangle(robo, symo, j, k, ka, antRj, antPj, f, n, A, AJE1):
     """
     f[ka] = antRj[k]*f[k]
     if k == j and robo.sigma[j] == 0:
-        n[ka] = AJE1[k] + hat(antPj[k])*f[k]
+        n[ka] = AJE1[k] + tools.skew(antPj[k])*f[k]
     else:
-        n[ka] = antRj[k]*n[k] + hat(antPj[k])*f[k]
+        n[ka] = antRj[k]*n[k] + tools.skew(antPj[k])*f[k]
     if ka == - 1:
         symo.mat_replace(f[ka], 'AV0')
         symo.mat_replace(n[ka], 'AW0')
@@ -606,7 +607,7 @@ def vec_mut_MS(v, P):
 
     Returns : Matrix 6x1
     """
-    U = - hat(v)*hat(P)
+    U = - tools.skew(v)*tools.skew(P)
     return Matrix([2*U[0, 0], U[0, 1] + U[1, 0], U[0, 2] + U[2, 0],
                    2*U[1, 1], U[1, 2] + U[2, 1], 2*U[2, 2]])
 
@@ -621,7 +622,7 @@ def vec_mut_M(P):
 
     Returns : Matrix 6x1
     """
-    U = -hat(P)*hat(P)
+    U = -tools.skew(P)*tools.skew(P)
     return Matrix([U[0, 0], U[0, 1], U[0, 2], U[1, 1], U[1, 2], U[2, 2]])
 
 

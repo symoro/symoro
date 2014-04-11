@@ -7,8 +7,9 @@ This module of SYMORO package computes the geometric models.
 
 from sympy import Matrix, zeros, eye, sin, cos
 
-from pysymoro.symoro import Init, hat
+from pysymoro.symoro import Init
 from symoroutils import symbolmgr
+from symoroutils import tools
 
 
 Z_AXIS = Matrix([0, 0, 1])
@@ -182,7 +183,7 @@ def compute_screw_transform(robo, symo, j, antRj, antPj, jTant):
     jTant is an output parameter
     """
     jRant = antRj[j].T
-    ET = symo.mat_replace(-jRant*hat(antPj[j]), 'JPR', j)
+    ET = symo.mat_replace(-jRant*tools.skew(antPj[j]), 'JPR', j)
     jTant[j] = (Matrix([jRant.row_join(ET),
                         zeros(3, 3).row_join(jRant)]))
 

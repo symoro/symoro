@@ -3,8 +3,14 @@
 
 """This module contains the Symbol Manager tools."""
 
+import itertools
 
-import os
+from sympy import sin, cos
+from sympy import Symbol, Matrix, Expr
+from sympy import Mul, Add, factor, var, sympify
+
+from symoroutils import filemgr
+from symoroutils import tools
 
 
 class SymbolManager:
@@ -24,7 +30,7 @@ class SymbolManager:
 
     def simp(self, sym):
         sym = factor(sym)
-        new_sym = ONE
+        new_sym = tools.ONE
         for e in Mul.make_args(sym):
             if e.is_Pow:
                 e, p = e.args
@@ -48,13 +54,13 @@ class SymbolManager:
                 repl_dict[term] = self.C2S2_simp(term)
             sym = sym.xreplace(repl_dict)
             return sym
-        names, short_form = trigonometric_info(sym)
+        names, short_form = tools.trignometric_info(sym)
         for name in names:
             if short_form:
-                C, S = CS_syms(name)
+                C, S = tools.CS_syms(name)
             else:
                 C, S = cos(name), sin(name)
-            sym = self.try_opt(ONE, None, S**2, C**2, sym)
+            sym = self.try_opt(tools.ONE, None, S**2, C**2, sym)
         return sym
 
     def CS12_simp(self, sym, silent=False):
@@ -74,20 +80,20 @@ class SymbolManager:
                 repl_dict[term] = self.CS12_simp(term)
             sym = sym.xreplace(repl_dict)
             return sym
-        names, short_form = trigonometric_info(sym)
+        names, short_form = tools.trignometric_info(sym)
         names = list(names)
         names.sort()
         sym2 = sym
-        for n1, n2 in combinations(names, 2):
+        for n1, n2 in itertools.combinations(names, 2):
             if short_form:
-                C1, S1 = CS_syms(n1)
-                C2, S2 = CS_syms(n2)
-                np1, nm1 = get_pos_neg(n1)
-                np2, nm2 = get_pos_neg(n2)
-                n12 = ang_sum(np1, np2, nm1, nm2)
-                nm12 = ang_sum(np1, nm2, nm1, np2)
-                C12, S12 = CS_syms(n12)
-                C1m2, S1m2 = CS_syms(nm12)
+                C1, S1 = tools.CS_syms(n1)
+                C2, S2 = tools.CS_syms(n2)
+                np1, nm1 = tools.get_pos_neg(n1)
+                np2, nm2 = tools.get_pos_neg(n2)
+                n12 = tools.ang_sum(np1, np2, nm1, nm2)
+                nm12 = tools.ang_sum(np1, nm2, nm1, np2)
+                C12, S12 = tools.CS_syms(n12)
+                C1m2, S1m2 = tools.CS_syms(nm12)
             else:
                 C1, S1 = cos(n1), sin(n1)
                 C2, S2 = cos(n2), sin(n2)
@@ -104,16 +110,16 @@ class SymbolManager:
         """Replaces B + C by A or B - C by Am.
         Chooses the best option.
         """
-        Bcfs = get_max_coef_list(old_sym, B)
-        Ccfs = get_max_coef_list(old_sym, C)
+        Bcfs = tools.get_max_coef_list(old_sym, B)
+        Ccfs = tools.get_max_coef_list(old_sym, C)
         if Bcfs != [] and Ccfs != []:
             Res = old_sym
             Res_tmp = Res
             for coef in Bcfs:
                 Res_tmp += A*coef - B*coef - C*coef
-                if sym_less(Res_tmp, Res):
+                if tools.sym_less(Res_tmp, Res):
                     Res = Res_tmp
-            if sym_less(Res, old_sym) and Am is None:
+            if tools.sym_less(Res, old_sym) and Am is None:
                 if not A.is_number and not silent:
                     self.add_to_dict(A, B + C)
                 return Res
@@ -122,13 +128,13 @@ class SymbolManager:
                 Res_tmp = Res2
                 for coef in Bcfs:
                     Res_tmp += Am*coef - B*coef + C*coef
-                    if sym_less(Res_tmp, Res2):
+                    if tools.sym_less(Res_tmp, Res2):
                         Res2 = Res_tmp
-                if sym_less(Res2, Res) and sym_less(Res2, old_sym):
+                if tools.sym_less(Res2, Res) and tools.sym_less(Res2, old_sym):
                     if not Am.is_number and not silent:
                         self.add_to_dict(Am, B - C)
                     return Res2
-                elif sym_less(Res, old_sym):
+                elif tools.sym_less(Res, old_sym):
                     if not A.is_number and not silent:
                         self.add_to_dict(A, B + C)
                     return Res
@@ -139,7 +145,7 @@ class SymbolManager:
         Extends symbol dictionary by (new_sym, old_sym) pair
         """
         new_sym = sympify(new_sym)
-        if new_sym.as_coeff_Mul()[0] == -ONE:
+        if new_sym.as_coeff_Mul()[0] == -tools.ONE:
             new_sym = -new_sym
             old_sym = -old_sym
         if new_sym not in self.sydi:
@@ -168,7 +174,7 @@ class SymbolManager:
         """
         if not isinstance(angle, Expr) or angle.is_number:
             return M
-        cos_sym, sin_sym = CS_syms(name)
+        cos_sym, sin_sym = tools.CS_syms(name)
         sym_list = [(cos_sym, cos(angle)), (sin_sym, sin(angle))]
         subs_dict = {}
         for sym, sym_old in sym_list:
@@ -303,13 +309,12 @@ class SymbolManager:
             Indices for which parameter rows will be written
         """
         self.write_line(name)
-        self.write_line(l2str(header))
+        self.write_line(tools.l2str(header))
         for j in N:
             params = robo.get_param_vec(header, j)
-            self.write_line(l2str(params))
+            self.write_line(tools.l2str(params))
         self.write_line()
 
-    #TODO: rewrite docstring
     def write_params_table(self, robo, title='', geom=True, inert=False,
                            dynam=False, equations=True,
                            inert_name='Dynamic inertia parameters'):
@@ -561,8 +566,6 @@ class SymbolManager:
         fun_body = self.gen_fbody(name, to_return, wr_syms, multival)
         fun_string = "".join(fun_head + fun_body)
         exec fun_string
-#        print fun_string
-#  TODO:       print is for debug pupuses, to be removed
         return eval('%s_func' % name)
 
 

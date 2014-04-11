@@ -60,9 +60,9 @@ def make_folders(folder_path):
 
 def get_folder_path(robot_name):
     """
-    Return the folder path to store the robot data. Also create the 
+    Return the folder path to store the robot data. Also create the
     folders if they are not already present.
-    
+
     Args:
         robot_name: The name of the robot (string).
 
@@ -82,7 +82,7 @@ def get_folder_path(robot_name):
 
 def make_file_path(robot, ext=None):
     """
-    Create the file path with the appropriate extension appended to 
+    Create the file path with the appropriate extension appended to
     the file name using an underscore.
 
     Args:
