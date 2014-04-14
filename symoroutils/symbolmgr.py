@@ -57,7 +57,7 @@ class SymbolManager:
         names, short_form = tools.trignometric_info(sym)
         for name in names:
             if short_form:
-                C, S = tools.CS_syms(name)
+                C, S = tools.cos_sin_syms(name)
             else:
                 C, S = cos(name), sin(name)
             sym = self.try_opt(tools.ONE, None, S**2, C**2, sym)
@@ -86,14 +86,14 @@ class SymbolManager:
         sym2 = sym
         for n1, n2 in itertools.combinations(names, 2):
             if short_form:
-                C1, S1 = tools.CS_syms(n1)
-                C2, S2 = tools.CS_syms(n2)
+                C1, S1 = tools.cos_sin_syms(n1)
+                C2, S2 = tools.cos_sin_syms(n2)
                 np1, nm1 = tools.get_pos_neg(n1)
                 np2, nm2 = tools.get_pos_neg(n2)
                 n12 = tools.ang_sum(np1, np2, nm1, nm2)
                 nm12 = tools.ang_sum(np1, nm2, nm1, np2)
-                C12, S12 = tools.CS_syms(n12)
-                C1m2, S1m2 = tools.CS_syms(nm12)
+                C12, S12 = tools.cos_sin_syms(n12)
+                C1m2, S1m2 = tools.cos_sin_syms(nm12)
             else:
                 C1, S1 = cos(n1), sin(n1)
                 C2, S2 = cos(n2), sin(n2)
@@ -174,7 +174,7 @@ class SymbolManager:
         """
         if not isinstance(angle, Expr) or angle.is_number:
             return M
-        cos_sym, sin_sym = tools.CS_syms(name)
+        cos_sym, sin_sym = tools.cos_sin_syms(name)
         sym_list = [(cos_sym, cos(angle)), (sin_sym, sin(angle))]
         subs_dict = {}
         for sym, sym_old in sym_list:

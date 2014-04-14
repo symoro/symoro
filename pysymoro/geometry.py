@@ -7,9 +7,9 @@ This module of SYMORO package computes the geometric models.
 
 from sympy import Matrix, zeros, eye, sin, cos
 
-from pysymoro.symoro import Init
 from symoroutils import symbolmgr
 from symoroutils import tools
+from symoroutils.paramsinit import ParamsInit
 
 
 Z_AXIS = Matrix([0, 0, 1])
@@ -424,8 +424,8 @@ def _rot_trans(axis='z', th=0, p=0):
 
 def compute_rot_trans(robo, symo):
     #init transformation
-    antRj = Init.init_mat(robo)
-    antPj = Init.init_vec(robo)
+    antRj = ParamsInit.init_mat(robo)
+    antPj = ParamsInit.init_vec(robo)
     for j in xrange(robo.NL):
         compute_transform(robo, symo, j, antRj, antPj)
     return antRj, antPj

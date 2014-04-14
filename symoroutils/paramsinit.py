@@ -2,14 +2,26 @@
 
 
 """
-This module contains the parameters used to initialise the dynamic
-model of a robot.
+This module contains the methods used to initialise the different
+matrices and parameters for various models.
 """
 
 
-class Init:
+from copy import copy
+
+from sympy import zeros
+from sympy import Matrix
+from symoroutils import tools
+
+
+class ParamsInit(object):
+    """
+    This class contains methods that are used to initialise the different
+    matrices and parameters for various models. All the methods in this
+    class are class-methods.
+    """
     @classmethod
-    def init_Jplus(cls, robo):
+    def init_jplus(cls, robo):
         """Copies the inertia parameters.
         Used for composed link inertia computation
 
@@ -19,16 +31,16 @@ class Init:
         MSplus: list of Matrices 3x1
         Mplus: list of var
         """
-        Jplus = copy(robo.J)
-        Jplus.append(zeros(3, 3))
-        MSplus = copy(robo.MS)
-        MSplus.append(zeros(3, 1))
-        Mplus = copy(robo.M)
-        Mplus.append(0)
-        return Jplus, MSplus, Mplus
+        j_plus = copy(robo.J)
+        j_plus.append(zeros(3, 3))
+        ms_plus = copy(robo.MS)
+        ms_plus.append(zeros(3, 1))
+        m_plus = copy(robo.M)
+        m_plus.append(0)
+        return j_plus, ms_plus, m_plus
 
     @classmethod
-    def init_mat(cls, robo, N=3):
+    def init_mat(cls, robo, num=3):
         """Generates a list of Matrices.Size of the
         list is number of links.
 
@@ -36,17 +48,17 @@ class Init:
         ==========
         robo: Robot
             Instance of robot description container
-        N: int, optional
+        num: int, optional
             size of the matries, default is 3
 
         Returns
         =======
-        list of Matrices NxN
+        list of Matrices numxnum
         """
-        return [zeros(N, N) for i in xrange(robo.NL)]
+        return [zeros(num, num) for i in xrange(robo.NL)]
 
     @classmethod
-    def init_vec(cls, robo, N=3, ext=0):
+    def init_vec(cls, robo, num=3, ext=0):
         """Generates a list of vectors.
         Size of the list is number of links.
 
@@ -54,7 +66,7 @@ class Init:
         ==========
         robo: Robot
             Instance of robot description container
-        N: int, optional
+        num: int, optional
             size of the vectors, default is 3
         ext: int, optional
             additional vector instances over number of links
@@ -63,7 +75,7 @@ class Init:
         =======
         list of Matrices Nx1
         """
-        return [zeros(N, 1) for i in xrange(robo.NL+ext)]
+        return [zeros(num, 1) for i in xrange(robo.NL+ext)]
 
     @classmethod
     def init_scalar(cls, robo):
@@ -78,9 +90,9 @@ class Init:
         Size of the list is number of links + 1.
         The zero vector is the base angular velocity
         """
-        w = cls.init_vec(robo)
-        w[0] = robo.w0
-        return w
+        omega = cls.init_vec(robo)
+        omega[0] = robo.w0
+        return omega
 
     @classmethod
     def init_v(cls, robo):
@@ -88,9 +100,9 @@ class Init:
         Size of the list is number of links + 1.
         The zero vector is the base angular velocity
         """
-        v = cls.init_vec(robo)
-        v[0] = robo.v0
-        return v
+        vel = cls.init_vec(robo)
+        vel[0] = robo.v0
+        return vel
 
     @classmethod
     def init_wv_dot(cls, robo, gravity=True):
@@ -113,26 +125,32 @@ class Init:
         return wdot, vdot
 
     @classmethod
-    def init_U(cls, robo):
+    def init_u(cls, robo):
         """Generates a list of auxiliary U matrices"""
-        U = Init.init_mat(robo)
+        u_aux_matrix = ParamsInit.init_mat(robo)
         # the value for the -1th base frame
-        U.append(tools.skew(robo.w0)**2 + tools.skew(robo.wdot0))
-        return U
+        u_aux_matrix.append(
+            tools.skew(robo.w0)**2 + tools.skew(robo.wdot0)
+        )
+        return u_aux_matrix
 
     @classmethod
-    def product_combinations(cls, v):
+    def product_combinations(cls, vec):
         """Generates 6-vector of different v elements'
         product combinations
 
         Parameters
         ==========
-        v: Matrix 3x1
+        vec: Matrix 3x1
             vector
 
         Returns
         =======
         product_combinations: Matrix 6x1
         """
-        return Matrix([v[0]*v[0], v[0]*v[1], v[0]*v[2],
-                       v[1]*v[1], v[1]*v[2], v[2]*v[2]])
+        return Matrix([
+            vec[0]*vec[0], vec[0]*vec[1], vec[0]*vec[2],
+            vec[1]*vec[1], vec[1]*vec[2], vec[2]*vec[2]
+        ])
+
+

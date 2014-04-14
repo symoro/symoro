@@ -26,7 +26,7 @@ TYPES = [SIMPLE, TREE, CLOSED_LOOP]
 INT_KEYS = ['ant', 'sigma', 'mu']
 
 
-def skew(v):
+def skew(vec):
     """skew-symmetry : Generates vectorial preproduct matrix
 
     Parameters
@@ -38,9 +38,9 @@ def skew(v):
     =======
     hat: Matrix 3x3
     """
-    return Matrix([[0, -v[2], v[1]],
-                   [v[2], 0, -v[0]],
-                   [-v[1], v[0], 0]])
+    return Matrix([[0, -vec[2], vec[1]],
+                   [vec[2], 0, -vec[0]],
+                   [-vec[1], vec[0], 0]])
 
 
 def l2str(list_var, spacing=8):
@@ -56,17 +56,17 @@ def l2str(list_var, spacing=8):
 
     Returns
     =======
-    s: string
+    ret_str: string
         String representation
 
     Notes
     =====
     l2str([1, 2, 3]) will be converted into '1      2      3      '
     """
-    s = ''
+    ret_str = ''
     for i in list_var:
-        s += str(i) + ' '*(spacing-len(str(i)))
-    return s
+        ret_str += str(i) + ' '*(spacing-len(str(i)))
+    return ret_str
 
 
 def find_trig_names(sym, pref=r'', pref_len=0, post=r'', post_len=0):
@@ -83,65 +83,67 @@ def get_trig_couple_names(sym):
     return names_c & names_s
 
 
-def get_max_coef_mul(sym, x):
-    k, ex = x.as_coeff_Mul()
+def get_max_coef_mul(sym, x_term):
+    k, ex = x_term.as_coeff_Mul()
     coef = sym / k
     pow_x = ex.as_powers_dict()
     pow_c = coef.as_powers_dict()
     pow_c[-1] = 0
-    for a, pa in pow_x.iteritems():
-        na = -a
-        if a in pow_c and pow_c[a] >= pa:
-            pow_c[a] -= pa
-        elif na in pow_c and pow_c[na] >= pa:
-            pow_c[na] -= pa
-            if pa % 2:
+    for j, pow_j in pow_x.iteritems():
+        num_j = -j
+        if j in pow_c and pow_c[j] >= pow_j:
+            pow_c[j] -= pow_j
+        elif num_j in pow_c and pow_c[num_j] >= pow_j:
+            pow_c[num_j] -= pow_j
+            if pow_j % 2:
                 pow_c[-1] += 1
         else:
             return ZERO
     return Mul.fromiter(c**p for c, p in pow_c.iteritems())
 
 
-def get_max_coef_list(sym, x):
-    return [get_max_coef_mul(s, x) for s in Add.make_args(sym)]
+def get_max_coef_list(sym, x_term):
+    return [get_max_coef_mul(s, x_term) for s in Add.make_args(sym)]
 
 
-def get_max_coef(sym, x):
-    return Add.fromiter(get_max_coef_mul(s, x) for s in Add.make_args(sym))
+def get_max_coef(sym, x_term):
+    return Add.fromiter(
+        get_max_coef_mul(s, x_term) for s in Add.make_args(sym)
+    )
 
 
-def get_pos_neg(s):
-    if s.find('m') != -1:
-        s_split = s.split('m')
+def get_pos_neg(str_term):
+    if str_term.find('m') != -1:
+        s_split = str_term.split('m')
         return s_split[0], s_split[1]
     else:
-        return s, ''
+        return str_term, ''
 
 
-def reduce_str(s1, s2):
+def reduce_str(str1, str2):
     while True:
-        for j, char in enumerate(s1):
+        for j, char in enumerate(str1):
             if char in 'AG':
-                i = s2.find(s1[j:j+2])
+                i = str2.find(str1[j:j+2])
                 k = 2
             else:
-                i = s2.find(char)
+                i = str2.find(char)
                 k = 1
             if i != -1:
-                if i+k < len(s2):
-                    s2_tail = s2[i+k:]
+                if i+k < len(str2):
+                    str2_tail = str2[i+k:]
                 else:
-                    s2_tail = ''
-                if j+k < len(s1):
-                    s1_tail = s1[j+k:]
+                    str2_tail = ''
+                if j+k < len(str1):
+                    str1_tail = str1[j+k:]
                 else:
-                    s1_tail = ''
-                s2 = s2[:i] + s2_tail
-                s1 = s1[:j] + s1_tail
+                    str1_tail = ''
+                str2 = str2[:i] + str2_tail
+                str1 = str1[:j] + str1_tail
                 break
         else:
             break
-    return s1, s2
+    return str1, str2
 
 
 def ang_sum(np1, np2, nm1, nm2):
@@ -153,37 +155,37 @@ def ang_sum(np1, np2, nm1, nm2):
         return np1 + np2 + 'm' + nm1 + nm2
 
 
-def CS_syms(name):
+def cos_sin_syms(name):
     if isinstance(name, str) and name[0] == 'm':
-        C, S = var('C{0}, S{0}'.format(name[1:]))
-        return C, -S
+        cos_term, sin_term = var('C{0}, S{0}'.format(name[1:]))
+        return cos_term, -sin_term
     else:
         return var('C{0}, S{0}'.format(name))
 
 
-def sym_less(A, B):
-    A_measure = A.count_ops()
-    B_measure = B.count_ops()
-    return A_measure < B_measure
+def sym_less(val_a, val_b):
+    val_a_measure = val_a.count_ops()
+    val_b_measure = val_b.count_ops()
+    return val_a_measure < val_b_measure
 
 
 def get_angles(expr):
     angles_s = set()
-    for s in expr.atoms(sin):
-        angles_s |= set(s.args)
+    for sin_term in expr.atoms(sin):
+        angles_s |= set(sin_term.args)
     angles_c = set()
-    for c in expr.atoms(cos):
-        angles_c |= set(c.args)
+    for cos_term in expr.atoms(cos):
+        angles_c |= set(cos_term.args)
     return angles_s & angles_c
 
 
-def cancel_terms(sym, X, coef):
+def cancel_terms(sym, x_term, coef):
     if coef.is_Add:
         for arg_c in coef.args:
-            sym = cancel_terms(sym, X, arg_c)
+            sym = cancel_terms(sym, x_term, arg_c)
     else:
         terms = Add.make_args(sym)
-        return Add.fromiter(t for t in terms if t != X*coef)
+        return Add.fromiter(t for t in terms if t != x_term*coef)
 
 
 def trignometric_info(sym):

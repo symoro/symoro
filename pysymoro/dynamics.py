@@ -11,13 +11,13 @@ import sympy
 from sympy import Matrix
 from copy import copy, deepcopy
 
-from pysymoro.symoro import Init, ZERO
 from pysymoro.geometry import compute_screw_transform
 from pysymoro.geometry import compute_rot_trans, Transform
 from pysymoro.kinematics import compute_vel_acc
 from pysymoro.kinematics import compute_omega
 from symoroutils import symbolmgr
 from symoroutils import tools
+from symoroutils.paramsinit import ParamsInit
 
 
 chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
@@ -44,10 +44,10 @@ def Newton_Euler(robo, symo):
     # init velocities and accelerations
     w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
     # init forces vectors
-    F = Init.init_vec(robo)
-    N = Init.init_vec(robo)
-    Fjnt = Init.init_vec(robo)
-    Njnt = Init.init_vec(robo)
+    F = ParamsInit.init_vec(robo)
+    N = ParamsInit.init_vec(robo)
+    Fjnt = ParamsInit.init_vec(robo)
+    Njnt = ParamsInit.init_vec(robo)
     for j in xrange(1, robo.NL):
         compute_wrench(robo, symo, j, w, wdot, U, vdot, F, N)
     for j in reversed(xrange(1, robo.NL)):
@@ -73,8 +73,8 @@ def dynamic_identification_NE(robo):
     """
 
     # init forces vectors
-    Fjnt = Init.init_vec(robo)
-    Njnt = Init.init_vec(robo)
+    Fjnt = ParamsInit.init_vec(robo)
+    Njnt = ParamsInit.init_vec(robo)
     # init file output, writing the robot description
     symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'dim')
@@ -91,8 +91,8 @@ def dynamic_identification_NE(robo):
     robo_tmp.FS = sympy.zeros(robo.NL, 1)
     for k in xrange(1, robo.NL):
         param_vec = robo.get_inert_param(k)
-        F = Init.init_vec(robo)
-        N = Init.init_vec(robo)
+        F = ParamsInit.init_vec(robo)
+        N = ParamsInit.init_vec(robo)
         for i in xrange(10):
             if param_vec[i] == ZERO:
                 continue
@@ -141,18 +141,18 @@ def direct_dynamic_NE(robo):
     symo.sydi : dictionary
         Dictionary with the information of all the sybstitution
     """
-    wi = Init.init_vec(robo)
+    wi = ParamsInit.init_vec(robo)
         # antecedent angular velocity, projected into jth frame
-    w = Init.init_w(robo)
-    jaj = Init.init_vec(robo, 6)
-    jTant = Init.init_mat(robo, 6)   # Twist transform list of Matrices 6x6
-    beta_star = Init.init_vec(robo, 6)
-    grandJ = Init.init_mat(robo, 6)
-    link_acc = Init.init_vec(robo, 6)
-    H_inv = Init.init_scalar(robo)
-    juj = Init.init_vec(robo, 6)   # Jj*aj / Hj
-    Tau = Init.init_scalar(robo)
-    grandVp = Init.init_vec(robo, 6)
+    w = ParamsInit.init_w(robo)
+    jaj = ParamsInit.init_vec(robo, 6)
+    jTant = ParamsInit.init_mat(robo, 6)   # Twist transform list of Matrices 6x6
+    beta_star = ParamsInit.init_vec(robo, 6)
+    grandJ = ParamsInit.init_mat(robo, 6)
+    link_acc = ParamsInit.init_vec(robo, 6)
+    H_inv = ParamsInit.init_scalar(robo)
+    juj = ParamsInit.init_vec(robo, 6)   # Jj*aj / Hj
+    Tau = ParamsInit.init_scalar(robo)
+    grandVp = ParamsInit.init_vec(robo, 6)
     grandVp.append(Matrix([robo.vdot0 - robo.G, robo.w0]))
     symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'ddm')
@@ -200,10 +200,10 @@ def inertia_matrix(robo):
     symo.sydi : dictionary
         Dictionary with the information of all the sybstitution
     """
-    Jplus, MSplus, Mplus = Init.init_Jplus(robo)
-    AJE1 = Init.init_vec(robo)
-    f = Init.init_vec(robo, ext=1)
-    n = Init.init_vec(robo, ext=1)
+    Jplus, MSplus, Mplus = ParamsInit.init_jplus(robo)
+    AJE1 = ParamsInit.init_vec(robo)
+    f = ParamsInit.init_vec(robo, ext=1)
+    n = ParamsInit.init_vec(robo, ext=1)
     A = sympy.zeros(robo.NL, robo.NL)
     symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'inm')

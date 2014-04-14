@@ -8,12 +8,12 @@ This module of SYMORO package computes the kinematic models.
 
 from sympy import Matrix, zeros
 
-from pysymoro.symoro import Init
 from pysymoro.symoro import FAIL, ZERO
 from pysymoro.geometry import dgm, Transform
 from pysymoro.geometry import compute_rot_trans, Z_AXIS
 from symoroutils import symbolmgr
 from symoroutils import tools
+from symoroutils.paramsinit import ParamsInit
 
 
 TERMINAL = 0
@@ -44,7 +44,7 @@ def _v_j(robo, j, antPj, jRant, v, w, qdj, forced=False):
 
 
 def _v_dot_j(robo, symo, j, jRant, antPj, w, wi, wdot, U, vdot, qdj, qddj):
-    DV = Init.product_combinations(w[j])
+    DV = ParamsInit.product_combinations(w[j])
     symo.mat_replace(DV, 'DV', j)
     hatw_hatw = Matrix([[-DV[3]-DV[5], DV[1], DV[2]],
                         [DV[1], -DV[5]-DV[0], DV[4]],
@@ -213,10 +213,10 @@ def compute_vel_acc(robo, symo, antRj, antPj, forced=False, gravity=True):
         Instance of symbolic manager
     """
     #init velocities and accelerations
-    w = Init.init_w(robo)
-    wdot, vdot = Init.init_wv_dot(robo, gravity)
+    w = ParamsInit.init_w(robo)
+    wdot, vdot = ParamsInit.init_wv_dot(robo, gravity)
     #init auxilary matrix
-    U = Init.init_U(robo)
+    U = ParamsInit.init_u(robo)
     for j in xrange(1, robo.NL):
         jRant = antRj[j].T
         qdj = Z_AXIS * robo.qdot[j]
@@ -236,8 +236,8 @@ def velocities(robo):
     symo.file_open(robo, 'vel')
     symo.write_params_table(robo, 'Link velocities')
     antRj, antPj = compute_rot_trans(robo, symo)
-    w = Init.init_w(robo)
-    v = Init.init_v(robo)
+    w = ParamsInit.init_w(robo)
+    v = ParamsInit.init_v(robo)
     for j in xrange(1, robo.NL):
         jRant = antRj[j].T
         qdj = Z_AXIS * robo.qdot[j]
@@ -265,9 +265,9 @@ def jdot_qdot(robo):
     symo.file_open(robo, 'jpqp')
     symo.write_params_table(robo, 'JdotQdot')
     antRj, antPj = compute_rot_trans(robo, symo)
-    w = Init.init_w(robo)
-    wdot, vdot = Init.init_wv_dot(robo, gravity=False)
-    U = Init.init_U(robo)
+    w = ParamsInit.init_w(robo)
+    wdot, vdot = ParamsInit.init_wv_dot(robo, gravity=False)
+    U = ParamsInit.init_u(robo)
     for j in xrange(1, robo.NL):
         jRant = antRj[j].T
         qdj = Z_AXIS * robo.qdot[j]
