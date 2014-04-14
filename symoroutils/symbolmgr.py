@@ -13,9 +13,9 @@ from symoroutils import filemgr
 from symoroutils import tools
 
 
-class SymbolManager:
+class SymbolManager(object):
     """Symbol manager, responsible for symbol replacing, file writing."""
-    def __init__(self, file_out='disp', sydi={}):
+    def __init__(self, file_out='disp', sydi=dict()):
         """Default values correspond to empty dictionary and screen output.
         """
         self.file_out = file_out
@@ -31,14 +31,14 @@ class SymbolManager:
     def simp(self, sym):
         sym = factor(sym)
         new_sym = tools.ONE
-        for e in Mul.make_args(sym):
-            if e.is_Pow:
-                e, p = e.args
+        for expr in Mul.make_args(sym):
+            if expr.is_Pow:
+                expr, pow_val = expr.args
             else:
-                p = 1
-            e = self.C2S2_simp(e)
-            e = self.CS12_simp(e, silent=True)
-            new_sym *= e**p
+                pow_val = 1
+            expr = self.C2S2_simp(expr)
+            expr = self.CS12_simp(expr, silent=True)
+            new_sym *= expr**pow_val
         return new_sym
 
     def C2S2_simp(self, sym):
@@ -57,10 +57,12 @@ class SymbolManager:
         names, short_form = tools.trignometric_info(sym)
         for name in names:
             if short_form:
-                C, S = tools.cos_sin_syms(name)
+                cos_term, sin_term = tools.cos_sin_syms(name)
             else:
-                C, S = cos(name), sin(name)
-            sym = self.try_opt(tools.ONE, None, S**2, C**2, sym)
+                cos_term, sin_term = cos(name), sin(name)
+            sym = self.try_opt(
+                tools.ONE, None, sin_term**2, cos_term**2, sym
+            )
         return sym
 
     def CS12_simp(self, sym, silent=False):
