@@ -6,6 +6,7 @@ Unit tests for SYMORO modules
 """
 
 
+import os
 import unittest
 
 from sympy import sympify, var, Matrix
@@ -18,6 +19,7 @@ from pysymoro.geometry import Transform as trns
 from pysymoro import kinematics
 from pysymoro import invgeom
 from pysymoro import dynamics
+from symoroutils import filemgr
 from symoroutils import parfile
 from symoroutils import symbolmgr
 from symoroutils import tools
@@ -28,7 +30,7 @@ class testMisc(unittest.TestCase):
         print "######## test_readwrite ##########"
         original_robo = symoro.Robot.RX90()
         parfile.writepar(original_robo)
-        fname = '%s.par' % original_robo.name
+        fname = filemgr.get_clean_name(original_robo.name) + ".par"
         file_path = os.path.join(original_robo.directory, fname)
         new_robo, flag = parfile.readpar(original_robo.name, file_path)
         self.assertEqual(flag, symoro.OK)

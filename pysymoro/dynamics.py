@@ -94,7 +94,7 @@ def dynamic_identification_NE(robo):
         F = ParamsInit.init_vec(robo)
         N = ParamsInit.init_vec(robo)
         for i in xrange(10):
-            if param_vec[i] == ZERO:
+            if param_vec[i] == tools.ZERO:
                 continue
             # change link names according to current non-zero parameter
             robo_tmp.num = [str(l) + str(param_vec[i])
@@ -341,7 +341,7 @@ def compute_joint_torque_deriv(symo, param, arg, index):
     index : strig
         identifies the parameter in the sybstituted symbol's name
     """
-    if param != ZERO and arg != ZERO:
+    if param != tools.ZERO and arg != tools.ZERO:
         index = str(index) + str(param)
         symo.replace(arg, 'DG', index, forced=True)
 
@@ -795,8 +795,8 @@ def group_param_prism_spec(robo, symo, j, antRj, antPj):
         to_replace -= {6, 7, 8}
     #TOD: rewrite
     dotGa = Transform.sna(antRj[j])[2].dot(robo.G)
-    if dotGa == ZERO:
-        revol_align = robo.ant[robo.ant[j]] == 0 and robo.ant[j] == ZERO
+    if dotGa == tools.ZERO:
+        revol_align = robo.ant[robo.ant[j]] == 0 and robo.ant[j] == tools.ZERO
         if robo.ant[j] == 0 or revol_align:
             Kj[9] += robo.IA[j]
             robo.IA[j] = 0
