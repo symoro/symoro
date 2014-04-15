@@ -10,7 +10,6 @@ from heapq import heapify, heappop
 from sympy import var, sin, cos, eye, atan2, sqrt, pi
 from sympy import Matrix, Symbol, Expr
 
-from pysymoro.symoro import ZERO, ONE
 from pysymoro.geometry import dgm
 from symoroutils import symbolmgr
 from symoroutils import tools
@@ -156,7 +155,7 @@ def _try_solve_1(symo, eq_sys, known):
         if th_i in known:
             continue
         Xi, Yi, Zi, i_ok = _get_coefs(eqi, sin(th_i), cos(th_i), th_i)
-        i_ok &= sum([Xi == ZERO, Yi == ZERO, Zi == ZERO]) <= 1
+        i_ok &= sum([Xi == tools.ZERO, Yi == tools.ZERO, Zi == tools.ZERO]) <= 1
         if not i_ok:
             continue
         j_ok = False
@@ -199,8 +198,8 @@ def _try_solve_2(symo, eq_sys, known):
                 break
             X1, Y1, Z1, i_ok = _get_coefs(eqi, S, C, th, r)
             X2, Y2, Z2, j_ok = _get_coefs(eqj, C, S, th, r)
-            i_ok &= X1.has(r) and not Z1.has(r) and Y1 == ZERO
-            j_ok &= X2.has(r) and not Z2.has(r) and Y2 == ZERO
+            i_ok &= X1.has(r) and not Z1.has(r) and Y1 == tools.ZERO
+            j_ok &= X2.has(r) and not Z2.has(r) and Y2 == tools.ZERO
             all_ok = j_ok and i_ok
             if all_ok:
                 eq_type = 4
@@ -317,21 +316,21 @@ def _solve_type_2(symo, X, Y, Z, th):
     Y = symo.replace(symo.CS12_simp(Y), 'Y', th)
     Z = symo.replace(symo.CS12_simp(Z), 'Z', th)
     YPS = var('YPS'+str(th))
-    if X == ZERO and Y != ZERO:
+    if X == tools.ZERO and Y != tools.ZERO:
         C = symo.replace(Z/Y, 'C', th)
-        symo.add_to_dict(YPS, (ONE, - ONE))
+        symo.add_to_dict(YPS, (tools.ONE, - tools.ONE))
         symo.add_to_dict(th, atan2(YPS*sqrt(1-C**2), C))
-    elif X != ZERO and Y == ZERO:
+    elif X != tools.ZERO and Y == tools.ZERO:
         S = symo.replace(Z/X, 'S', th)
-        symo.add_to_dict(YPS, (ONE, - ONE))
+        symo.add_to_dict(YPS, (tools.ONE, - tools.ONE))
         symo.add_to_dict(th, atan2(S, YPS*sqrt(1-S**2)))
-    elif Z == ZERO:
-        symo.add_to_dict(YPS, (ONE, ZERO))
+    elif Z == tools.ZERO:
+        symo.add_to_dict(YPS, (tools.ONE, tools.ZERO))
         symo.add_to_dict(th, atan2(-Y, X) + YPS*pi)
     else:
         B = symo.replace(X**2 + Y**2, 'B', th)
         D = symo.replace(B - Z**2, 'D', th)
-        symo.add_to_dict(YPS, (ONE, - ONE))
+        symo.add_to_dict(YPS, (tools.ONE, - tools.ONE))
         S = symo.replace((X*Z + YPS * Y * sqrt(D))/B, 'S', th)
         C = symo.replace((Y*Z - YPS * X * sqrt(D))/B, 'C', th)
         symo.add_to_dict(th, atan2(S, C))
@@ -350,9 +349,9 @@ def _solve_type_3(symo, X1, Y1, Z1, X2, Y2, Z2, th):
     X2 = symo.replace(symo.CS12_simp(X2), 'X2', th)
     Y2 = symo.replace(symo.CS12_simp(Y2), 'Y2', th)
     Z2 = symo.replace(symo.CS12_simp(Z2), 'Z2', th)
-    if X1 == ZERO and Y2 == ZERO:
+    if X1 == tools.ZERO and Y2 == tools.ZERO:
         symo.add_to_dict(th, atan2(Z2/X2, Z1/Y1))
-    elif X2 == ZERO and Y1 == ZERO:
+    elif X2 == tools.ZERO and Y1 == tools.ZERO:
         symo.add_to_dict(th, atan2(Z1/X1, Z2/Y2))
     else:
         D = symo.replace(X1*Y2-X2*Y1, 'D', th)
@@ -373,7 +372,7 @@ def _solve_type_4(symo, X1, Y1, X2, Y2, th, r):
     X2 = symo.replace(symo.CS12_simp(X2), 'X2', th)
     Y2 = symo.replace(symo.CS12_simp(Y2), 'Y2', th)
     YPS = var('YPS' + r)
-    symo.add_to_dict(YPS, (ONE, - ONE))
+    symo.add_to_dict(YPS, (tools.ONE, - tools.ONE))
     symo.add_to_dict(r, YPS*sqrt((Y1/X1)**2 + (Y2/X2)**2))
     symo.add_to_dict(th, atan2(Y1/(X1*r), Y2/(X2*r)))
 
@@ -396,7 +395,7 @@ def _solve_type_5(symo, X1, Y1, Z1, X2, Y2, Z2, th, r):
     V2 = symo.replace(Y2/X2, 'V2', r)
     W2 = symo.replace(Z2/X2, 'W2', r)
     _solve_square(W1**2 + W2**2, 2*(V1*W1 + V2*W2), V1**2 + V2**2, r)
-    _solve_type_3(X1, ZERO, Y1 + Z1*r, ZERO, X2, Y2 + Z2*r)
+    _solve_type_3(X1, tools.ZERO, Y1 + Z1*r, tools.ZERO, X2, Y2 + Z2*r)
 
 
 def _solve_type_7(symo, V, W, X, Y, Z1, Z2, eps, th_i, th_j):
@@ -441,7 +440,7 @@ def _solve_type_8(symo, X, Y, Z1, Z2, th_i, th_j):
     Z2 = symo.replace(symo.CS12_simp(Z2), 'Z2', th_j)
     Cj = symo.replace((Z1**2 + Z2**2 - X**2 - Y**2) / (2*X*Y), 'C', th_j)
     YPS = var('YPS%s' % th_j)
-    symo.add_to_dict(YPS, (ONE, - ONE))
+    symo.add_to_dict(YPS, (tools.ONE, - tools.ONE))
     symo.add_to_dict(th_j, atan2(YPS*sqrt(1 - Cj**2), Cj))
     Q1 = symo.replace(X + Y*cos(th_j), 'Q1', th_i)
     Q2 = symo.replace(X + Y*sin(th_j), 'Q2', th_i)
@@ -460,7 +459,7 @@ def _solve_square(symo, A, B, C, x):
     C = symo.replace(C, 'C', x)
     Delta = symo.repalce(B**2 - 4*A*C, 'Delta', x)
     YPS = var('YPS' + x)
-    symo.add_to_dict(YPS, (ONE, - ONE))
+    symo.add_to_dict(YPS, (tools.ONE, - tools.ONE))
     symo.add_to_dict(x, (-B + YPS*sqrt(Delta))/(2*A))
 
 
@@ -481,9 +480,9 @@ def _check_const(consts, *xs):
 def _get_coefs(eq, A1, A2, *xs):
     eqe = eq.expand()
     X = tools.get_max_coef(eqe, A1)
-    eqe = eqe.xreplace({A1: ZERO})
+    eqe = eqe.xreplace({A1: tools.ZERO})
     Y = tools.get_max_coef(eqe, A2)
-    Z = eqe.xreplace({A2: ZERO})
+    Z = eqe.xreplace({A2: tools.ZERO})
 #    is_ok = not X.has(A2) and not X.has(A1) and not Y.has(A2)
     is_ok = True
     is_ok &= _check_const((X, Y, Z), *xs)

@@ -8,7 +8,6 @@ This module of SYMORO package computes the kinematic models.
 
 from sympy import Matrix, zeros
 
-from pysymoro.symoro import FAIL, ZERO
 from pysymoro.geometry import dgm, Transform
 from pysymoro.geometry import compute_rot_trans, Z_AXIS
 from symoroutils import symbolmgr
@@ -134,7 +133,7 @@ def _jac_inv(robo, symo, n, i, j):
         J = _make_square(J)
     det = _jac_det(robo, symo, J=J)
     Jinv = J.adjugate()
-    if det == ZERO:
+    if det == tools.ZERO:
         print 'Matrix is singular!'
     else:
         Jinv = Jinv/det
@@ -165,7 +164,7 @@ def extend_W(J, r, W, indx, chain):
 
 def _kinematic_loop_constraints(robo, symo, proj=None):
     if robo.NJ == robo.NL:
-        return FAIL
+        return tools.FAIL
     indx_c = robo.indx_cut
     indx_a = robo.indx_active
     indx_p = robo.indx_passive
@@ -184,9 +183,9 @@ def _kinematic_loop_constraints(robo, symo, proj=None):
         chi.extend(chj)
         J = Ji.row_join(-Jj)
         for row in xrange(6):
-            if all(J[row, col] == ZERO for col in xrange(len(chi))):
+            if all(J[row, col] == tools.ZERO for col in xrange(len(chi))):
                 continue
-            elif J[row, chi.index(i)] == ZERO:
+            elif J[row, chi.index(i)] == tools.ZERO:
                 extend_W(J, row, W_a, indx_a, chi)
                 extend_W(J, row, W_p, indx_p, chi)
             else:
@@ -271,7 +270,7 @@ def jdot_qdot(robo):
     for j in xrange(1, robo.NL):
         jRant = antRj[j].T
         qdj = Z_AXIS * robo.qdot[j]
-        qddj = Z_AXIS * ZERO
+        qddj = Z_AXIS * tools.ZERO
         wi, w[j] = _omega_ij(robo, j, jRant, w, qdj)
         symo.mat_replace(w[j], 'W', j)
         symo.mat_replace(wi, 'WI', j)
@@ -311,8 +310,8 @@ def jacobian_determinant(robo, n, i, j, rows, cols):
 def kinematic_constraints(robo):
     symo = symbolmgr.SymbolManager(None)
     res = _kinematic_loop_constraints(robo, symo)
-    if res == FAIL:
-        return FAIL
+    if res == tools.FAIL:
+        return tools.FAIL
     W_a, W_p, W_ac, W_pc, W_c = res
     symo.file_open(robo, 'ckel')
     symo.write_params_table(robo, 'Constraint kinematic equations of loop',

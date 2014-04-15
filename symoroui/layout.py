@@ -13,15 +13,19 @@ from collections import OrderedDict
 
 import wx
 
-from pysymoro.symoro import Robot, FAIL
-from pysymoro import geometry, kinematics, dynamics, invgeom
+from pysymoro.symoro import Robot
+from pysymoro import geometry
+from pysymoro import kinematics
+from pysymoro import dynamics
+from pysymoro import invgeom
 from symoroutils import parfile
 from symoroutils import filemgr
-from symoroviz import graphics
+from symoroutils import tools
 from symoroui import definition as ui_definition
 from symoroui import geometry as ui_geometry
 from symoroui import kinematics as ui_kinematics
 from symoroui import labels as ui_labels
+from symoroviz import graphics
 
 
 class MainFrame(wx.Frame):
@@ -281,7 +285,7 @@ class MainFrame(wx.Frame):
     def Change(self, index, name, event_object):
         prev_value = str(self.robo.get_val(index, name))
         if event_object.Value != prev_value:
-            if self.robo.put_val(index, name, event_object.Value) == FAIL:
+            if self.robo.put_val(index, name, event_object.Value) == tools.FAIL:
                 message = "Unacceptable value '%s' has been input in %s%s" \
                           % (event_object.Value, name, index)
                 self.message_error(message)
@@ -625,7 +629,7 @@ class MainFrame(wx.Frame):
             if dialog_res == wx.CANCEL:
                 return
             elif dialog_res == wx.YES:
-                if self.OnSave(None) == FAIL:
+                if self.OnSave(None) == tools.FAIL:
                     return
         dialog = wx.FileDialog(
             self, 
@@ -641,7 +645,7 @@ class MainFrame(wx.Frame):
             if new_robo is None:
                 self.message_error('File could not be read!')
             else:
-                if flag == FAIL:
+                if flag == tools.FAIL:
                     self.message_warning(
                         "While reading file an error occured."
                     )
@@ -660,7 +664,7 @@ class MainFrame(wx.Frame):
             wildcard='*.par'
         )
         if dialog.ShowModal() == wx.ID_CANCEL:
-            return FAIL
+            return tools.FAIL
         self.robo.directory = dialog.GetDirectory()
         self.robo.name = dialog.GetFilename()[:-4]
         parfile.writepar(self.robo)
@@ -722,7 +726,7 @@ class MainFrame(wx.Frame):
         dialog.Destroy()
 
     def OnCkel(self, event):
-        if kinematics.kinematic_constraints(self.robo) == FAIL:
+        if kinematics.kinematic_constraints(self.robo) == tools.FAIL:
             self.message_warning('There are no loops')
         else:
             self.model_success('ckel')
@@ -786,7 +790,7 @@ class MainFrame(wx.Frame):
                 'Do you want to save changes?', 'Please confirm',
                 wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL, self)
             if result == wx.YES:
-                if self.OnSave(_) == FAIL:
+                if self.OnSave(_) == tools.FAIL:
                     return
             elif result == wx.CANCEL:
                 return

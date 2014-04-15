@@ -13,7 +13,7 @@ import wx.lib.scrolledpanel as scrolled
 
 from sympy import Expr, Symbol
 
-from pysymoro.symoro import SIMPLE, TREE, CLOSED_LOOP
+from symoroutils import tools
 
 
 class DialogDefinition(wx.Dialog):
@@ -50,10 +50,11 @@ class DialogDefinition(wx.Dialog):
         grid.Add(self.spin_joints, pos=(2, 1))
         grid.Add(wx.StaticText(self, label='Type of structure'), pos=(3, 0),
                  flag=wx.BOTTOM | wx.TOP | wx.ALIGN_LEFT, border=2)
-        self.cmb_structure = wx.ComboBox(self, size=(92, -1),
-                                         name='structure', style=wx.CB_READONLY,
-                                         choices=[SIMPLE, TREE, CLOSED_LOOP],
-                                         value=structure)
+        self.cmb_structure = wx.ComboBox(
+            self, size=(92, -1), name='structure', style=wx.CB_READONLY,
+            choices=[tools.SIMPLE, tools.TREE, tools.CLOSED_LOOP],
+            value=structure
+        )
         grid.Add(self.cmb_structure, pos=(3, 1))
         self.cmb_structure.Bind(wx.EVT_COMBOBOX, self.OnTypeChanged)
         self.OnTypeChanged(None)

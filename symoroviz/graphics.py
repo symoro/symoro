@@ -15,10 +15,10 @@ from numpy import sin, cos, radians, pi, inf, nan
 
 from sympy import Expr
 
-from pysymoro.symoro import CLOSED_LOOP
 from pysymoro.invgeom import loop_solve
 from pysymoro.geometry import dgm
 from symoroutils import symbolmgr
+from symoroutils import tools
 
 from objects import Frame, RevoluteJoint, FixedJoint, PrismaticJoint
 
@@ -194,7 +194,7 @@ class myGLCanvas(GLCanvas):
                 self.jnt_dict[sym].q = min_sln[i]
 
     def solve(self):
-        if self.robo.structure != CLOSED_LOOP:
+        if self.robo.structure != tools.CLOSED_LOOP:
             return
         if self.l_solver is None:
             self.generate_loop_fcn()
@@ -432,7 +432,7 @@ class MainWindow(wx.Frame):
             gridJnts.Add(s, pos=(p_index, 1), flag=wx.ALIGN_CENTER_VERTICAL)
             p_index += 1
 
-        if self.robo.structure == CLOSED_LOOP:
+        if self.robo.structure == tools.CLOSED_LOOP:
             choise_list = ['Break Loops', 'Make Loops']
             self.radioBox = wx.RadioBox(self.p, choices=choise_list,
                                         style=wx.RA_SPECIFY_ROWS)
