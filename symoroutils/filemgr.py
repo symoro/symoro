@@ -10,18 +10,15 @@ import os
 SYMORO_ROBOTS_FOLDER = "symoro-robots"
 
 
-def get_base_path():
+def get_base_path(base_folder=SYMORO_ROBOTS_FOLDER):
     """
     Return the base path for storing all SYMORO robot files.
 
     Returns:
         A string specifying the base folder path.
-
-    >>> get_base_path()
-    '/home/aravind/symoro-robots'
     """
     home_folder = os.path.expanduser("~")
-    return os.path.join(home_folder, SYMORO_ROBOTS_FOLDER)
+    return os.path.join(home_folder, base_folder)
 
 
 def get_clean_name(name, char='-'):
@@ -68,11 +65,6 @@ def get_folder_path(robot_name):
 
     Returns:
         A string specifying the folder path.
-
-    >>> get_folder_path('RX 90')
-    '/home/aravind/symoro-robots/rx-90'
-    >>> get_folder_path('RX90')
-    '/home/aravind/symoro-robots/rx90'
     """
     robot_name = get_clean_name(robot_name)
     folder_path = os.path.join(get_base_path(), robot_name)
@@ -100,10 +92,5 @@ def make_file_path(robot, ext=None):
     file_path = os.path.join(robot.directory, fname)
     make_folders(robot.directory)
     return file_path
-
-
-if __name__ == "__main__":
-    import doctest
-    doctest.testmod()
 
 
