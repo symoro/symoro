@@ -12,6 +12,7 @@ import os
 import re
 
 from symoroutils import filemgr
+from symoroutils import tools
 from pysymoro import symoro
 
 
@@ -60,8 +61,8 @@ def _extract_vals(robo, key, line):
         else:
             prev_item = True
     for i, v in enumerate(items_proc):
-        if robo.put_val(i+k, key, v.strip()) == symoro.FAIL:
-            return symoro.FAIL
+        if robo.put_val(i+k, key, v.strip()) == tools.FAIL:
+            return tools.FAIL
 
 
 def _write_par_list(robo, f, key, N0, N):
@@ -78,7 +79,7 @@ def writepar(robo):
         f.write('NL = %s\n' % robo.nl)
         f.write('NJ = %s\n' % robo.nj)
         f.write('NF = %s\n' % robo.nf)
-        f.write('Type = %s\n' % symoro.TYPES.index(robo.structure))
+        f.write('Type = %s\n' % tools.TYPES.index(robo.structure))
         f.write('is_mobile = %s\n' % int(robo.is_mobile))
         f.write('\n(* Geometric parameters *)\n')
         if robo.is_mobile:
@@ -106,7 +107,7 @@ def writepar(robo):
 def readpar(robo_name, file_path):
     """Return:
         robo: an instance of Robot, read from file
-        flag: indicates if any errors accured. (symoro.FAIL)
+        flag: indicates if any errors accured. (tools.FAIL)
     """
     with open(file_path, 'r') as f:
         #initialize the Robot instance
@@ -123,16 +124,16 @@ def readpar(robo_name, file_path):
             if match:
                 is_mobile = _bool_dict[(match.group(1).strip())]
         if len(d) < 2:
-            return None, symoro.FAIL
+            return None, tools.FAIL
         NF = d['NJ']*2 - d['NL']
         robo = symoro.Robot(robo_name, d['NL'], d['NJ'], NF,
-                            is_mobile, symoro.TYPES[d['Type']])
+                            is_mobile, tools.TYPES[d['Type']])
         robo.directory = os.path.dirname(file_path)
         #fitting the data
         acc_line = ''
         key = ''
         f.seek(0)
-        flag = symoro.OK
+        flag = tools.OK
         for line in f.readlines():
             if line.find('(*') != -1:
                 continue
@@ -148,8 +149,8 @@ def readpar(robo_name, file_path):
                 if key in _keyword_repl:
                     key = _keyword_repl[key]
                 if key in _keywords:
-                    if _extract_vals(robo, key, acc_line) == symoro.FAIL:
-                        flag = symoro.FAIL
+                    if _extract_vals(robo, key, acc_line) == tools.FAIL:
+                        flag = tools.FAIL
                 acc_line = ''
                 key = ''
     return robo, flag

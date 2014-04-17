@@ -26,22 +26,6 @@ from symoroutils import tools
 
 
 class testMisc(unittest.TestCase):
-    def test_readwrite(self):
-        print "######## test_readwrite ##########"
-        original_robo = symoro.Robot.RX90()
-        parfile.writepar(original_robo)
-        fname = filemgr.get_clean_name(original_robo.name) + ".par"
-        file_path = os.path.join(original_robo.directory, fname)
-        new_robo, flag = parfile.readpar(original_robo.name, file_path)
-        self.assertEqual(flag, symoro.OK)
-        l1 = original_robo.get_geom_head()
-        l2 = original_robo.get_dynam_head()
-        l3 = original_robo.get_ext_dynam_head()
-        for Name in l3[1:]+l2[1:]+l1[1:]:
-            for i in xrange(1, original_robo.NL):
-                self.assertEqual(original_robo.get_val(i, Name),
-                                 new_robo.get_val(i, Name))
-
     def test_robo_misc(self):
         print "######## test_robo_misc ##########"
         self.robo = symoro.Robot.SR400()
@@ -57,20 +41,20 @@ class testMisc(unittest.TestCase):
         l1 = self.robo.get_geom_head()
         l2 = self.robo.get_dynam_head()
         l3 = self.robo.get_ext_dynam_head()
-        for Name in l1[1:] + l2[1:] + l3[1:]:
+        for name in l1[1:] + l2[1:] + l3[1:]:
             for i in xrange(self.robo.NL):
-                if Name in symoro.INT_KEYS:
-                    self.assertEqual(self.robo.put_val(i, Name, i), symoro.OK)
+                if name in tools.INT_KEYS:
+                    self.assertEqual(self.robo.put_val(i, name, i), tools.OK)
                 else:
-                    v = var(Name + str(i))
-                    self.assertEqual(self.robo.put_val(i, Name, v), symoro.OK)
-        for Name in l3[1:]+l2[1:]+l1[1:]:
+                    v = var(name + str(i))
+                    self.assertEqual(self.robo.put_val(i, name, v), tools.OK)
+        for name in l3[1:]+l2[1:]+l1[1:]:
             for i in xrange(self.robo.NL):
-                if Name in symoro.INT_KEYS:
-                    self.assertEqual(self.robo.get_val(i, Name), i)
+                if name in tools.INT_KEYS:
+                    self.assertEqual(self.robo.get_val(i, name), i)
                 else:
-                    v = var(Name + str(i))
-                    self.assertEqual(self.robo.get_val(i, Name), v)
+                    v = var(name + str(i))
+                    self.assertEqual(self.robo.get_val(i, name), v)
 
 
 class testGeometry(unittest.TestCase):
@@ -235,12 +219,16 @@ class testDynamics(unittest.TestCase):
         print 'Base parameters computation'
         dynamics.base_paremeters(robo)
 
+
 if __name__ == '__main__':
-    unittest.main()
-#########################
     suite = unittest.TestSuite()
-##    suite.addTest(testSymoroTrig('test_trig_simp'))
+    suite.addTest(testMisc('test_robo_misc'))
+    suite.addTest(testGeometry('test_dgm_RX90'))
+    suite.addTest(testGeometry('test_dgm_SR400'))
+    suite.addTest(testGeometry('test_igm'))
+    suite.addTest(testGeometry('test_loop'))
     suite.addTest(testKinematics('test_jac'))
-#    unittest.TextTestRunner().run(suite)
+    suite.addTest(testKinematics('test_jac2'))
+    unittest.TextTestRunner(verbosity=2).run(suite)
 
 
