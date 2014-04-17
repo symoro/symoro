@@ -13,7 +13,7 @@ from collections import OrderedDict
 
 import wx
 
-from pysymoro.symoro import Robot
+from pysymoro.robot import Robot
 from pysymoro import geometry
 from pysymoro import kinematics
 from pysymoro import dynamics

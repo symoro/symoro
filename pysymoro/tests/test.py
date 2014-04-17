@@ -13,7 +13,7 @@ from sympy import sympify, var, Matrix
 from sympy.abc import A, B, C, X, Y, Z
 from numpy import random, amax, matrix, eye, zeros
 
-from pysymoro import symoro
+from pysymoro import robot
 from pysymoro import geometry
 from pysymoro.geometry import Transform as trns
 from pysymoro import kinematics
@@ -28,7 +28,7 @@ from symoroutils import tools
 class testMisc(unittest.TestCase):
     def test_robo_misc(self):
         print "######## test_robo_misc ##########"
-        self.robo = symoro.Robot.SR400()
+        self.robo = robot.Robot.SR400()
         q = list(var('th1:10'))
         self.assertEqual(self.robo.q_vec, q)
         self.assertEqual(self.robo.chain(6), [6, 5, 4, 3, 2, 1])
@@ -61,16 +61,16 @@ class testGeometry(unittest.TestCase):
 
     def setUp(self):
         self.symo = symbolmgr.SymbolManager()
-        self.robo = symoro.Robot.RX90()
+        self.robo = robot.Robot.RX90()
 
 #    def test_misc(self):
-#        self.assertEqual(self.robo.structure, symoro.SIMPLE)
+#        self.assertEqual(self.robo.structure, tools.SIMPLE)
 #        self.robo.ant[3] = 0
-#        self.assertEqual(self.robo.type_of_structure, symoro.TREE)
+#        self.assertEqual(self.robo.type_of_structure, tools.TREE)
 #        self.robo.ant[3] = 2
-#        self.assertEqual(self.robo.type_of_structure, symoro.SIMPLE)
-#        robo2 = symoro.Robot.SR400()
-#        self.assertEqual(robo2.type_of_structure, symoro.CLOSED_LOOP)
+#        self.assertEqual(self.robo.type_of_structure, tools.SIMPLE)
+#        robo2 = robot.Robot.SR400()
+#        self.assertEqual(robo2.type_of_structure, tools.CLOSED_LOOP)
 
     def test_dgm_RX90(self):
         print "######## test_dgm_RX90 ##########"
@@ -103,7 +103,7 @@ class testGeometry(unittest.TestCase):
 
     def test_dgm_SR400(self):
         print "######## test_dgm_SR400 ##########"
-        self.robo = symoro.Robot.SR400()
+        self.robo = robot.Robot.SR400()
         T = geometry.dgm(self.robo, self.symo, 0, 6,
                          fast_form=True, trig_subs=True)
         f06 = self.symo.gen_func('DGM_generated1', T, self.robo.q_vec)
@@ -135,7 +135,7 @@ class testGeometry(unittest.TestCase):
 
     def test_loop(self):
         print "######## test_loop ##########"
-        self.robo = symoro.Robot.SR400()
+        self.robo = robot.Robot.SR400()
         invgeom.loop_solve(self.robo, self.symo)
         l_solver = self.symo.gen_func('IGM_gen', self.robo.q_vec,
                                       self.robo.q_active)
@@ -152,14 +152,14 @@ class testGeometry(unittest.TestCase):
 class testKinematics(unittest.TestCase):
     def setUp(self):
         self.symo = symbolmgr.SymbolManager()
-        self.robo = symoro.Robot.RX90()
+        self.robo = robot.Robot.RX90()
 
     def test_speeds(self):
         print 'Speeds and accelerations'
         kinematics.speeds_accelerations(self.robo)
 
         print 'Kinematic constraint equations'
-        kinematics.kinematic_constraints(symoro.Robot.SR400())
+        kinematics.kinematic_constraints(robot.Robot.SR400())
 
     def test_jac(self):
         print "######## test_jac ##########"
@@ -199,7 +199,7 @@ class testKinematics(unittest.TestCase):
 
 class testDynamics(unittest.TestCase):
     def test_dynamics(self):
-        robo = symoro.Robot.RX90()
+        robo = robot.Robot.RX90()
 
         print 'Inverse dynamic model using Newton - Euler Algorith'
         dynamics.inverse_dynamic_NE(robo)

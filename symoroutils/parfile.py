@@ -13,7 +13,7 @@ import re
 
 from symoroutils import filemgr
 from symoroutils import tools
-from pysymoro import symoro
+from pysymoro import robot
 
 
 _keywords = ['ant', 'sigma', 'b', 'd', 'r',
@@ -126,7 +126,7 @@ def readpar(robo_name, file_path):
         if len(d) < 2:
             return None, tools.FAIL
         NF = d['NJ']*2 - d['NL']
-        robo = symoro.Robot(robo_name, d['NL'], d['NJ'], NF,
+        robo = robot.Robot(robo_name, d['NL'], d['NJ'], NF,
                             is_mobile, tools.TYPES[d['Type']])
         robo.directory = os.path.dirname(file_path)
         #fitting the data

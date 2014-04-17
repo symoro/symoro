@@ -556,8 +556,8 @@ class MainWindow(wx.Frame):
 
 if __name__ == '__main__':
     app = wx.PySimpleApp()
-    import symoro
-    robo = symoro.Robot.RX90()
+    from pysymoro import robot
+    robo = robot.Robot.RX90()
     robo.d[3] = 1.
     robo.r[4] = 1.
     frame = MainWindow(prefix='', robo=robo)
