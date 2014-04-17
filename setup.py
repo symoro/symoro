@@ -29,7 +29,7 @@ setup(
     name='symoro',
     version='0.1alpha',
     description='SYmoblic MOdelling of RObots software',
-    url='http://github.com/vijaravind/symoro',
+    url='http://github.com/symoro/symoro',
     scripts=bin_scripts,
     packages=find_packages(),
     zip_safe=False
