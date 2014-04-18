@@ -10,13 +10,14 @@ import unittest
 
 from symoroutils import filemgr
 from symoroutils import parfile
+from symoroutils import samplerobots
 from symoroutils import tools
 from pysymoro import robot
 
 
 class TestParfile(unittest.TestCase):
     def setUp(self):
-        self.orig_robo = robot.Robot.RX90()
+        self.orig_robo = samplerobots.rx90()
 
     def test_readwrite(self):
         parfile.writepar(self.orig_robo)

@@ -12,6 +12,7 @@ from pysymoro.geometry import dgm, Transform
 from pysymoro.geometry import compute_rot_trans, Z_AXIS
 from symoroutils import symbolmgr
 from symoroutils import tools
+from symoroutils import samplerobots
 from symoroutils.paramsinit import ParamsInit
 
 
@@ -337,7 +338,7 @@ def kinematic_constraints(robo):
 #symo = symbolmgr.SymbolManager()
 #from symoro import Robot
 #from symoroutils import symbolmgr
-#kinematic_constraints(Robot.SR400())
+#kinematic_constraints(samplerobots.sr400())
 ##jacobian_determinant(robo, 6, range(6), range(6))
 ###print _jac(robo, symo, 2, 5, 5)
 ###print _jac_det(robo, symo, 5)
@@ -345,11 +346,11 @@ def kinematic_constraints(robo):
 ###print W[0]
 ###print W[1]
 ###speeds_accelerations(robo, symo)
-###print _jac_inv(Robot.RX90(), symo, 2, 5, 5)
+###print _jac_inv(samplerobots.rx90(), symo, 2, 5, 5)
 ##
 #def b():
 #    symo = symbolmgr.SymbolManager()
-#    print _jac_inv(Robot.RX90(), symo, 6, 3, 3)
+#    print _jac_inv(samplerobots.rx90(), symo, 6, 3, 3)
 ####from timeit import timeit
 #####print timeit(a, number=10)
 #####print timeit(b, number=10)

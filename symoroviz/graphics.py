@@ -17,6 +17,7 @@ from sympy import Expr
 
 from pysymoro.invgeom import loop_solve
 from pysymoro.geometry import dgm
+from symoroutils import samplerobots
 from symoroutils import symbolmgr
 from symoroutils import tools
 
@@ -557,7 +558,7 @@ class MainWindow(wx.Frame):
 if __name__ == '__main__':
     app = wx.PySimpleApp()
     from pysymoro import robot
-    robo = robot.Robot.RX90()
+    robo = samplerobots.rx90()
     robo.d[3] = 1.
     robo.r[4] = 1.
     frame = MainWindow(prefix='', robo=robo)
