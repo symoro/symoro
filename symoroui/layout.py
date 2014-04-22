@@ -40,7 +40,7 @@ class MainFrame(wx.Frame):
         # create menu bar
         self.create_menu()
         # set default robot
-        self.robo = samplerobots.rx90()
+        self.robo = samplerobots.planar2r()
         # object to store different ui elements
         self.widgets = {}
         # object to store parameter values got from dialog box input

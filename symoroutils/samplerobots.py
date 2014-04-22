@@ -54,6 +54,21 @@ def cart_pole():
     return robo
 
 
+def planar2r():
+    """Generate Robot instance of 2R Planar robot"""
+    robo = Robot('Planar2R', 2, 2, 3, False)
+    robo.structure = tools.SIMPLE
+    robo.sigma = [2, 0, 0, 2]
+    robo.mu = [0, 1, 1, 0]
+    robo.gamma = [0, 0, 0, 0]
+    robo.b = [0, 0, 0, 0]
+    robo.alpha = [0, 0, 0, 0]
+    robo.d = [0, 0, var('L1'), var('L2')]
+    robo.theta = [0, var('th1'), var('th2'), 0]
+    robo.r = [0, 0, 0, 0]
+    return robo
+
+
 def sr400():
     #TODO: bring it to the new notation with 0-frame
     """Generate Robot instance of SR400"""
