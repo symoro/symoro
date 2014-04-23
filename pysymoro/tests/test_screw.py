@@ -11,7 +11,7 @@ from sympy import Matrix
 from sympy import ShapeError
 from sympy import zeros
 
-from pysymoro.floatr import Screw
+from pysymoro.screw import Screw
 
 
 class TestScrew(unittest.TestCase):
