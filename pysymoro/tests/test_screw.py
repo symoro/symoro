@@ -66,14 +66,18 @@ class TestScrew(unittest.TestCase):
         self.indiv.ang = Matrix([4, 5, 6])
         self.assertEqual(self.indiv.ang, Matrix([4, 5, 6]))
         with self.assertRaises(ShapeError):
-            self.empty.lin = Matrix([3, 3])
+            self.empty.ang = Matrix([3, 3])
+
+
+def run_tests():
+    """Load and run the unittests"""
+    unit_suite = unittest.TestLoader().loadTestsFromTestCase(TestScrew)
+    unittest.TextTestRunner(verbosity=2).run(unit_suite)
 
 
 def main():
     """Main function."""
-    # load and run the unittests
-    unit_suite = unittest.TestLoader().loadTestsFromTestCase(TestScrew)
-    unittest.TextTestRunner(verbosity=2).run(unit_suite)
+    run_tests()
 
 
 if __name__ == '__main__':
