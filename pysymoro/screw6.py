@@ -17,8 +17,48 @@ class Screw6(object):
         which in turn contains four 3x3 matrices.
     """
     def __init__(self, *args, **kwargs):
-        """Constructor period."""
+        """
+        Constructor period.
+
+        Usage:
+        >>> # initialise to 0 by default
+        Screw6()
+        >>> # initialise to a given 6x6 matrix
+        Screw6(<value>)
+        >>> # intiialise each of the 4 sub-matrices individually
+        Screw6(<top-left>, <top-right>, <bottom-left>, <bottom-right>)
+        >>> # initialise using keywords
+        Screw6(value=<value>)
+        Screw6(
+            tl=<top-left>, tr=<top-right>,
+            bl=<bottom-left>, br=<bottom-right>
+        )
+        """
         self._val = zeros(6, 6)
+        if len(args) == 1:
+            self.val = args[0]
+        elif len(args) == 4:
+            self.topleft = args[0]
+            self.topright = args[1]
+            self.botleft = args[2]
+            self.botright = args[3]
+        elif len(args) > 0:
+            raise NotImplementedError(
+                """Screw6 Constructor does not accept %s positional
+                arguments. See Usage.""" % (str(len(args)))
+            )
+        if len(kwargs) == 4:
+            self.topleft = kwargs['tl']
+            self.topright = kwargs['tr']
+            self.botleft = kwargs['bl']
+            self.botright = kwargs['br']
+        elif len(kwargs) == 1:
+            self.val = kwargs['value']
+        elif len(kwargs) > 0:
+            raise NotImplementedError(
+                """Screw6 Constructor does not accept %s keyword
+                arguments. See Usage.""" % (str(len(kwargs)))
+            )
 
     @property
     def val(self):

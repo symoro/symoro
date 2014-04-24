@@ -56,6 +56,23 @@ class TestScrew6(unittest.TestCase):
         # test instance type
         self.assertIsInstance(self.empty, Screw6)
         self.assertIsInstance(self.indiv, Screw6)
+        self.assertIsInstance(Screw6(self.data), Screw6)
+        self.assertIsInstance(Screw6(value=self.data), Screw6)
+        self.assertIsInstance(
+            Screw6(
+                self.data_tl, self.data_tr,
+                self.data_bl, self.data_br
+            ), Screw6
+        )
+        self.assertIsInstance(
+            Screw6(
+                tl=self.data_tl, bl=self.data_bl,
+                tr=self.data_tr, br=self.data_br
+            ), Screw6
+        )
+        # test raise appropriate exception
+        self.assertRaises(NotImplementedError, Screw6, 3, 4)
+        self.assertRaises(NotImplementedError, Screw6, tl=5, tr=6)
 
     def test_val(self):
         """Test get and set of val()"""
