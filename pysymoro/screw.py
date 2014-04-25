@@ -128,4 +128,16 @@ class Screw(object):
             raise ShapeError("Angular term matrix size has to be 3x1.")
         self._val[3:6, 0] = value
 
+    def __eq__(self, other):
+        """Check equality between two instances of Screw."""
+        if type(self) != type(other):
+            raise ValueError(
+                "Unable to compare %s with Screw type." % str(type(other))
+            )
+        return self.val == other.val
+
+    def __ne__(self, other):
+        """Check non-equality between two instances of Screw."""
+        return not self == other
+
 

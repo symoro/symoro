@@ -38,9 +38,11 @@ def skew(vec):
     =======
     hat: Matrix 3x3
     """
-    return Matrix([[0, -vec[2], vec[1]],
-                   [vec[2], 0, -vec[0]],
-                   [-vec[1], vec[0], 0]])
+    return Matrix([
+        [0, -vec[2], vec[1]],
+        [vec[2], 0, -vec[0]],
+        [-vec[1], vec[0], 0]
+    ])
 
 
 def l2str(list_var, spacing=8):

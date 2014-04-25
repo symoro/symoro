@@ -125,6 +125,18 @@ class TestScrew6(unittest.TestCase):
         with self.assertRaises(ShapeError):
             self.empty.botright = Matrix([3, 3])
 
+    def test_equality(self):
+        """Test __eq__() and __ne__()"""
+        self.assertEqual(self.empty, Screw6())
+        self.assertNotEqual(self.indiv, Screw6())
+        self.assertRaises(
+            ValueError, self.empty.__eq__,
+            Matrix([1, 2, 3, 4, 5, 6, 7, 8])
+        )
+        self.assertRaises(
+            ValueError, self.empty.__ne__,
+            Matrix([1, 2, 3, 4, 5, 6, 7, 8])
+        )
 
 def run_tests():
     """Load and run the unittests"""

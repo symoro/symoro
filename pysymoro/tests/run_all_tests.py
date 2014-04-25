@@ -4,12 +4,14 @@
 
 import test_screw
 import test_screw6
+import test_dynparams
 
 
 def main():
     """Main function."""
     test_screw.run_tests()
     test_screw6.run_tests()
+    test_dynparams.run_tests()
 
 
 if __name__ == '__main__':

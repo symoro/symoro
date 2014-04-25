@@ -170,4 +170,16 @@ class Screw6(object):
             raise ShapeError("Bottom-right value size has to be 3x3.")
         self._val[3:6, 3:6] = value
 
+    def __eq__(self, other):
+        """Check equality between two instances of Screw6."""
+        if type(self) != type(other):
+            raise ValueError(
+                "Unable to compare %s with Screw6 type." % str(type(other))
+            )
+        return self.val == other.val
+
+    def __ne__(self, other):
+        """Check non-equality between two instances of Screw6."""
+        return not self == other
+
 
