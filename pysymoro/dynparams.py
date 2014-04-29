@@ -34,26 +34,26 @@ class DynParams(object):
         DynParams(link=<link-number>, params=<params-dict>)
         """
         self.link = link
-        """Inertia matrix terms"""
+        # Inertia matrix terms"""
         self.xx = None
         self.xy = None
         self.xz = None
         self.yy = None
         self.yz = None
         self.zz = None
-        """Mass tensor terms"""
+        # Mass tensor terms"""
         self.msx = None
         self.msy = None
         self.msz = None
-        """Link mass"""
+        # Link mass"""
         self.mass = None
-        """Rotor inertia term"""
+        # Rotor inertia term"""
         self.ia = None
-        """Coulomb friction parameter"""
+        # Coulomb friction parameter"""
         self.frc = None
-        """Viscous friction parameter"""
+        # Viscous friction parameter"""
         self.frv = None
-        """External forces and moments"""
+        # External forces and moments"""
         self.fx_ext = None
         self.fy_ext = None
         self.fz_ext = None
