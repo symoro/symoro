@@ -41,7 +41,7 @@ class TestDynParams(unittest.TestCase):
         # rotor inertia term
         self.ia = var('IA33')
         # coulomb friction parameter
-        self.frc = var('FS33') 
+        self.frc = var('FS33')
         # viscous friction parameter
         self.frv = var('FV33')
         # external forces and moments
@@ -68,6 +68,16 @@ class TestDynParams(unittest.TestCase):
             lin=Matrix([self.fx_ext, self.fy_ext, self.fz_ext]),
             ang=Matrix([self.mx_ext, self.my_ext, self.mz_ext])
         )
+        # setup params to compare against
+        self.param_xx = var('XX20')
+        self.param_yy = var('YY20')
+        self.param_zz = var('ZZ20')
+        self.params = {
+            'xx': self.param_xx,
+            'yy': self.param_yy,
+            'zz': self.param_zz
+        }
+        self.wrong_param = {'rand': 'some-value'}
 
     def test_init(self):
         """Test constructor."""
@@ -98,11 +108,23 @@ class TestDynParams(unittest.TestCase):
         """Test get and set of force()"""
         # test get
         self.assertEqual(self.data.force, self.wrench.lin)
-    
+
     def test_moment(self):
         """Test get of moment()"""
         # test get
         self.assertEqual(self.data.moment, self.wrench.ang)
+
+    def test_update_params(self):
+        """Test update_params()"""
+        # test raise AttributeError
+        self.assertRaises(
+            AttributeError, self.data.update_params, self.wrong_param
+        )
+        # test update values
+        self.data.update_params(self.params)
+        self.assertEqual(self.data.xx, self.param_xx)
+        self.assertEqual(self.data.yy, self.param_yy)
+        self.assertEqual(self.data.zz, self.param_zz)
 
 
 def run_tests():

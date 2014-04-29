@@ -25,12 +25,13 @@ class DynParams(object):
     Mass tensor refers to the MS 3x1 matrix which is the first moments
     of a link wrt its own frame of reference. MS = transpose([MX MY MZ])
     """
-    def __init__(self, link):
+    def __init__(self, link, params=None):
         """
         Constructor period.
 
         Usage:
         DynParams(link=<link-number>)
+        DynParams(link=<link-number>, params=<params-dict>)
         """
         self.link = link
         """Inertia matrix terms"""
@@ -49,7 +50,7 @@ class DynParams(object):
         """Rotor inertia term"""
         self.ia = None
         """Coulomb friction parameter"""
-        self.frc = None 
+        self.frc = None
         """Viscous friction parameter"""
         self.frv = None
         """External forces and moments"""
@@ -62,7 +63,7 @@ class DynParams(object):
         # lists to hold the string representation for the prefix of
         # different terms
         self._inertial_terms = {
-            'xx': 'XX', 
+            'xx': 'XX',
             'xy': 'XY',
             'xz': 'XZ',
             'yy': 'YY',
@@ -93,6 +94,27 @@ class DynParams(object):
         self._init_ms_terms()
         self._init_fr_terms()
         self._init_ext_force_terms()
+        # initialise with values if available
+        if params is not None:
+            self.update_params(params)
+
+    def update_params(self, params):
+        """
+        Update the dynamic parameter values.
+
+        Args:
+            params: A dict in which the keys correspond to the list of
+                parameters that are to be updated and the values
+                correspond to the values with which the parameters are
+                to be updated.
+        """
+        for key, value in params.iteritems():
+            if hasattr(self, key):
+                setattr(self, key, value)
+            else:
+                raise AttributeError(
+                    "%s is not an attribute of DynParams" % key
+                )
 
     @property
     def inertia(self):
