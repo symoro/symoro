@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 
-"""Unit test module for Screw6 class."""
+"""Unit test module for DynParams class."""
 
 
 import unittest
@@ -18,7 +18,7 @@ from pysymoro.dynparams import DynParams
 
 
 class TestDynParams(unittest.TestCase):
-    """Unit test for Screw6 class."""
+    """Unit test for DynParams class."""
     def setUp(self):
         link = 33
         # setup an instance of DynParams

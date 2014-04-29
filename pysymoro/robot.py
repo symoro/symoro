@@ -36,26 +36,27 @@ class Robot(object):
     def __init__(self, name, NL=0, NJ=0, NF=0, is_mobile=False,
                  structure=TREE):
         # member variables:
-        self.name = name
         """  name of the robot: string"""
-        self.directory = filemgr.get_folder_path(name)
+        self.name = name
         """ directory name"""
+        self.directory = filemgr.get_folder_path(name)
+        """ whether the base frame is floating: bool"""
         self.is_mobile = is_mobile
-        """ whethere the base frame is floating: bool"""
-        self.nl = NL
         """  number of links: int"""
-        self.nj = NJ
+        self.nl = NL
         """  number of joints: int"""
-        self.nf = NF
+        self.nj = NJ
         """  number of frames: int"""
-        self.structure = structure
+        self.nf = NF
         """ type of robot's structure"""
-        self.sigma = [0 for i in xrange(NF + 1)]
+        self.structure = structure
         """  joint type: list of int"""
-        self.ant = range(-1, self.NF - 1)
+        self.sigma = [0 for i in xrange(NF + 1)]
         """  index of antecedent joint: list of int"""
-        self.mu = [0 for i in xrange(NF + 1)]
+        self.ant = range(-1, self.NF - 1)
         """motorization, if 1, then the joint im motorized"""
+        self.mu = [0 for i in xrange(NF + 1)]
+        """  geometrical parameter: list of var"""
         self.theta = [0] + [var('th%s' % (i+1)) for i in xrange(NF)]
         """  geometrical parameter: list of var"""
         self.r = [0 for i in xrange(NF + 1)]
@@ -67,46 +68,45 @@ class Robot(object):
         self.gamma = [0 for i in xrange(NF + 1)]
         """  geometrical parameter: list of var"""
         self.b = [0 for i in xrange(NF + 1)]
-        """  geometrical parameter: list of var"""
-        self.Z = eye(4)
         """ transformation from reference frame to zero frame"""
+        self.Z = eye(4)
         num = range(self.NL)
         numj = range(self.NJ)
-        self.w0 = zeros(3, 1)
         """  base angular velocity: 3x1 matrix"""
-        self.wdot0 = zeros(3, 1)
+        self.w0 = zeros(3, 1)
         """  base angular acceleration: 3x1 matrix"""
-        self.v0 = zeros(3, 1)
+        self.wdot0 = zeros(3, 1)
         """  base linear velocity: 3x1 matrix"""
-        self.vdot0 = zeros(3, 1)
+        self.v0 = zeros(3, 1)
         """  base linear acceleration: 3x1 matrix"""
-        self.qdot = [var('QP{0}'.format(i)) for i in numj]
+        self.vdot0 = zeros(3, 1)
         """  joint speed: list of var"""
-        self.qddot = [var('QDP{0}'.format(i)) for i in numj]
+        self.qdot = [var('QP{0}'.format(i)) for i in numj]
         """  joint acceleration: list of var"""
-        self.Nex = [zeros(3, 1) for i in num]
+        self.qddot = [var('QDP{0}'.format(i)) for i in numj]
         """  external moment of link: list of 3x1 matrix"""
+        self.Nex = [zeros(3, 1) for i in num]
         self.Nex[-1] = Matrix(var('CX{0}, CY{0}, CZ{0}'.format(self.NL - 1)))
-        self.Fex = [zeros(3, 1) for i in num]
         """  external force of link: list of 3x1 matrix"""
+        self.Fex = [zeros(3, 1) for i in num]
         self.Fex[-1] = Matrix(var('FX{0}, FY{0}, FZ{0}'.format(self.NL - 1)))
-        self.FS = [var('FS{0}'.format(i)) for i in num]
         """  dry friction coefficient: list of ver"""
-        self.IA = [var('IA{0}'.format(i)) for i in num]
+        self.FS = [var('FS{0}'.format(i)) for i in num]
         """  joint actuator inertia: list of var"""
-        self.FV = [var('FV{0}'.format(i)) for i in num]
+        self.IA = [var('IA{0}'.format(i)) for i in num]
         """  viscous friction coefficient: list of var"""
-        self.MS = [Matrix(var('MX{0}, MY{0}, MZ{0}'.format(i))) for i in num]
+        self.FV = [var('FV{0}'.format(i)) for i in num]
         """  first momentum of link: list of 3x1 matrix"""
-        self.M = [var('M{0}'.format(i)) for i in num]
+        self.MS = [Matrix(var('MX{0}, MY{0}, MZ{0}'.format(i))) for i in num]
         """  mass of link: list of var"""
-        self.GAM = [var('GAM{0}'.format(i)) for i in numj]
+        self.M = [var('M{0}'.format(i)) for i in num]
         """  joint torques: list of var"""
+        self.GAM = [var('GAM{0}'.format(i)) for i in numj]
         J_str = 'XX{0},XY{0},XZ{0},XY{0},YY{0},YZ{0},XZ{0},YZ{0},ZZ{0}'
-        self.J = [Matrix(3, 3, var(J_str.format(i))) for i in num]
         """  inertia tensor of link: list of 3x3 matrix"""
-        self.G = Matrix([0, 0, var('G3')])
+        self.J = [Matrix(3, 3, var(J_str.format(i))) for i in num]
         """  gravity vector: 3x1 matrix"""
+        self.G = Matrix([0, 0, var('G3')])
 
     # member methods:
     def put_val(self, j, name, val):
