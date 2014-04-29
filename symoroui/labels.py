@@ -70,25 +70,25 @@ DYN_PARAMS_I = OrderedDict([
 ])
 # mass tensor params
 DYN_PARAMS_M = OrderedDict([
-    ('mx', FieldEntry('MX', 'MX', 'txt', (1, 0), 'OnDynParamChanged', -1)),
-    ('my', FieldEntry('MY', 'MY', 'txt', (1, 1), 'OnDynParamChanged', -1)),
-    ('mz', FieldEntry('MZ', 'MZ', 'txt', (1, 2), 'OnDynParamChanged', -1)),
-    ('m', FieldEntry('M', 'M', 'txt', (1, 3), 'OnDynParamChanged', -1))
+    ('msx', FieldEntry('MX', 'MX', 'txt', (1, 0), 'OnDynParamChanged', -1)),
+    ('msy', FieldEntry('MY', 'MY', 'txt', (1, 1), 'OnDynParamChanged', -1)),
+    ('msz', FieldEntry('MZ', 'MZ', 'txt', (1, 2), 'OnDynParamChanged', -1)),
+    ('mass', FieldEntry('M', 'M', 'txt', (1, 3), 'OnDynParamChanged', -1))
 ])
 # friction and rotor inertia params
 DYN_PARAMS_X = OrderedDict([
     ('ia', FieldEntry('IA', 'IA', 'txt', (2, 0), 'OnDynParamChanged', -1)),
-    ('fc', FieldEntry('FS', 'FS', 'txt', (2, 1), 'OnDynParamChanged', -1)),
-    ('fv', FieldEntry('FV', 'FV', 'txt', (2, 2), 'OnDynParamChanged', -1))
+    ('frc', FieldEntry('FS', 'FS', 'txt', (2, 1), 'OnDynParamChanged', -1)),
+    ('frv', FieldEntry('FV', 'FV', 'txt', (2, 2), 'OnDynParamChanged', -1))
 ])
 # external force, moments params
 DYN_PARAMS_F = OrderedDict([
-    ('ex_fx', FieldEntry('FX', 'FX', 'txt', (3, 0), 'OnDynParamChanged', -1)),
-    ('ex_fy', FieldEntry('FY', 'FY', 'txt', (3, 1), 'OnDynParamChanged', -1)),
-    ('ex_fz', FieldEntry('FZ', 'FZ', 'txt', (3, 2), 'OnDynParamChanged', -1)),
-    ('ex_mx', FieldEntry('CX', 'CX', 'txt', (3, 3), 'OnDynParamChanged', -1)),
-    ('ex_my', FieldEntry('CY', 'CY', 'txt', (3, 4), 'OnDynParamChanged', -1)),
-    ('ex_mz', FieldEntry('CZ', 'CZ', 'txt', (3, 5), 'OnDynParamChanged', -1))
+    ('fx_ext', FieldEntry('FX', 'FX', 'txt', (3, 0), 'OnDynParamChanged', -1)),
+    ('fy_ext', FieldEntry('FY', 'FY', 'txt', (3, 1), 'OnDynParamChanged', -1)),
+    ('fz_ext', FieldEntry('FZ', 'FZ', 'txt', (3, 2), 'OnDynParamChanged', -1)),
+    ('mx_ext', FieldEntry('CX', 'CX', 'txt', (3, 3), 'OnDynParamChanged', -1)),
+    ('my_ext', FieldEntry('CY', 'CY', 'txt', (3, 4), 'OnDynParamChanged', -1)),
+    ('mz_ext', FieldEntry('CZ', 'CZ', 'txt', (3, 5), 'OnDynParamChanged', -1))
 ])
 # dynamic params got by concatenation
 DYN_PARAMS = OrderedDict(

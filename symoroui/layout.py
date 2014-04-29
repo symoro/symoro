@@ -41,8 +41,9 @@ class MainFrame(wx.Frame):
         self.create_menu()
         # set default robot
         self.robo = samplerobots.planar2r()
-        # object to store different ui elements
+        # object to store different ui elements and their keys
         self.widgets = {}
+        self.widget_keys = {}
         # object to store parameter values got from dialog box input
         self.par_dict = {}
         # setup panel and sizer for content
@@ -88,6 +89,7 @@ class MainFrame(wx.Frame):
                 )
                 ctrl.Bind(wx.EVT_KILL_FOCUS, handler)
             self.widgets[name] = ctrl
+            self.widget_keys[key] = ctrl
             szr_ele = wx.BoxSizer(wx.HORIZONTAL)
             szr_ele.Add(
                 wx.StaticText(
@@ -127,16 +129,18 @@ class MainFrame(wx.Frame):
         for idx, key in enumerate(ui_labels.ROBOT_TYPE):
             label = ui_labels.ROBOT_TYPE[key].label
             name = ui_labels.ROBOT_TYPE[key].name
-            self.widgets[name] = wx.StaticText(
+            ctrl = wx.StaticText(
                 self.panel, size=(150, -1),
                 name=ui_labels.ROBOT_TYPE[key].name
             )
+            self.widgets[name] = ctrl
+            self.widget_keys[key] = ctrl
             szr_grd_robot_type.Add(
                 wx.StaticText(self.panel, label=label), 
                 pos=(idx, 0), flag=wx.LEFT, border=10
             )
             szr_grd_robot_type.Add(
-                self.widgets[name], pos=(idx, 1), 
+                ctrl, pos=(idx, 1), 
                 flag=wx.LEFT | wx.RIGHT, border=10
             )
         szr_robot_type.Add(
@@ -175,6 +179,7 @@ class MainFrame(wx.Frame):
                     id=idx, size=(60, -1)
                 )
                 self.widgets[name] = txt_z_element
+                self.widget_keys[name.lower()] = txt_z_element
                 txt_z_element.Bind(
                     wx.EVT_KILL_FOCUS, self.OnZParamChanged
                 )
@@ -229,6 +234,7 @@ class MainFrame(wx.Frame):
             getattr(self, ui_labels.DYN_PARAMS['link'].handler)
         )
         self.widgets['link'] = cmb_link
+        self.widget_keys['link'] = cmb_link
         szr_link = wx.BoxSizer(wx.HORIZONTAL)
         szr_link.Add(
             wx.StaticText(
