@@ -34,18 +34,18 @@ def get_transformation_matrix(gamma, b, alpha, d, theta, r):
     cg_ca = c_gamma * c_alpha
     cg_sa = c_gamma * s_alpha
     # t matrix elements
-    t11 = (c_gamma * c_theta) - (sg_ca * s_theta);
-    t12 = -(c_gamma * s_theta) - (sg_ca * c_theta);
-    t13 = sg_sa;
-    t14 = (d * c_gamma) + (r * sg_sa);
-    t21 = (s_gamma * c_theta) + (cg_ca * s_theta);
-    t22 = -(s_gamma * s_theta) + (cg_ca * c_theta);
-    t23 = -cg_sa;
-    t24 = (d * s_gamma) - (r * cg_sa);
-    t31 = s_alpha * s_theta;
-    t32 = s_alpha * c_theta;
-    t33 = c_alpha;
-    t34 = (r * c_alpha) + b;
+    t11 = (c_gamma * c_theta) - (sg_ca * s_theta)
+    t12 = -(c_gamma * s_theta) - (sg_ca * c_theta)
+    t13 = sg_sa
+    t14 = (d * c_gamma) + (r * sg_sa)
+    t21 = (s_gamma * c_theta) + (cg_ca * s_theta)
+    t22 = -(s_gamma * s_theta) + (cg_ca * c_theta)
+    t23 = -cg_sa
+    t24 = (d * s_gamma) - (r * cg_sa)
+    t31 = s_alpha * s_theta
+    t32 = s_alpha * c_theta
+    t33 = c_alpha
+    t34 = (r * c_alpha) + b
     # t matrix
     tmat = sympy.Matrix([
         [t11, t12, t13, t14],
@@ -96,8 +96,8 @@ class TransformationMatrix(object):
                 to be updated.
         """
         for key, value in params.iteritems():
-            if key in self._params_terms:
-                attr = '_' + key
+            attr = '_' + key
+            if hasattr(self, attr):
                 setattr(self, attr, value)
             else:
                 raise AttributeError(
@@ -114,7 +114,7 @@ class TransformationMatrix(object):
         Returns:
             A 4x4 Matrix
         """
-        if not hasattr(self, _tmat):
+        if not hasattr(self, '_tmat'):
             raise AttributeError("tmat is yet to be computed")
         return self._tmat
 
@@ -126,7 +126,7 @@ class TransformationMatrix(object):
         Returns:
             A 3x3 Matrix
         """
-        if not hasattr(self, _tmat):
+        if not hasattr(self, '_tmat'):
             raise AttributeError("tmat is yet to be computed")
         return self._tmat[0:3, 0:3]
 
@@ -138,7 +138,7 @@ class TransformationMatrix(object):
         Returns:
             A 3x1 Matrix
         """
-        if not hasattr(self, _tmat):
+        if not hasattr(self, '_tmat'):
             raise AttributeError("tmat is yet to be computed")
         return self._tmat[0:3, 3:4]
 
@@ -150,7 +150,7 @@ class TransformationMatrix(object):
         Returns:
             A 4x4 Matrix
         """
-        if not hasattr(self, _tinv):
+        if not hasattr(self, '_tinv'):
             raise AttributeError("tinv is yet to be computed")
         return self._tinv
 
@@ -162,7 +162,7 @@ class TransformationMatrix(object):
         Returns:
             A 3x3 Matrix
         """
-        if not hasattr(self, _tinv):
+        if not hasattr(self, '_tinv'):
             raise AttributeError("tinv is yet to be computed")
         return self._tinv[0:3, 0:3]
 
@@ -174,7 +174,7 @@ class TransformationMatrix(object):
         Returns:
             A 3x1 Matrix
         """
-        if not hasattr(self, _tinv):
+        if not hasattr(self, '_tinv'):
             raise AttributeError("tinv is yet to be computed")
         return self._tinv
 
@@ -183,7 +183,7 @@ class TransformationMatrix(object):
         Call (proxy method) the actual function that computes the
         transformation matrix between any two frames.
         """
-        self._tmat = transformation_matrix(
+        self._tmat = get_transformation_matrix(
             self._gamma, self._b,
             self._alpha, self._d,
             self._theta, self._r
@@ -193,9 +193,9 @@ class TransformationMatrix(object):
         """
         Compute inverse of the transformation matrix.
         """
-        if not hasattr(self, _tmat):
+        if not hasattr(self, '_tmat'):
             raise AttributeError("tmat is yet to be computed")
-        self._tinv = eye(4)
+        self._tinv = sympy.eye(4)
         rot_inv = self.rot.transpose()
         trans_inv = -rot_inv * self.trans
         self._tinv[0:3, 0:3] = rot_inv
