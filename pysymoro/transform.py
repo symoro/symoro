@@ -106,10 +106,23 @@ class TransformationMatrix(object):
             )
 
     def __str__(self):
-        pass
+        str_format = (
+            "T matrix of frame %d wrt frame %d:\n"
+            "----------------------------------\n"
+            "\tgamma=%s, b=%s, alpha=%s, d=%s, theta=%s, r=%s\n"
+            "%s\n"
+            "**********************************\n"
+        ) % (
+            self._frame_j, self._frame_i,
+            str(self._gamma), str(self._b),
+            str(self._alpha), str(self._d),
+            str(self._theta), str(self._r),
+            sympy.pretty(self._tmat)
+        )
+        return str_format
 
     def __repr__(self):
-        pass
+        return "T of %d wrt %d" % (self._frame_j, self._frame_i)
 
     @property
     def val(self):
