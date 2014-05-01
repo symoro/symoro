@@ -2,18 +2,13 @@
 # -*- coding: utf-8 -*-
 
 
-import test_screw
-import test_screw6
-import test_geoparams
-import test_dynparams
+import unittest
 
 
 def main():
     """Main function."""
-    test_screw.run_tests()
-    test_screw6.run_tests()
-    test_geoparams.run_tests()
-    test_dynparams.run_tests()
+    all_tests = unittest.TestLoader().discover('tests', pattern='test_*.py')
+    unittest.TextTestRunner(verbosity=2).run(all_tests)
 
 
 if __name__ == '__main__':
