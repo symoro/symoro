@@ -46,6 +46,8 @@ def _paul_solve(robo, symo, nTm, n, m, known=set()):
     while True:
         repeat = False
         for i in reversed(chain):
+            print iTn.keys()
+            print iTm.keys()
             M_eq = iTn[(i, n)]*nTm - iTm[(i, m)]
             while True:
                 found = _look_for_eq(symo, M_eq, known, th_all, r_all)
@@ -79,6 +81,7 @@ def _look_for_eq(symo, M_eq, known, th_all, r_all):
             eq = symo.unknown_sep(M_eq[e1, e2], known)
             th_vars = (eq.atoms(Symbol) & th_all) - known
             if th_vars:
+                print '*******', eq.atoms(sin, cos)
                 arg_sum = max(at.count_ops()-1 for at in eq.atoms(sin, cos)
                               if not at.atoms(Symbol) & known)
             else:

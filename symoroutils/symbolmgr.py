@@ -180,10 +180,9 @@ class SymbolManager(object):
         sym_list = [(cos_sym, cos(angle)), (sin_sym, sin(angle))]
         subs_dict = {}
         for sym, sym_old in sym_list:
-            if sym_old.has(-1):
-                subs_dict[-sym_old] = -sym
-            else:
-                subs_dict[sym_old] = sym
+            if -1 in Mul.make_args(sym_old):
+                sym_old = -sym_old
+            subs_dict[sym_old] = sym
             self.add_to_dict(sym, sym_old)
         for i1 in xrange(M.shape[0]):
             for i2 in xrange(M.shape[1]):
@@ -543,8 +542,9 @@ class SymbolManager(object):
         return fun_body
 
     def gen_func(self, name, to_return, args, multival=False):
+        #TODO self, name, toret, *args, **kwargs
         """ Returns function that computes what is in to_return
-        using *args as arguments
+        using args as arguments
 
          Parameters
         ==========
@@ -563,6 +563,7 @@ class SymbolManager(object):
         -This function must be called only after the model that
             computes symbols in to_return have been generated.
         """
+        #if kwargs.get
         fun_head = self.gen_fheader(name, args)
         wr_syms = self.extract_syms(args)   # set of defined symbols
         fun_body = self.gen_fbody(name, to_return, wr_syms, multival)

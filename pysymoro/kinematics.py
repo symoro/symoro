@@ -95,6 +95,7 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
     iTk_dict = dgm(robo, symo, i, chain[0], key='right', trig_subs=trig_subs)
     iTk_tmp = dgm(robo, symo, i, chain[-1], key='right', trig_subs=trig_subs)
     iTk_dict.update(iTk_tmp)
+    print iTk_dict
     for k in chain:
         kTj = kTj_dict[k, j]
         iTk = iTk_dict[i, k]
