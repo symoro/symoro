@@ -62,7 +62,7 @@ class GeoParams(object):
             returned.
         """
         if self.sigma == 2:
-            return 0
+            return None
         return ((1 - self.sigma) * self.theta) + (self.sigma * self.r)
 
 

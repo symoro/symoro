@@ -62,7 +62,7 @@ class TestGeoParams(unittest.TestCase):
         """Test get of q()"""
         self.assertEqual(self.data_revol.q, self.revol_theta)
         self.assertEqual(self.data_prism.q, self.prism_r)
-        self.assertEqual(self.data_fixed.q, 0)
+        self.assertEqual(self.data_fixed.q, None)
 
 
 def run_tests():
