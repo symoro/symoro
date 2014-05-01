@@ -62,49 +62,54 @@ class TransformationMatrix(object):
         Represent the data structure to hold a transformation matrix
         between any two frames.
     """
-    def __init__(self, frame_i, frame_j, params=None):
+    def __init__(self, *args, **kwargs):
         """
         Constructor period.
 
-        Args:
-            frame_i: Frame with respect to which the transformation is
-                computed (int). This is usually the antecedent frame.
-            frame_j: Frame whose transformation is to be computed (int).
-            params: A dict containing the geometric parameters.
-
         Usage:
+            >>> # Positional arguments are not allowed.
+            >>> # Only frames are specified. i, j are of type int.
+            TransformationMatrix(i=<frame-i>, j=<frame-j>)
+            >>> # Frames and parameter values are specified. i, j are
+            >>> # of type int.
+            TransformationMatrix(
+                i=<frame-i>, j=<frame-j>, params=<param-dict>
+            )
+            >>> # Only parameter values are specified. In this case the
+            >>> # <param-dict> must contain the `frame` and `ant` keys
+            >>> # with relevant values.
+            TransformationMatrix(params=<param-dict>)
         """
-        self._frame_i = frame_i
-        self._frame_j = frame_j
-        self._gamma = 0
-        self._b = 0
-        self._alpha = 0
-        self._d = 0
-        self._theta = 0
-        self._r = 0
-        if params is not None:
-            self.update(params)
-
-    def update(self, params):
-        """
-        Update the parameter values and all the matrices accordingly.
-
-        Args:
-            params: A dict in which the keys correspond to the list of
-                parameters that are to be updated and the values
-                correspond to the values with which the parameters are
-                to be updated.
-        """
-        for key, value in params.iteritems():
-            attr = '_' + key
-            if hasattr(self, attr):
-                setattr(self, attr, value)
+        if len(kwargs) >= 1 and len(kwargs) <= 3:
+            self._init_default()
+            self._compute_tmat()
+            self._compute_tinv()
+            if len(kwargs) > 1:
+                self._frame_i = int(kwargs['i'])
+                self._frame_j = int(kwargs['j'])
+                if kwargs.has_key('params'):
+                    self.update(kwargs['params'])
             else:
-                raise AttributeError(
-                    "%s is not a geometric parameter" % key
-                )
-        self._compute_tmat()
-        self._compute_tinv()
+                if self._has_frames(kwargs['params']):
+                    self.update(kwargs['params'])
+                else:
+                    self._cleanup()
+                    raise AttributeError(
+                        """Cannot setup TransformationMatrix without
+                        specifying the two frames - frame, ant. Input
+                        was: %s""" % str(kwargs['params'])
+                    )
+        else:
+            raise NotImplementedError(
+                """Wrong use of TransformationMatrix constructor. See
+                Usage."""
+            )
+
+    def __str__(self):
+        pass
+
+    def __repr__(self):
+        pass
 
     @property
     def val(self):
@@ -176,7 +181,34 @@ class TransformationMatrix(object):
         """
         if not hasattr(self, '_tinv'):
             raise AttributeError("tinv is yet to be computed")
-        return self._tinv
+        return self._tinv[0:3, 3:4]
+
+    def update(self, params):
+        """
+        Update the parameter values and all the matrices accordingly.
+
+        Args:
+            params: A dict in which the keys correspond to the list of
+                parameters that are to be updated and the values
+                correspond to the values with which the parameters are
+                to be updated.
+        """
+        for key, value in params.iteritems():
+            attr = '_' + key
+            if hasattr(self, attr):
+                setattr(self, attr, value)
+            elif key in ['sigma', 'mu']:
+                continue
+            elif key is 'frame':
+                self._frame_j = int(value)
+            elif key is 'ant':
+                self._frame_i = int(value)
+            else:
+                raise AttributeError(
+                    "%s is not a geometric parameter" % key
+                )
+        self._compute_tmat()
+        self._compute_tinv()
 
     def _compute_tmat(self):
         """
@@ -200,5 +232,42 @@ class TransformationMatrix(object):
         trans_inv = -rot_inv * self.trans
         self._tinv[0:3, 0:3] = rot_inv
         self._tinv[0:3, 3:4] = trans_inv
+
+    def _init_default(self):
+        """Initialise to 0 by default."""
+        self._gamma = 0
+        self._b = 0
+        self._alpha = 0
+        self._d = 0
+        self._theta = 0
+        self._r = 0
+
+    def _has_frames(self, params):
+        """
+        Check if the frame and its antecedent are specified in a
+        given dict.
+        
+        Args:
+            params: A dict containing the geometric parameters.
+
+        Returns:
+            True if `frame` and `ant` keys are present in params. False
+            otherwise.
+        """
+        if params.has_key('frame') and params.has_key('ant'):
+            return True
+        else:
+            return False
+
+    def _cleanup(self):
+        """Remove attributes of the data structure."""
+        del self._tinv
+        del self._tmat
+        del self._gamma
+        del self._b
+        del self._alpha
+        del self._d
+        del self._theta
+        del self._r
 
 

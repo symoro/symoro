@@ -40,7 +40,7 @@ class TestGeoParams(unittest.TestCase):
         self.wrong_param = {'rand': 'some-value'}
 
     def test_init(self):
-        """Test constructor."""
+        """Test constructor"""
         # test instance type
         self.assertIsInstance(GeoParams(self.frame), GeoParams)
 
