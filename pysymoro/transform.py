@@ -65,7 +65,7 @@ class TransformationMatrix(object):
         Represent the data structure to hold a transformation matrix
         between any two frames.
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         """
         Constructor period.
 
@@ -305,7 +305,7 @@ class TransformationMatrix(object):
         """
         Check if the frame and its antecedent are specified in a
         given dict.
-        
+
         Args:
             params: A dict containing the geometric parameters.
 

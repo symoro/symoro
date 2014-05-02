@@ -2,6 +2,11 @@
 # -*- coding: utf-8 -*-
 
 
+"""
+This module discovers all the unittest code in the folder and runs them.
+"""
+
+
 import unittest
 
 
