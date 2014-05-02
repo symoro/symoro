@@ -8,6 +8,9 @@ This module contains the TransformationMatrix data structure.
 
 import sympy
 
+from pysymoro.screw6 import Screw6
+from symoroutils import tools
+
 
 def get_transformation_matrix(gamma, b, alpha, d, theta, r):
     """
@@ -84,6 +87,8 @@ class TransformationMatrix(object):
             self._init_default()
             self._compute_tmat()
             self._compute_tinv()
+            self._compute_smat()
+            self._compute_sinv()
             if len(kwargs) > 1:
                 self._frame_i = int(kwargs['i'])
                 self._frame_j = int(kwargs['j'])
@@ -130,7 +135,7 @@ class TransformationMatrix(object):
         Get the value of the transformation matrix.
 
         Returns:
-            A 4x4 Matrix
+            A 4x4 Matrix.
         """
         if not hasattr(self, '_tmat'):
             raise AttributeError("tmat is yet to be computed")
@@ -142,7 +147,7 @@ class TransformationMatrix(object):
         Get the value of the rotation matrix.
 
         Returns:
-            A 3x3 Matrix
+            A 3x3 Matrix.
         """
         if not hasattr(self, '_tmat'):
             raise AttributeError("tmat is yet to be computed")
@@ -154,7 +159,7 @@ class TransformationMatrix(object):
         Get the value of the translation vector.
 
         Returns:
-            A 3x1 Matrix
+            A 3x1 Matrix.
         """
         if not hasattr(self, '_tmat'):
             raise AttributeError("tmat is yet to be computed")
@@ -166,7 +171,7 @@ class TransformationMatrix(object):
         Get the inverse of the transformation matrix.
 
         Returns:
-            A 4x4 Matrix
+            A 4x4 Matrix.
         """
         if not hasattr(self, '_tinv'):
             raise AttributeError("tinv is yet to be computed")
@@ -178,7 +183,7 @@ class TransformationMatrix(object):
         Get the inverse of the rotation matrix.
 
         Returns:
-            A 3x3 Matrix
+            A 3x3 Matrix.
         """
         if not hasattr(self, '_tinv'):
             raise AttributeError("tinv is yet to be computed")
@@ -190,11 +195,31 @@ class TransformationMatrix(object):
         Get the inverse of the translation vector.
 
         Returns:
-            A 3x1 Matrix
+            A 3x1 Matrix.
         """
         if not hasattr(self, '_tinv'):
             raise AttributeError("tinv is yet to be computed")
         return self._tinv[0:3, 3:4]
+
+    @property
+    def s_j_wrt_i(self):
+        """
+        Get the screw form of the transformation matrix.
+
+        Returns:
+            A 6x6 Matrix.
+        """
+        return self._smat.val
+
+    @property
+    def s_i_wrt_j(self):
+        """
+        Get the screw form of the inverse transformation matrix.
+
+        Returns:
+            A 6x6 Matrix.
+        """
+        return self._sinv.val
 
     def update(self, params):
         """
@@ -222,6 +247,8 @@ class TransformationMatrix(object):
                 )
         self._compute_tmat()
         self._compute_tinv()
+        self._compute_smat()
+        self._compute_sinv()
 
     def _compute_tmat(self):
         """
@@ -245,6 +272,25 @@ class TransformationMatrix(object):
         trans_inv = -rot_inv * self.trans
         self._tinv[0:3, 0:3] = rot_inv
         self._tinv[0:3, 3:4] = trans_inv
+
+    def _compute_smat(self):
+        """
+        Compute the transformation matrix in Screw (6x6) matrix form.
+        """
+        self._smat = Screw6(
+            tl=self.rot, tr=tools.skew(self.trans),
+            bl=sympy.zeros(3, 3), br=self.rot
+        )
+
+    def _compute_sinv(self):
+        """
+        Compute the inverse transformation matrix in Screw
+        (6x6) matrix form.
+        """
+        self._sinv = Screw6(
+            tl=self.inv_rot, tr=-(self.inv_rot * tools.skew(self.trans)),
+            bl=sympy.zeros(3, 3), br=self.inv_rot
+        )
 
     def _init_default(self):
         """Initialise to 0 by default."""
