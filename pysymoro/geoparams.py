@@ -45,9 +45,8 @@ class GeoParams(object):
             self.update_params(params)
 
     def __str__(self):
-        str_format = (
-            "\t\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s"
-        ) % (
+        pattern = '\t%s'
+        str_format = (pattern * 11) % (
             str(self.frame), str(self.ant),
             str(self.sigma), str(self.mu),
             str(self.gamma), str(self.b),

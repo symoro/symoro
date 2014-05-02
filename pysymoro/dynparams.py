@@ -98,6 +98,25 @@ class DynParams(object):
         if params is not None:
             self.update_params(params)
 
+    def __str__(self):
+        pattern = '  %s'
+        str_format = (pattern * 20) % (
+            str(self.link),
+            str(self.xx), str(self.xy), str(self.xz), 
+            str(self.yy), str(self.yz), str(self.zz),
+            str(self.msx), str(self.msy), str(self.msz), str(self.mass),
+            str(self.ia), str(self.frc), str(self.frv),
+            str(self.fx_ext), str(self.fy_ext), str(self.fz_ext),
+            str(self.mx_ext), str(self.my_ext), str(self.mz_ext)
+        )
+        str_format = '\t' + str_format.lstrip()
+        return str_format
+
+    def __repr__(self):
+        repr_format = str(self).lstrip().replace('  ', ', ')
+        repr_format = '(' + repr_format + ')'
+        return repr_format
+
     def update_params(self, params):
         """
         Update the dynamic parameter values.
