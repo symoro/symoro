@@ -44,6 +44,24 @@ class GeoParams(object):
         if params is not None:
             self.update_params(params)
 
+    def __str__(self):
+        str_format = (
+            "\t\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s"
+        ) % (
+            str(self.frame), str(self.ant),
+            str(self.sigma), str(self.mu),
+            str(self.gamma), str(self.b),
+            str(self.alpha), str(self.d),
+            str(self.theta), str(self.r),
+            str(self.q)
+        )
+        return str_format
+
+    def __repr__(self):
+        repr_format = str(self).lstrip().replace('\t', ', ')
+        repr_format = '(' + repr_format + ')'
+        return repr_format
+
     def update_params(self, params):
         """
         Update the geometric parameter values.

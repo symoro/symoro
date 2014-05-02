@@ -114,7 +114,7 @@ class TransformationMatrix(object):
         str_format = (
             "T matrix of frame %d wrt frame %d:\n"
             "----------------------------------\n"
-            "\tgamma=%s, b=%s, alpha=%s, d=%s, theta=%s, r=%s\n"
+            "gamma=%s, b=%s, alpha=%s, d=%s, theta=%s, r=%s\n"
             "%s\n"
             "**********************************\n"
         ) % (
