@@ -10,7 +10,7 @@ from heapq import heapify, heappop
 from sympy import var, sin, cos, eye, atan2, sqrt, pi
 from sympy import Matrix, Symbol, Expr
 
-from pysymoro.geometry import dgm
+from pysymoro.geometry import transform_list, to_matrix
 from symoroutils import symbolmgr
 from symoroutils import tools
 
@@ -27,10 +27,11 @@ eq_dict = {(1, 0, 0): 0, (0, 1, 0): 1, (1, 1, 0): 2,
 
 def _paul_solve(robo, symo, nTm, n, m, known=set()):
     chain = robo.loop_chain(m, n)
-    iTn = dgm(robo, symo, m, n, key='left', trig_subs=False)
-    iTm = dgm(robo, symo, n, m, key='left', trig_subs=False)
+#    iTn = dgm(robo, symo, m, n, key='left', trig_subs=False)
+#    iTm = dgm(robo, symo, n, m, key='left', trig_subs=False)
 #    mTi = dgm(robo, symo, m, n, key='right', trig_subs=False)
 #    nTi = dgm(robo, symo, n, m, key='right', trig_subs=False)
+
     th_all = set()
     r_all = set()
     for i in chain:
@@ -45,15 +46,29 @@ def _paul_solve(robo, symo, nTm, n, m, known=set()):
             known |= robo.alpha[i].atoms(Symbol)
     while True:
         repeat = False
-        for i in reversed(chain):
-            print iTn.keys()
-            print iTm.keys()
-            M_eq = iTn[(i, n)]*nTm - iTm[(i, m)]
-            while True:
-                found = _look_for_eq(symo, M_eq, known, th_all, r_all)
-                repeat |= found
-                if not found or th_all | r_all <= known:
-                    break
+        iTm = nTm.copy()
+        tr_list = transform_list(robo, n, m)
+        while True: #bring all the known transforms to the left hand side
+            tr = tr_list.pop()
+            print tr
+            if tr.val.atoms(Symbol) <= known:
+                print 'ololo'
+                tr.val = -tr.val
+                iTm = iTm*tr.matrix()
+            else:
+                tr_list.append(tr)
+                break
+        while tr_list:
+            tr = tr_list.pop(0)
+            if tr.val.atoms(Symbol) - known:
+                M_eq = tr.matrix() * to_matrix(tr_list, simplify=False) - iTm
+                while True:
+                    found = _look_for_eq(symo, M_eq, known, th_all, r_all)
+                    repeat |= found
+                    if not found or th_all | r_all <= known:
+                        break
+            tr.val = -tr.val
+            iTm = tr.matrix() * iTm
             if th_all | r_all <= known:
                 break
 #        if th_all | r_all <= known:
@@ -78,12 +93,13 @@ def _look_for_eq(symo, M_eq, known, th_all, r_all):
         for e2 in xrange(4):
             if M_eq[e1, e2].has(EMPTY):
                 continue
-            eq = symo.unknown_sep(M_eq[e1, e2], known)
+            #eq = symo.unknown_sep(M_eq[e1, e2], known)
+            eq = M_eq[e1, e2]
             th_vars = (eq.atoms(Symbol) & th_all) - known
-            if th_vars:
-                print '*******', eq.atoms(sin, cos)
-                arg_sum = max(at.count_ops()-1 for at in eq.atoms(sin, cos)
-                              if not at.atoms(Symbol) & known)
+            arg_ops = [at.count_ops()-1 for at in eq.atoms(sin, cos)
+                       if not at.atoms(Symbol) & known]
+            if th_vars and arg_ops:
+                arg_sum = max(arg_ops)
             else:
                 arg_sum = 0
             rs_s = (eq.atoms(Symbol) & r_all) - known
@@ -99,7 +115,6 @@ def _look_for_eq(symo, M_eq, known, th_all, r_all):
     cont_search |= _try_solve_3(symo, eq_candidates[3], known)
     cont_search |= _try_solve_4(symo, eq_candidates[4], known)
     return cont_search
-
 
 def loop_solve(robo, symo, knowns=None):
     #TODO: rewrite; Add parallelogram detection

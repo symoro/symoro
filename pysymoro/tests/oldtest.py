@@ -157,8 +157,9 @@ class testKinematics(unittest.TestCase):
 
     def test_speeds(self):
         print 'Speeds and accelerations'
-        kinematics.speeds_accelerations(self.robo)
-
+        kinematics.velocities(self.robo)
+        kinematics.accelerations(self.robo)
+        kinematics.jdot_qdot(self.robo)
         print 'Kinematic constraint equations'
         kinematics.kinematic_constraints(samplerobots.sr400())
 
@@ -222,14 +223,15 @@ class testDynamics(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    suite = unittest.TestSuite()
-    suite.addTest(testMisc('test_robo_misc'))
-    suite.addTest(testGeometry('test_dgm_rx90'))
-    suite.addTest(testGeometry('test_dgm_sr400'))
-    suite.addTest(testGeometry('test_igm'))
-   # suite.addTest(testGeometry('test_loop'))
-    suite.addTest(testKinematics('test_jac'))
-    suite.addTest(testKinematics('test_jac2'))
-    unittest.TextTestRunner(verbosity=2).run(suite)
+#    suite = unittest.TestSuite()
+#    suite.addTest(testMisc('test_robo_misc'))
+#    suite.addTest(testGeometry('test_dgm_rx90'))
+#    suite.addTest(testGeometry('test_dgm_sr400'))
+#    suite.addTest(testGeometry('test_igm'))
+#    suite.addTest(testGeometry('test_loop'))
+#    suite.addTest(testKinematics('test_jac'))
+#    suite.addTest(testKinematics('test_jac2'))
+#    unittest.TextTestRunner(verbosity=2).run(suite)
+    unittest.main()
 
 
