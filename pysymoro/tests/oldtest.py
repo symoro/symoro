@@ -121,6 +121,8 @@ class testGeometry(unittest.TestCase):
 
     def test_igm(self):
         print "######## test_igm ##########"
+        self.robo.r[6] = var('R6')
+        self.robo.gamma[6] = var('G6')
         invgeom._paul_solve(self.robo, self.symo, invgeom.T_GENERAL, 0, 6)
         igm_f = self.symo.gen_func('IGM_gen', self.robo.q_vec,
                                    invgeom.T_GENERAL)
@@ -228,7 +230,7 @@ if __name__ == '__main__':
 #    suite.addTest(testGeometry('test_dgm_rx90'))
 #    suite.addTest(testGeometry('test_dgm_sr400'))
 #    suite.addTest(testGeometry('test_igm'))
-#    suite.addTest(testGeometry('test_loop'))
+ #   suite.addTest(testGeometry('test_loop'))
 #    suite.addTest(testKinematics('test_jac'))
 #    suite.addTest(testKinematics('test_jac2'))
 #    unittest.TextTestRunner(verbosity=2).run(suite)

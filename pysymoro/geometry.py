@@ -126,6 +126,15 @@ class CompTransf:
         elif self.type == 1:
             return _rot_trans(self.axis, p=self.val)
 
+    def matrix_inv(self):
+        """
+        Homogeneous transformation matrix (inverted)
+        """
+        if self.type == 0:
+            return _rot_trans(self.axis, th=-self.val)
+        elif self.type == 1:
+            return _rot_trans(self.axis, p=-self.val)
+
     def rot(self):
         if self.type == 0:
             return _rot(self.axis, self.val)
