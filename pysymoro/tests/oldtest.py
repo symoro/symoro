@@ -77,6 +77,8 @@ class testGeometry(unittest.TestCase):
         print "######## test_dgm_rx90 ##########"
         T = geometry.dgm(self.robo, self.symo, 0, 6,
                          fast_form=True, trig_subs=True)
+        self.symo.gen_func_string('DGM_generated1', T, self.robo.q_vec,
+                                  syntax = 'matlab')
         f06 = self.symo.gen_func('DGM_generated1', T, self.robo.q_vec)
         T = geometry.dgm(self.robo, self.symo, 6, 0,
                          fast_form=True, trig_subs=True)
@@ -124,6 +126,8 @@ class testGeometry(unittest.TestCase):
         self.robo.r[6] = var('R6')
         self.robo.gamma[6] = var('G6')
         invgeom._paul_solve(self.robo, self.symo, invgeom.T_GENERAL, 0, 6)
+        self.symo.gen_func_string('IGM_gen', self.robo.q_vec,
+                                   invgeom.T_GENERAL, syntax = 'matlab')
         igm_f = self.symo.gen_func('IGM_gen', self.robo.q_vec,
                                    invgeom.T_GENERAL)
         T = geometry.dgm(self.robo, self.symo, 0, 6,
@@ -140,6 +144,8 @@ class testGeometry(unittest.TestCase):
         print "######## test_loop ##########"
         self.robo = samplerobots.sr400()
         invgeom.loop_solve(self.robo, self.symo)
+        self.symo.gen_func_string('IGM_gen', self.robo.q_vec,
+                                  self.robo.q_active, syntax = 'matlab')
         l_solver = self.symo.gen_func('IGM_gen', self.robo.q_vec,
                                       self.robo.q_active)
         T = geometry.dgm(self.robo, self.symo, 9, 10,
@@ -225,15 +231,15 @@ class testDynamics(unittest.TestCase):
 
 
 if __name__ == '__main__':
-#    suite = unittest.TestSuite()
+    suite = unittest.TestSuite()
 #    suite.addTest(testMisc('test_robo_misc'))
-#    suite.addTest(testGeometry('test_dgm_rx90'))
+    suite.addTest(testGeometry('test_dgm_rx90'))
 #    suite.addTest(testGeometry('test_dgm_sr400'))
-#    suite.addTest(testGeometry('test_igm'))
- #   suite.addTest(testGeometry('test_loop'))
+    suite.addTest(testGeometry('test_igm'))
+    suite.addTest(testGeometry('test_loop'))
 #    suite.addTest(testKinematics('test_jac'))
 #    suite.addTest(testKinematics('test_jac2'))
-#    unittest.TextTestRunner(verbosity=2).run(suite)
-    unittest.main()
+    unittest.TextTestRunner(verbosity=2).run(suite)
+#    unittest.main()
 
 

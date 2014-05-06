@@ -11,7 +11,7 @@ from sympy import Mul, Add, factor, var, sympify
 
 from symoroutils import filemgr
 from symoroutils import tools
-
+from genfunc import gen_fheader_matlab, gen_fbody_matlab
 
 class SymbolManager(object):
     """Symbol manager, responsible for symbol replacing, file writing."""
@@ -220,10 +220,7 @@ class SymbolManager(object):
                     return i * self.revdi[i * old_sym]
         new_sym = var(str(name) + str(index))
         self.add_to_dict(new_sym, old_sym)
-        if is_simple:
-            return old_sym
-        else:
-            return new_sym
+        return new_sym
 
     def mat_replace(self, M, name, index='',
                     forced=False, skip=0, symmet=False):
@@ -386,7 +383,7 @@ class SymbolManager(object):
         B: expression or var
             right-hand side of the equation
         """
-        self.write_line(str(A) + ' = ' + str(B))
+        self.write_line(str(A) + ' = ' + str(B) + ';')
 
     def write_line(self, line=''):
         """Writes string data into tha output with new line symbol
@@ -470,11 +467,10 @@ class SymbolManager(object):
                     res += ','
             res += ']'
             return res
+        elif rpl_liter and sympify(syms).is_number:
+            return '_'
         else:
-            if rpl_liter and sympify(syms).is_number:
-                return '_'
-            else:
-                return str(syms)
+            return str(syms)
 
     def extract_syms(self, syms):
         """ returns set of all symbols from list or matrix
@@ -506,11 +502,13 @@ class SymbolManager(object):
             # will be set to '1.'
         return rq_vals + order_list
 
-    def gen_fbody(self, name, to_return, wr_syms, multival):
+    def gen_fbody(self, name, to_return, args):
         """Generates list of string statements of the function that
         computes symbolf from to_return.  wr_syms are considered to
         be known
         """
+         # set of defined symbols
+        wr_syms = self.extract_syms(args)
         # final symbols to be compute
         syms = self.extract_syms(to_return)
         # defines order of computation
@@ -520,7 +518,7 @@ class SymbolManager(object):
         # will be switched to true when branching detected
         space = '    '
         folded = 1    # indentation = 1 + number of 'for' statements
-
+        multival = False
         for s in order_list:
             if s not in self.sydi:
                 item = '%s%s=1.\n' % (space * folded, s)
@@ -541,8 +539,41 @@ class SymbolManager(object):
         fun_body.append('    return %s_result\n' % (name))
         return fun_body
 
-    def gen_func(self, name, to_return, args, multival=False):
+    def gen_func_string(self, name, to_return, args, syntax = 'python'):
         #TODO self, name, toret, *args, **kwargs
+        """ Returns function string. The rest is the same as for
+        gen_func
+
+         Parameters
+        ==========
+        name: string
+            Future function's name, must be different for
+            different fucntions
+        to_return: list, Matrix or tuple of them
+            Determins the shape of the output and symbols inside it
+        *args: any number of lists, Matrices or tuples of them
+            Determins the shape of the input and symbols
+            names to assigned
+
+        Notes
+        =====
+        -All unassigned used symbols will be set to '1.0'.
+        -This function must be called only after the model that
+            computes symbols in to_return have been generated.
+        """
+        #if kwargs.get
+        if syntax == 'python':
+            fun_head = self.gen_fheader(name, args)
+            fun_body = self.gen_fbody(name, to_return, args)
+        elif syntax == 'matlab':
+            fun_body, mval = gen_fbody_matlab(self, name, to_return, args)
+            fun_head = gen_fheader_matlab(self, name, args, to_return, mval)
+        fun_string = "".join(fun_head + fun_body)
+        print fun_string
+        return fun_string
+
+
+    def gen_func(self, name, to_return, args):
         """ Returns function that computes what is in to_return
         using args as arguments
 
@@ -563,12 +594,5 @@ class SymbolManager(object):
         -This function must be called only after the model that
             computes symbols in to_return have been generated.
         """
-        #if kwargs.get
-        fun_head = self.gen_fheader(name, args)
-        wr_syms = self.extract_syms(args)   # set of defined symbols
-        fun_body = self.gen_fbody(name, to_return, wr_syms, multival)
-        fun_string = "".join(fun_head + fun_body)
-        exec fun_string
+        exec self.gen_func_string(name, to_return, args)
         return eval('%s_func' % name)
-
-
