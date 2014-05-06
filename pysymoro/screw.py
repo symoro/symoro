@@ -2,7 +2,7 @@
 
 
 """
-This module contains the Screw data structure. 
+This module contains the Screw data structure.
 """
 
 
@@ -67,22 +67,6 @@ class Screw(object):
         if value.rows != 6 or value.cols != 1:
             raise ShapeError("Matrix size has to be 6x1.")
         self._val = value
- 
-#    @val.setter
-#    def val(self, lin, ang):
-#        """
-#        Set the linear and angular terms individually.
-#
-#        Args:
-#            lin: A 3x1 Matrix - linear term
-#            ang: A 3X1 Matrix - angular term
-#        """
-#        if lin.rows != 3 or lin.cols != 1:
-#            raise ShapeError("Linear term matrix size has to be 3x1.")
-#        elif ang.rows != 3 or ang.cols != 1:
-#            raise ShapeError("Angular term matrix size has to be 3x1.")
-#        self._val[0:3, 0] = lin
-#        self._val[3:6, 0] = ang
 
     @property
     def lin(self):

@@ -14,6 +14,8 @@ from sympy import Matrix
 from pysymoro.dynparams import DynParams
 from pysymoro.geoparams import GeoParams
 from pysymoro.screw import Screw
+from symoroutils import filemgr
+from symoroutils import tools
 
 
 class FloatingRobot(object):
@@ -23,7 +25,7 @@ class FloatingRobot(object):
     """
     def __init__(
         self, name, links=0, joints=0, frames=0, 
-        is_floating=True, structure=TREE
+        is_floating=True, structure=tools.TREE
     ):
         """
         Constructor period.
@@ -58,7 +60,7 @@ class FloatingRobot(object):
         corresponds to a virtual joint of the base. This joint is
         usually rigid.
         """
-        self.etas = [0 for j in joint_nums]
+        self.etas = [0 for j in self.joint_nums]
         """Joint velocities."""
         self.qdots = [var('QD{0}'.format(j)) for j in self.joint_nums]
         """Joint accelerations."""
@@ -85,6 +87,43 @@ class FloatingRobot(object):
         self.base_acc = Screw()
         """Transformation matrix of base wrt a reference frame."""
         self.base_tmat = eye(4)
+
+    def __str__(self):
+        str_format = ""
+        # add robot description
+        str_format = str_format + "Robot Description:\n"
+        str_format = str_format + "------------------\n"
+        str_format = str_format + ("\tName: %s\n" % str(self.name))
+        str_format = str_format + ("\tLinks: %s\n" % str(self.num_links))
+        str_format = str_format + ("\tJoints: %s\n" % str(self.num_joints))
+        str_format = str_format + ("\tFrames: %s\n" % str(self.num_frames))
+        str_format = str_format + ("\tFloating: %s\n" % str(self.is_floating))
+        str_format = str_format + ("\tStructure: %s\n" % str(self.structure))
+        # add joint type - rigid or flexible
+        str_format = str_format + "\tJoint Type: " + str(self.etas) + '\n'
+        str_format = str_format + '\n'
+        # add geometric params
+        str_format = str_format + "Geometric Parameters:\n"
+        str_format = str_format + "---------------------\n"
+        for geo in self.geos:
+            str_format = str_format + str(geo) + '\n'
+        str_format = str_format + '\n'
+        # add dynamic params
+        str_format = str_format + "Dynamic Parameters:\n"
+        str_format = str_format + "-------------------\n"
+        for dyn in self.dyns:
+            str_format = str_format + str(dyn) + '\n'
+        str_format = str_format + '\n' + ('=*' * 60) + '='
+        return str_format
+
+    def __repr__(self):
+        repr_format = (
+            "(name=%s, links=%d, joints=%d, frames=%d, floating=%s, type=%s)"
+        ) % (
+            str(self.name), self.num_links, self.num_joints,
+            self.num_frames, str(self.is_floating), str(self.structure)
+        )
+        return repr_format
 
     @property
     def link_nums(self):
@@ -129,5 +168,82 @@ class FloatingRobot(object):
             to frame 1 and so on.
         """
         return xrange(self.num_frames + 1)
+
+    @property
+    def q_vec(self):
+        """
+        Get the list of joint variables.
+
+        Returns:
+            A list containing the joint variables.
+        """
+        q = list()
+        for j in self.joint_nums:
+            if j == 0:
+                continue
+            q.append(self.geos[j].q)
+        return q
+
+    @property
+    def q_passive(self):
+        """
+        Get the list of passive joint variables.
+
+        Returns:
+            A list containing the passive joint variables.
+        """
+        q = list()
+        for j in self.joint_nums:
+            if j == 0: continue
+            if self.geos[j].mu == 0 and self.geos[j].sigma != 2:
+                q.append(self.geos[j].q)
+        return q
+
+    @property
+    def q_active(self):
+        """
+        Get the list of active joint variables.
+
+        Returns:
+            A list containing the active joint variables.
+        """
+        q = list()
+        for j in self.joint_nums:
+            if j == 0: continue
+            if self.geos[j].mu == 1 and self.geos[j].sigma != 2:
+                q.append(self.geos[j].q)
+        return q
+
+    @property
+    def passive_joints(self):
+        """
+        Get the list of joint numbers (indices) corresponding to passive
+        joints.
+
+        Returns:
+            A list containing the passive joint numbers (indices).
+        """
+        joints = list()
+        for j in self.joint_nums:
+            if j == 0: continue
+            if self.geos[j].mu == 0 and self.geos[j].sigma != 2:
+                joints.append(j)
+        return joints
+
+    @property
+    def active_joints(self):
+        """
+        Get the list of joint numbers (indices) corresponding to active
+        joints.
+
+        Returns:
+            A list containing the active joint numbers (indices).
+        """
+        joints = list()
+        for j in self.joint_nums:
+            if j == 0: continue
+            if self.geos[j].mu == 1 and self.geos[j].sigma != 2:
+                joints.append(j)
+        return joints
 
 

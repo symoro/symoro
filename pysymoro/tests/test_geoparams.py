@@ -46,6 +46,8 @@ class TestGeoParams(unittest.TestCase):
 
     def test_update_params(self):
         """Test update_params()"""
+        # NOTE: the state of TransformationMatrix instance is not tested
+        # here.
         # test raise AttributeError
         self.assertRaises(
             AttributeError, self.data_fixed.update_params,

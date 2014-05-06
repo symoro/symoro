@@ -11,6 +11,9 @@ from sympy import eye, var, zeros
 from sympy import cos, sin
 from sympy import Matrix
 
+from pysymoro.screw6 import Screw6
+from symoroutils import tools
+
 from pysymoro.transform import TransformationMatrix
 
 
@@ -50,6 +53,15 @@ class TestTransformationMatrix(unittest.TestCase):
             [0, 0, 1]
         ])
         self.inv_trans = Matrix([-l1*cos(th1), l1*sin(th1), 0])
+        self.sji = Screw6(
+            tl=self.rot_val, tr=tools.skew(self.trans_val),
+            bl=zeros(3, 3), br=self.rot_val
+        ).val
+        self.sij = Screw6(
+            tl=self.inv_rot,
+            tr=-(self.inv_rot * tools.skew(self.trans_val)),
+            bl=zeros(3, 3), br=self.inv_rot
+        ).val
         # params dict
         self.params = {
             'gamma': self.gamma,
@@ -122,6 +134,16 @@ class TestTransformationMatrix(unittest.TestCase):
         """Test get of inv_trans()"""
         self.assertEqual(self.t_empty.inv_trans, zeros(3, 1))
         self.assertEqual(self.t_data.inv_trans, self.inv_trans)
+
+    def test_s_j_wrt_i(self):
+        """Test get of s_j_wrt_i()"""
+        self.assertEqual(self.t_empty.s_j_wrt_i, eye(6))
+        self.assertEqual(self.t_data.s_j_wrt_i, self.sji)
+
+    def test_s_i_wrt_j(self):
+        """Test get of s_i_wrt_j()"""
+        self.assertEqual(self.t_empty.s_i_wrt_j, eye(6))
+        self.assertEqual(self.t_data.s_i_wrt_j, self.sij)
 
     def test_update(self):
         """Test update()"""
