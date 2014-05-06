@@ -247,7 +247,7 @@ def to_matrix_fast(symo, tr_list):
             conv = TransConvolve(symo, trig_subs=True)
         conv.process(tr)
     T *= conv.result()
-    symo.mat_replace(T, 'T%sT%s' % (i, j), skip=1)
+    symo.mat_replace(T, 'T%sT%s' % (i, j), skip=1, forced=True)
     return T
 
 
