@@ -99,6 +99,8 @@ class FloatingRobot(object):
         str_format = str_format + ("\tFrames: %s\n" % str(self.num_frames))
         str_format = str_format + ("\tFloating: %s\n" % str(self.is_floating))
         str_format = str_format + ("\tStructure: %s\n" % str(self.structure))
+        # add joint type - rigid or flexible
+        str_format = str_format + "\tJoint Type: " + str(self.etas) + '\n'
         str_format = str_format + '\n'
         # add geometric params
         str_format = str_format + "Geometric Parameters:\n"
@@ -166,5 +168,82 @@ class FloatingRobot(object):
             to frame 1 and so on.
         """
         return xrange(self.num_frames + 1)
+
+    @property
+    def q_vec(self):
+        """
+        Get the list of joint variables.
+
+        Returns:
+            A list containing the joint variables.
+        """
+        q = list()
+        for j in self.joint_nums:
+            if j == 0:
+                continue
+            q.append(self.geos[j].q)
+        return q
+
+    @property
+    def q_passive(self):
+        """
+        Get the list of passive joint variables.
+
+        Returns:
+            A list containing the passive joint variables.
+        """
+        q = list()
+        for j in self.joint_nums:
+            if j == 0: continue
+            if self.geos[j].mu == 0 and self.geos[j].sigma != 2:
+                q.append(self.geos[j].q)
+        return q
+
+    @property
+    def q_active(self):
+        """
+        Get the list of active joint variables.
+
+        Returns:
+            A list containing the active joint variables.
+        """
+        q = list()
+        for j in self.joint_nums:
+            if j == 0: continue
+            if self.geos[j].mu == 1 and self.geos[j].sigma != 2:
+                q.append(self.geos[j].q)
+        return q
+
+    @property
+    def passive_joints(self):
+        """
+        Get the list of joint numbers (indices) corresponding to passive
+        joints.
+
+        Returns:
+            A list containing the passive joint numbers (indices).
+        """
+        joints = list()
+        for j in self.joint_nums:
+            if j == 0: continue
+            if self.geos[j].mu == 0 and self.geos[j].sigma != 2:
+                joints.append(j)
+        return joints
+
+    @property
+    def active_joints(self):
+        """
+        Get the list of joint numbers (indices) corresponding to active
+        joints.
+
+        Returns:
+            A list containing the active joint numbers (indices).
+        """
+        joints = list()
+        for j in self.joint_nums:
+            if j == 0: continue
+            if self.geos[j].mu == 1 and self.geos[j].sigma != 2:
+                joints.append(j)
+        return joints
 
 
