@@ -539,7 +539,7 @@ class SymbolManager(object):
         fun_body.append('    return %s_result\n' % (name))
         return fun_body
 
-    def gen_func_string(self, name, to_return, args, syntax = 'python'):
+    def gen_func_string(self, name, to_return, args, syntax='python'):
         #TODO self, name, toret, *args, **kwargs
         """ Returns function string. The rest is the same as for
         gen_func
@@ -566,12 +566,11 @@ class SymbolManager(object):
             fun_head = self.gen_fheader(name, args)
             fun_body = self.gen_fbody(name, to_return, args)
         elif syntax == 'matlab':
-            fun_body, mval = gen_fbody_matlab(self, name, to_return, args)
-            fun_head = gen_fheader_matlab(self, name, args, to_return, mval)
+            fun_head = gen_fheader_matlab(self, name, args, to_return)
+            fun_body = gen_fbody_matlab(self, name, to_return, args)
         fun_string = "".join(fun_head + fun_body)
         print fun_string
         return fun_string
-
 
     def gen_func(self, name, to_return, args):
         """ Returns function that computes what is in to_return

@@ -4,21 +4,31 @@ This module provides MATLAB function generation
 """
 
 from sympy import Matrix, Symbol
-from sympy import sympify
 
 
-def gen_fheader_matlab(symo, name, args, to_return, multival=False):
-    func_head = ['function [']
-    if multival:
-        func_head.append(convert_syms_matlab(to_return, 'r'))
-    else:
-        func_head.append(convert_syms_matlab(to_return))
-    func_head.append('] = %s_func (' % name)
+def gen_fheader_matlab(symo, name, args,
+                       multival=False):
+    func_head = []
+    func_head.append('function RESULT=%s_func (' % name)
     func_head.append(convert_syms_matlab(args))
-    func_head.append(')\n');
+    func_head.append(')\n')
     return func_head
 
-def convert_syms_matlab(syms, extension=''):
+
+def convert_mat_matlab(to_return):
+    sym_list = convert_to_list(to_return, keep_const=True)
+    res = []
+    sym_iter = iter(sym_list)
+    for i in xrange(to_return.shape[0]):
+        for j in xrange(to_return.shape[1]):
+            res.append(str(sym_iter.next()))
+            res.append(',')
+        res[-1] = ';'
+    res.pop()
+    return "".join(res)
+
+
+def convert_syms_matlab(syms):
     """Converts 'syms' structure to sintactically correct string
 
     Parameters
@@ -29,43 +39,16 @@ def convert_syms_matlab(syms, extension=''):
         It is done to evoid expression like [x, 0] = args[1]
         Because it will cause exception of assigning to literal
     """
-#    if isinstance(syms, tuple) or isinstance(syms, list):
-#        syms = [convert_syms_matlab(item, rpl_liter) for item in syms]
-#        res = []
-#        for i, s in enumerate(syms):
-#            res.append(s)
-#            if i < len(syms) - 1:
-#                res += ','
-#        return res
-#    elif isinstance(syms, Matrix):
-#        res = ''
-#        for i in xrange(syms.shape[0]):
-#            res += convert_syms_matlab(list(syms[i, :]), rpl_liter)
-#            if i < syms.shape[0] - 1:
-#                res += ','
-#        return res
-#    elif rpl_liter and sympify(syms).is_number:
-#        return ''
-#    else:
-#        return '%s%s' % (syms, extension)
-    cond1 = isinstance(syms, tuple)
-    cond2 = isinstance(syms, list)
-    cond3 = isinstance(syms, Matrix)
-    if cond1 or cond2 or cond3:
-        res = []
-        for item in iter(syms):
-            s = convert_syms_matlab(item, extension)
-            if s is not None:
-                res.append(s)
-                res.append(',')
-        res.pop()
-        return "".join(res)
-    elif isinstance(syms, Symbol):
-        return '%s%s' % (syms, extension)
-    else:
-        return None
+    sym_list = convert_to_list(syms, keep_const=False)
+    res = []
+    for item in iter(sym_list):
+        res.append(str(item))
+        res.append(',')
+    res.pop()
+    return "".join(res)
 
-def convert_to_list(syms):
+
+def convert_to_list(syms, keep_const=True):
     cond1 = isinstance(syms, tuple)
     cond2 = isinstance(syms, list)
     cond3 = isinstance(syms, Matrix)
@@ -74,13 +57,13 @@ def convert_to_list(syms):
         for item in syms:
             res.extend(convert_to_list(item))
         return res
-    elif isinstance(syms, Symbol):
-            return syms
+    elif isinstance(syms, Symbol) or keep_const:
+        return [syms]
     else:
         return []
 
 
-def gen_fbody_matlab(symo, name, to_return, args):
+def gen_fbody_matlab(symo, name, to_return, args, ret_name=''):
     """Generates list of string statements of the function that
     computes symbolf from to_return.  wr_syms are considered to
     be known
@@ -89,7 +72,10 @@ def gen_fbody_matlab(symo, name, to_return, args):
     wr_syms = symo.extract_syms(args)
     # final symbols to be compute
     syms = symo.extract_syms(to_return)
-    syms_list = list(syms)
+    if isinstance(to_return, Matrix):
+        to_ret_str = convert_mat_matlab(to_return)
+    else:
+        to_ret_str = convert_syms_matlab(to_return)
     # defines order of computation
     order_list = symo.sift_syms(syms, wr_syms)
     # list of instructions in final function
@@ -112,16 +98,17 @@ def gen_fbody_matlab(symo, name, to_return, args):
             folded += 1
         else:
             item = '%s%s=%s;\n' % (space * folded, s, symo.sydi[s])
-        item.replace('**','^')
+        item.replace('**', '^')
         func_body.append(item)
     if multival:
-        for sym in syms_list:
-            func_body.insert(0, '%s%sr=[];\n' % (space, sym))
-            item = '%s%sr=[%sr;%s];\n' % (space*folded, sym, sym, sym)
-            func_body.append(item)
-
+        func_body.insert(0, '%sRESULT=[];\n' % (space))
+        item = '%sRESULT=[RESULT;%s];\n' % (space * folded, to_ret_str)
+        func_body.append(item)
+    else:
+        item = '%sRESULT=[%s];\n' % (space * folded, to_ret_str)
+        func_body.append(item)
     for f in xrange(folded-1, 0, -1):
         func_body.append('%send\n' % (space * f))
     func_body.append('end\n')
 
-    return func_body, multival
+    return func_body
