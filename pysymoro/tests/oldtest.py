@@ -209,7 +209,7 @@ class testKinematics(unittest.TestCase):
 
 class testDynamics(unittest.TestCase):
     def test_dynamics(self):
-        robo = samplerobots.rx90()
+        robo = samplerobots.cart_pole()
 
         print 'Inverse dynamic model using Newton - Euler Algorith'
         dynamics.inverse_dynamic_NE(robo)
@@ -240,6 +240,26 @@ if __name__ == '__main__':
 #    suite.addTest(testKinematics('test_jac'))
 #    suite.addTest(testKinematics('test_jac2'))
 #    unittest.TextTestRunner(verbosity=2).run(suite)
-    unittest.main()
+#    unittest.main()
+    robo = samplerobots.planar2r()
+
+    print 'Inverse dynamic model using Newton - Euler Algorith'
+    dynamics.inverse_dynamic_NE(robo)
+
+    print 'Direct dynamic model using Newton - Euler Algorith'
+    dynamics.direct_dynamic_NE(robo)
+
+    print 'Dynamic identification model using Newton - Euler Algorith'
+    dynamics.dynamic_identification_NE(robo)
+
+    print 'Inertia Matrix using composite links'
+    dynamics.inertia_matrix(robo)
+
+    print 'Coriolis torques using Newton - Euler Algorith'
+    dynamics.pseudo_force_NE(robo)
+
+    print 'Base parameters computation'
+    dynamics.base_paremeters(robo)
+
 
 

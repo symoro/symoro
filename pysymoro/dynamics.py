@@ -141,11 +141,12 @@ def direct_dynamic_NE(robo):
     symo.sydi : dictionary
         Dictionary with the information of all the sybstitution
     """
+    # antecedent angular velocity, projected into jth frame
     wi = ParamsInit.init_vec(robo)
-        # antecedent angular velocity, projected into jth frame
     w = ParamsInit.init_w(robo)
     jaj = ParamsInit.init_vec(robo, 6)
-    jTant = ParamsInit.init_mat(robo, 6)   # Twist transform list of Matrices 6x6
+    # Twist transform list of Matrices 6x6
+    jTant = ParamsInit.init_mat(robo, 6)
     beta_star = ParamsInit.init_vec(robo, 6)
     grandJ = ParamsInit.init_mat(robo, 6)
     link_acc = ParamsInit.init_vec(robo, 6)
@@ -204,28 +205,28 @@ def inertia_matrix(robo):
     AJE1 = ParamsInit.init_vec(robo)
     f = ParamsInit.init_vec(robo, ext=1)
     n = ParamsInit.init_vec(robo, ext=1)
-    A = sympy.zeros(robo.NL, robo.NL)
+    A = sympy.zeros(robo.nl, robo.nl)
     symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'inm')
     title = 'Inertia Matrix using composite links'
     symo.write_params_table(robo, title, inert=True, dynam=True)
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
-    for j in reversed(xrange(-1, robo.NL)):
+    for j in reversed(xrange(robo.NL)):
         replace_Jplus(robo, symo, j, Jplus, MSplus, Mplus)
-        if j != - 1:
+        if j != 0:
             compute_Jplus(robo, symo, j, antRj, antPj,
                           Jplus, MSplus, Mplus, AJE1)
     for j in xrange(1, robo.NL):
         compute_A_diagonal(robo, symo, j, Jplus, MSplus, Mplus, f, n, A)
         ka = j
-        while ka != - 1:
+        while ka != 0:
             k = ka
             ka = robo.ant[ka]
             compute_A_triangle(robo, symo, j, k, ka,
                                antRj, antPj, f, n, A, AJE1)
     symo.mat_replace(A, 'A', forced=True, symmet=True)
-    J_base = inertia_spatial(Jplus[-1], MSplus[-1], Mplus[-1])
+    J_base = inertia_spatial(Jplus[0], MSplus[0], Mplus[0])
     symo.mat_replace(J_base, 'JP', 0, forced=True, symmet=True)
     symo.file_close()
     return symo
@@ -497,11 +498,11 @@ def compute_A_diagonal(robo, symo, j, Jplus, MSplus, Mplus, f, n, A):
     if robo.sigma[j] == 0:
         f[j] = Matrix([-MSplus[j][1], MSplus[j][0], 0])
         n[j] = Jplus[j][:, 2]
-        A[j, j] = Jplus[j][2, 2] + robo.IA[j]
+        A[j-1, j-1] = Jplus[j][2, 2] + robo.IA[j]
     elif robo.sigma[j] == 1:
         f[j] = Matrix([0, 0, Mplus[j]])
         n[j] = Matrix([MSplus[j][1], - MSplus[j][0], 0])
-        A[j, j] = Mplus[j] + robo.IA[j]
+        A[j-1, j-1] = Mplus[j] + robo.IA[j]
     symo.mat_replace(f[j], 'E' + chars[j], j)
     symo.mat_replace(n[j], 'N' + chars[j], j)
 
@@ -516,20 +517,20 @@ def compute_A_triangle(robo, symo, j, k, ka, antRj, antPj, f, n, A, AJE1):
     """
     f[ka] = antRj[k]*f[k]
     if k == j and robo.sigma[j] == 0:
-        n[ka] = AJE1[k] + tools.skew(antPj[k])*f[k]
+        n[ka] = AJE1[k] + tools.skew(antPj[k])*antRj[k]*f[k]
     else:
-        n[ka] = antRj[k]*n[k] + tools.skew(antPj[k])*f[k]
-    if ka == - 1:
+        n[ka] = antRj[k]*n[k] + tools.skew(antPj[k])*antRj[k]*f[k]
+    if ka == 0:
         symo.mat_replace(f[ka], 'AV0')
         symo.mat_replace(n[ka], 'AW0')
     else:
         symo.mat_replace(f[ka], 'E' + chars[j], ka)
         symo.mat_replace(n[ka], 'N' + chars[j], ka)
         if robo.sigma[ka] == 0:
-            A[j, ka] = n[ka][2]
+            A[j-1, ka-1] = n[ka][2]
         elif robo.sigma[ka] == 1:
-            A[j, ka] = f[ka][2]
-        A[ka, j] = A[j, ka]
+            A[j-1, ka-1] = f[ka][2]
+        A[ka-1, j-1] = A[j-1, ka-1]
 
 
 # TODO:Finish base parameters computation
