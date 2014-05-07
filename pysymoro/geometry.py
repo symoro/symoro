@@ -234,7 +234,7 @@ def transform_list(robo, i, j):
     return [tr for tr in tr_list if tr.val != 0]
 
 
-def to_matrix_fast(symo, tr_list):
+def to_matrix_fast(symo, tr_list, forced=False):
     conv = TransConvolve(symo, trig_subs=True)
     T = eye(4)
     i = tr_list[0].i
@@ -247,7 +247,7 @@ def to_matrix_fast(symo, tr_list):
             conv = TransConvolve(symo, trig_subs=True)
         conv.process(tr)
     T *= conv.result()
-    symo.mat_replace(T, 'T%sT%s' % (i, j), skip=1)
+    symo.mat_replace(T, 'T%sT%s' % (i, j), skip=1, forced=forced)
     return T
 
 
@@ -286,7 +286,8 @@ def to_matrices_left(tr_list, symo=None, trig_subs=False):
     return res
 
 
-def dgm(robo, symo, i, j, key='one', fast_form=True, trig_subs=True):
+def dgm(robo, symo, i, j, key='one', fast_form=True,
+        trig_subs=True, forced=False):
     """must be the final DGM function
 
     Parameters
@@ -316,7 +317,7 @@ def dgm(robo, symo, i, j, key='one', fast_form=True, trig_subs=True):
             return {(i, i): eye(4)}
     tr_list = transform_list(robo, i, j)
     if key == 'one' and fast_form:
-        return to_matrix_fast(symo, tr_list)
+        return to_matrix_fast(symo, tr_list, forced)
     else:
         if key == 'left':
             return to_matrices_left(tr_list, symo, trig_subs)

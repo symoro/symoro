@@ -29,7 +29,7 @@ def convert_mat_matlab(to_return):
 
 
 def convert_syms_matlab(syms):
-    """Converts 'syms' structure to sintactically correct string
+    """Converts 'syms' structure to a string
 
     Parameters
     ==========
@@ -55,7 +55,7 @@ def convert_to_list(syms, keep_const=True):
     if cond1 or cond2 or cond3:
         res = []
         for item in syms:
-            res.extend(convert_to_list(item))
+            res.extend(convert_to_list(item, keep_const))
         return res
     elif isinstance(syms, Symbol) or keep_const:
         return [syms]
@@ -65,41 +65,53 @@ def convert_to_list(syms, keep_const=True):
 
 def gen_fbody_matlab(symo, name, to_return, args, ret_name=''):
     """Generates list of string statements of the function that
-    computes symbolf from to_return.  wr_syms are considered to
+    computes symbolf from to_return.  arg_syms are considered to
     be known
     """
      # set of defined symbols
-    wr_syms = symo.extract_syms(args)
+    arg_syms = symo.extract_syms(args)
     # final symbols to be compute
-    syms = symo.extract_syms(to_return)
+    res_syms = symo.extract_syms(to_return)
     if isinstance(to_return, Matrix):
         to_ret_str = convert_mat_matlab(to_return)
     else:
         to_ret_str = convert_syms_matlab(to_return)
     # defines order of computation
-    order_list = symo.sift_syms(syms, wr_syms)
+    print arg_syms, res_syms
+    order_list = symo.sift_syms(res_syms, arg_syms)
     # list of instructions in final function
     func_body = []
     # will be switched to true when branching detected
     space = '    '
     folded = 1    # indentation = 1 + number of 'for' statements
     multival = False
+    glob = 0
+    glob_item = ''
     for s in order_list:
         if s not in symo.sydi:
-            item = '%s%s=1.;\n' % (space * folded, s)
-        elif isinstance(symo.sydi[s], tuple):
-            multival = True
-            items = ['%sfor %s=' % (space * folded, s)]
-            for x in symo.sydi[s]:
-                items.append('%s' % x)
-                items.append(',')
-            items.append('\n')
-            item = "".join(items)
-            folded += 1
+            if glob == 0:
+                glob += 1
+                glob_item += '%sglobal %s' % (space * folded, s)
+            elif glob < 12:
+                glob_item += ' %s' % s
+                glob += 1
+            else:
+                glob = 0
+                glob_item += ' %s\n' % s
         else:
-            item = '%s%s=%s;\n' % (space * folded, s, symo.sydi[s])
-        item.replace('**', '^')
-        func_body.append(item)
+            if isinstance(symo.sydi[s], tuple):
+                multival = True
+                items = ['%sfor %s=' % (space * folded, s)]
+                for x in symo.sydi[s]:
+                    items.append('%s' % x)
+                    items.append(',')
+                items.append('\n')
+                item = "".join(items)
+                folded += 1
+            else:
+                item = '%s%s=%s;\n' % (space * folded, s, symo.sydi[s])
+            item.replace('**', '^')
+            func_body.append(item)
     if multival:
         func_body.insert(0, '%sRESULT=[];\n' % (space))
         item = '%sRESULT=[RESULT;%s];\n' % (space * folded, to_ret_str)
@@ -110,5 +122,5 @@ def gen_fbody_matlab(symo, name, to_return, args, ret_name=''):
     for f in xrange(folded-1, 0, -1):
         func_body.append('%send\n' % (space * f))
     func_body.append('end\n')
-
+    func_body.insert(0, glob_item + '\n')
     return func_body

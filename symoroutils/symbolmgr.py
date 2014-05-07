@@ -264,9 +264,9 @@ class SymbolManager(object):
             2)  >>> A = symo.mat_replace(B+C+..., 'A')
                 # for the case when B+C+... is small enough
         """
-        for i2 in xrange(M.shape[1]):
-            for i1 in xrange(M.shape[0] - skip):
-                if symmet and i2 < i1:
+        for i1 in xrange(M.shape[0] - skip):
+            for i2 in xrange(M.shape[1]):
+                if symmet and i1 > i2:
                     M[i1, i2] = M[i2, i1]
                     continue
                 if M.shape[1] > 1:
@@ -570,7 +570,6 @@ class SymbolManager(object):
             fun_head = gen_fheader_matlab(self, name, args, to_return)
             fun_body = gen_fbody_matlab(self, name, to_return, args)
         fun_string = "".join(fun_head + fun_body)
-        print fun_string
         return fun_string
 
     def gen_func(self, name, to_return, args):

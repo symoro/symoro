@@ -126,20 +126,7 @@ def dynamic_identification_NE(robo):
     return symo
 
 
-def direct_dynamic_NE(robo):
-    """Computes Direct Dynamic Model using
-    Newton-Euler formulation
-
-    Parameters
-    ==========
-    robo : Robot
-        Instance of robot description container
-
-    Returns
-    =======
-    symo.sydi : dictionary
-        Dictionary with the information of all the sybstitution
-    """
+def compute_direct_dynamic_NE(symo, robo):
     # antecedent angular velocity, projected into jth frame
     wi = ParamsInit.init_vec(robo)
     w = ParamsInit.init_w(robo)
@@ -153,12 +140,7 @@ def direct_dynamic_NE(robo):
     juj = ParamsInit.init_vec(robo, 6)   # Jj*aj / Hj
     Tau = ParamsInit.init_scalar(robo)
     grandVp = ParamsInit.init_vec(robo, 6)
-    grandVp.append(Matrix([robo.vdot0 - robo.G, robo.w0]))
-    symo = symbolmgr.SymbolManager()
-    symo.file_open(robo, 'ddm')
-    title = 'Direct dynamic model using Newton - Euler Algorith'
-    symo.write_params_table(robo, title, inert=True, dynam=True)
-
+    grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
     for j in xrange(1, robo.NL):
@@ -175,7 +157,7 @@ def direct_dynamic_NE(robo):
     for j in reversed(xrange(1, robo.NL)):
         replace_beta_J_star(robo, symo, j, grandJ, beta_star)
         compute_Tau(robo, symo, j, grandJ, beta_star, jaj, juj, H_inv, Tau)
-        if robo.ant[j] != - 1:
+        if robo.ant[j] != 0:
             compute_beta_J_star(robo, symo, j, grandJ, jaj, juj, Tau,
                                 beta_star, jTant, link_acc)
     for j in xrange(1, robo.NL):
@@ -183,12 +165,12 @@ def direct_dynamic_NE(robo):
                              juj, H_inv, jaj, Tau, link_acc)
     for j in xrange(1, robo.NL):
         compute_coupled_forces(robo, symo, j, grandVp, grandJ, beta_star)
-    symo.file_close()
-    return symo
+    return robo.qddot
 
 
-def inertia_matrix(robo):
-    """Computes Inertia Matrix using composed link
+def direct_dynamic_NE(robo):
+    """Computes Direct Dynamic Model using
+    Newton-Euler formulation
 
     Parameters
     ==========
@@ -200,15 +182,21 @@ def inertia_matrix(robo):
     symo.sydi : dictionary
         Dictionary with the information of all the sybstitution
     """
+    symo = symbolmgr.SymbolManager()
+    symo.file_open(robo, 'ddm')
+    title = 'Direct dynamic model using Newton - Euler Algorith'
+    symo.write_params_table(robo, title, inert=True, dynam=True)
+    compute_direct_dynamic_NE(symo, robo)
+    symo.file_close()
+    return symo
+
+
+def compute_inertia_matrix(symo, robo, forced=False):
     Jplus, MSplus, Mplus = ParamsInit.init_jplus(robo)
     AJE1 = ParamsInit.init_vec(robo)
     f = ParamsInit.init_vec(robo, ext=1)
     n = ParamsInit.init_vec(robo, ext=1)
     A = sympy.zeros(robo.nl, robo.nl)
-    symo = symbolmgr.SymbolManager()
-    symo.file_open(robo, 'inm')
-    title = 'Inertia Matrix using composite links'
-    symo.write_params_table(robo, title, inert=True, dynam=True)
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
     for j in reversed(xrange(robo.NL)):
@@ -224,9 +212,30 @@ def inertia_matrix(robo):
             ka = robo.ant[ka]
             compute_A_triangle(robo, symo, j, k, ka,
                                antRj, antPj, f, n, A, AJE1)
-    symo.mat_replace(A, 'A', forced=True, symmet=True)
+    symo.mat_replace(A, 'A', forced=forced, symmet=True)
     J_base = inertia_spatial(Jplus[0], MSplus[0], Mplus[0])
-    symo.mat_replace(J_base, 'JP', 0, forced=True, symmet=True)
+    symo.mat_replace(J_base, 'JP', 0, forced=forced, symmet=True)
+    return A
+
+
+def inertia_matrix(robo):
+    """Computes Inertia Matrix using composed link
+
+    Parameters
+    ==========
+    robo : Robot
+        Instance of robot description container
+
+    Returns
+    =======
+    symo.sydi : dictionary
+        Dictionary with the information of all the sybstitution
+    """
+    symo = symbolmgr.SymbolManager()
+    symo.file_open(robo, 'inm')
+    title = 'Inertia Matrix using composite links'
+    symo.write_params_table(robo, title, inert=True, dynam=True)
+    compute_inertia_matrix(symo, robo, forced=True)
     symo.file_close()
     return symo
 
@@ -312,10 +321,12 @@ def compute_joint_wrench(robo, symo, j, antRj, antPj, vdot,
         Nex[robo.ant[j]] += antRj[j]*Njnt[j] + tools.skew(antPj[j])*f_ant
 
 
-def compute_torque(robo, symo, j, Fjnt, Njnt, name='GAM%s'):
+def compute_torque(robo, symo, j, Fjnt, Njnt, name=None):
     """Internal function. Computes actuation torques - projection of
     joint wrench on the joint axis
     """
+    if name is None:
+        name = str(robo.GAM[j]) + '%s'
     if robo.sigma[j] != 2:
         tau = (robo.sigma[j]*Fjnt[j] + (1 - robo.sigma[j])*Njnt[j])
         tau_total = tau[2] + robo.fric_s(j) + robo.fric_v(j) + robo.tau_ia(j)
@@ -445,7 +456,7 @@ def compute_acceleration(robo, symo, j, jTant, grandVp,
         qddot = 0
     else:
         qddot = H_inv[j]*Tau[j] - E1
-    qddot = symo.replace(qddot, "QDP", j, forced=True)
+    qddot = symo.replace(qddot, str(robo.qddot[j]), forced=True)
     grandVp[j] = (grandR + qddot*jaj[j])
     grandVp[j][3:, 0] = symo.mat_replace(grandVp[j][3:, 0], 'WP', j)
     grandVp[j][:3, 0] = symo.mat_replace(grandVp[j][:3, 0], 'VP', j)
