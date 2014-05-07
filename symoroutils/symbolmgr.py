@@ -189,6 +189,7 @@ class SymbolManager(object):
                 M[i1, i2] = M[i1, i2].subs(subs_dict)
         return M
 
+    #TODO remove index
     def replace(self, old_sym, name, index='', forced=False):
         """Creates a new symbol for the symbolic expression old_sym.
 
