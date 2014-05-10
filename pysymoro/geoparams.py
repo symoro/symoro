@@ -6,6 +6,8 @@ This module contains the GeoParams data structure.
 """
 
 
+import re
+
 from pysymoro import transform
 
 
@@ -45,19 +47,20 @@ class GeoParams(object):
             self.update_params(params)
 
     def __str__(self):
-        pattern = '\t%s'
-        str_format = (pattern * 11) % (
+        row_format = '\t' + ('{:^8}' * 11)
+        str_format = row_format.format(*(
             str(self.frame), str(self.ant),
             str(self.sigma), str(self.mu),
             str(self.gamma), str(self.b),
             str(self.alpha), str(self.d),
             str(self.theta), str(self.r),
             str(self.q)
-        )
+        ))
         return str_format
 
     def __repr__(self):
-        repr_format = str(self).lstrip().replace('\t', ', ')
+        repr_format = str(self).lstrip().rstrip()
+        repr_format = re.sub('\s+', ', ', repr_format)
         repr_format = '(' + repr_format + ')'
         return repr_format
 

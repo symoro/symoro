@@ -6,6 +6,8 @@ This module contains the DynParams data structure.
 """
 
 
+import re
+
 from sympy import eye, var
 from sympy import Matrix
 
@@ -99,8 +101,8 @@ class DynParams(object):
             self.update_params(params)
 
     def __str__(self):
-        pattern = '  %s'
-        str_format = (pattern * 20) % (
+        row_format = '\t' + ('{:^7}' * 20)
+        str_format = row_format.format(*(
             str(self.link),
             str(self.xx), str(self.xy), str(self.xz), 
             str(self.yy), str(self.yz), str(self.zz),
@@ -108,12 +110,12 @@ class DynParams(object):
             str(self.ia), str(self.frc), str(self.frv),
             str(self.fx_ext), str(self.fy_ext), str(self.fz_ext),
             str(self.mx_ext), str(self.my_ext), str(self.mz_ext)
-        )
-        str_format = '\t' + str_format.lstrip()
+        ))
         return str_format
 
     def __repr__(self):
-        repr_format = str(self).lstrip().replace('  ', ', ')
+        repr_format = str(self).lstrip().rstrip()
+        repr_format = re.sub('\s+', ', ', repr_format)
         repr_format = '(' + repr_format + ')'
         return repr_format
 
