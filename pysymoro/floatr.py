@@ -85,8 +85,10 @@ class FloatingRobot(object):
         self.base_vel = Screw()
         """Base acceleration 6x1 column vector - a Screw."""
         self.base_acc = Screw()
-        """Transformation matrix of base wrt a reference frame."""
+        """Transformation matrix of base wrt a reference frame at time 0."""
         self.base_tmat = eye(4)
+        # call init methods
+        self._init_maps()
 
     def __str__(self):
         str_format = ""
@@ -105,12 +107,20 @@ class FloatingRobot(object):
         # add geometric params
         str_format = str_format + "Geometric Parameters:\n"
         str_format = str_format + "---------------------\n"
+        str_format = str_format + ('\t' + ('{:^8}' * 11) + '\n').format(*(
+            'frame', 'ant', 'sigma', 'mu', 'gamma', 'b',
+            'alpha', 'd', 'theta', 'r', 'q'
+        ))
         for geo in self.geos:
             str_format = str_format + str(geo) + '\n'
         str_format = str_format + '\n'
         # add dynamic params
         str_format = str_format + "Dynamic Parameters:\n"
         str_format = str_format + "-------------------\n"
+        str_format = str_format + ('\t' + ('{:^7}' * 20) + '\n').format(*(
+            'link', 'XX', 'XY', 'XZ', 'YY', 'YZ', 'ZZ', 'MX', 'MY', 'MZ',
+            'M', 'IA', 'Fc', 'Fv', 'FX', 'FY', 'FZ', 'CX', 'CY', 'CZ'
+        ))
         for dyn in self.dyns:
             str_format = str_format + str(dyn) + '\n'
         str_format = str_format + '\n' + ('=*' * 60) + '='
@@ -124,6 +134,77 @@ class FloatingRobot(object):
             self.num_frames, str(self.is_floating), str(self.structure)
         )
         return repr_format
+
+    def put_val(self, idx, name, value):
+        """
+        Modify the robot parameter values. This method is mainly to
+        communicate with the UI. For other purposes, see update_params()
+        method.
+
+        Args:
+            idx: The joint/link/frame (index) value.
+            name: The parameter name.
+            value: The value with which the parameter is to be modified.
+
+        Returns:
+            A `OK` if successful and `FAIL` otherwise.
+        """
+        # update Z matrix
+        if name is 'Z':
+            return tools.OK
+            #return self.base_tmat[idx] = val
+        elif name in self._dyn_params_map:
+            param = {int(idx): {self._dyn_params_map[name]: value}}
+            return self.update_params('dyns', param)
+        elif name in self._geo_params_map:
+            if name in ['frame', 'ant', 'sigma', 'mu']:
+                value = int(value)
+            param = {int(idx): {self._geo_params_map[name]: value}}
+            return self.update_params('geos', param)
+        return tools.FAIL
+
+    def update_params(self, attr, params):
+        """
+        Update the parameter values of the robot.
+
+        Args:
+            attr: A string metioning the attribute. More specifically
+                indicating whether the parameters correspond to geometric
+                (`geos`), dynamic (`dyns`) or others (`misc`).
+            params: A nested dict containing the index values as the key
+                and another dict containing the parameter names and
+                values as the value. See Example for a valid dict
+                argument that is accepted by this method.
+
+        Example 1:
+            params = {
+                2: {'ant': 0, 'sigma': 1, 'mu': 1},
+                4: {'ant': 2, 'alpha': 0, 'd': 1, 'r': 0},
+                7: {'ant': 5}
+            }
+        Example 2:
+            params = {
+                3: {'xx': 'XX3', 'msx': 'MX3', 'mass': 'M3'},
+                5: {'yz': 0, 'xz': 0, 'xy': 0},
+                2: {'fx_ext': 0, 'fy_ext': 0, 'mz_ext': 0},
+                4: {'ia': 'IA4', 'frv': 0, 'frc': 0}
+            }
+        """
+        if attr in ['dyns', 'geos']:
+            param = getattr(self, attr)
+        else:
+            raise NotImplementedError(
+                "Only geometric and dynamic params are supported."
+            )
+        for key in params:
+            try:
+                idx = int(key)
+                param[idx].update_params(params[key])
+            except IndexError:
+                raise IndexError(
+                    "geos doesnt have %s index value." % str(idx)
+                )
+        return tools.OK
 
     @property
     def link_nums(self):
@@ -245,5 +326,28 @@ class FloatingRobot(object):
             if self.geos[j].mu == 1 and self.geos[j].sigma != 2:
                 joints.append(j)
         return joints
+
+    def _init_maps(self):
+        """
+        Initialise maps (dict) that will be used to read and write the
+        different parameter values of the robot. The main purpose of
+        these maps is to talk easily with the user interface.
+        """
+        self._dyn_params_map = dict([
+            ('XX', 'xx'), ('XY', 'xy'), ('XZ', 'xz'),
+            ('YY', 'yy'), ('YZ', 'yz'), ('ZZ', 'zz'),
+            ('MX', 'msx'), ('MY', 'msy'), ('MZ', 'msz'), ('M', 'mass'),
+            ('IA', 'ia'), ('FS', 'frc'), ('FV', 'frv'),
+            ('FX', 'fx_ext'), ('FY', 'fy_ext'), ('FZ', 'fz_ext'),
+            ('CX', 'mx_ext'), ('CY', 'my_ext'), ('CZ', 'mz_ext')
+        ])
+        self._geo_params_map = dict([
+            ('j', 'frame'), ('ant', 'ant'), ('sigma', 'sigma'),
+            ('mu', 'mu'), ('gamma', 'gamma'), ('b', 'b'),
+            ('alpha', 'alpha'), ('d', 'd'), ('theta', 'theta'), ('r', 'r')
+        ])
+        self._misc_params_map = [
+            'axis', 'W0', 'WP0', 'V0', 'VP0', 'G', 'QP', 'QDP', 'GAM'
+        ]
 
 
