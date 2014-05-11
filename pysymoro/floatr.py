@@ -61,6 +61,8 @@ class FloatingRobot(object):
         usually rigid.
         """
         self.etas = [0 for j in self.joint_nums]
+        """Joint stiffness usually indicated by k."""
+        self.stiffness = [0 for j in self.joint_nums]
         """Joint velocities."""
         self.qdots = [var('QD{0}'.format(j)) for j in self.joint_nums]
         """Joint accelerations."""
@@ -102,7 +104,8 @@ class FloatingRobot(object):
         str_format = str_format + ("\tFloating: %s\n" % str(self.is_floating))
         str_format = str_format + ("\tStructure: %s\n" % str(self.structure))
         # add joint type - rigid or flexible
-        str_format = str_format + "\tJoint Type: " + str(self.etas) + '\n'
+        str_format = str_format + "\tJoint Type: %s\n" % str(self.etas)
+        str_format = str_format + "\tStiffness: %s\n" % str(self.stiffness)
         str_format = str_format + '\n'
         # add geometric params
         str_format = str_format + "Geometric Parameters:\n"
@@ -161,19 +164,26 @@ class FloatingRobot(object):
                 value = int(value)
             param = {int(idx): {self._geo_params_map[name]: value}}
             return self.update_params('geos', param)
+        elif name in self._base_params_map:
+            return self.update_params('base', param)
+        elif name in self._misc_params_map:
+            key = self._misc_params_map[name]
+            param = {int(idx): {key: value}}
+            return self.update_params('misc', param)
         return tools.FAIL
 
-    def update_params(self, attr, params):
+    def update_params(self, kind, params):
         """
         Update the parameter values of the robot.
 
         Args:
-            attr: A string metioning the attribute. More specifically
+            kind: A string metioning the paramter type. More specifically
                 indicating whether the parameters correspond to geometric
-                (`geos`), dynamic (`dyns`) or others (`misc`).
+                (`geos`), dynamic (`dyns`), base velocity (`base`),
+                base acceleration (`base`) or others (`misc`).
             params: A nested dict containing the index values as the key
                 and another dict containing the parameter names and
-                values as the value. See Example for a valid dict
+                values as the value. See Examples for a valid dict
                 argument that is accepted by this method.
 
         Example 1:
@@ -189,21 +199,30 @@ class FloatingRobot(object):
                 2: {'fx_ext': 0, 'fy_ext': 0, 'mz_ext': 0},
                 4: {'ia': 'IA4', 'frv': 0, 'frc': 0}
             }
+        Example 3:
+            params = {
+                1: {'qdots': 'QP1', 'qddots': 'QDP1', 'torques': 'GAM1'},
+                2: {'etas': 1, 'stiffness': 'k2'}
+            }
+        Example 4:
+            params = {
+                0: {'gravity': 'GX'},
+                1: {'gravity': 'GY'},
+                2: {'gravity': 'GZ'}
+            }
         """
-        if attr in ['dyns', 'geos']:
-            param = getattr(self, attr)
-        else:
+        if kind in ['dyns', 'geos']:
+            self._update_dyns_geos(kind, params)
+        elif kind is 'misc':
+            self._update_misc(params)
+        elif kind is 'base':
             raise NotImplementedError(
-                "Only geometric and dynamic params are supported."
+                "Yet to be supported."
             )
-        for key in params:
-            try:
-                idx = int(key)
-                param[idx].update_params(params[key])
-            except IndexError:
-                raise IndexError(
-                    "geos doesnt have %s index value." % str(idx)
-                )
+        else:
+            errmsg = "`kind` can be ['dyns', 'geos', 'misc', 'base']. "
+            errmsg = errmsg + ("Current input: {0}").format(kind)
+            raise ValueError(errmsg)
         return tools.OK
 
     @property
@@ -327,6 +346,47 @@ class FloatingRobot(object):
                 joints.append(j)
         return joints
 
+    def _update_base(self, params):
+        """
+        Update the base velocity and acceleration values of the robot.
+        """
+        pass
+
+    def _update_misc(self, params):
+        """
+        Update the miscellaneous parameter values of the robot.
+        """
+        for key in params:
+            idx = int(key)
+            curr_params = params[key]
+            for attr in curr_params:
+                if not hasattr(self, attr):
+                    raise AttributeError((
+                        "{0} is not an attribute of Robot."
+                    ).format(str(attr)))
+                else:
+                    try:
+                        param = getattr(self, attr)
+                        param[idx] = curr_params[attr]
+                    except IndexError:
+                        raise IndexError((
+                            "`{0}` doesnt have {1} index value."
+                        ).format(attr, str(idx)))
+
+    def _update_dyns_geos(self, attr, params):
+        """
+        Update the geometric and dynamic parameter values of the robot.
+        """
+        param = getattr(self, attr)
+        for key in params:
+            idx = int(key)
+            try:
+                param[idx].update_params(params[key])
+            except IndexError:
+                raise IndexError((
+                    "`{0}` doesnt have {1} index value."
+                ).format(attr, str(idx)))
+
     def _init_maps(self):
         """
         Initialise maps (dict) that will be used to read and write the
@@ -346,8 +406,13 @@ class FloatingRobot(object):
             ('mu', 'mu'), ('gamma', 'gamma'), ('b', 'b'),
             ('alpha', 'alpha'), ('d', 'd'), ('theta', 'theta'), ('r', 'r')
         ])
-        self._misc_params_map = [
-            'axis', 'W0', 'WP0', 'V0', 'VP0', 'G', 'QP', 'QDP', 'GAM'
-        ]
+        self._base_params_map = dict([
+            ('V0', 'base_vel'), ('VP0', 'base_acc'),
+            ('W0', 'base_vel'), ('WP0', 'base_acc')
+        ])
+        self._misc_params_map = dict([
+            ('QP', 'qdots'), ('QDP', 'qddots'), ('GAM', 'torques'),
+            ('ETA', 'etas'), ('K', 'stiffness'), ('G', 'gravity'),
+        ])
 
 

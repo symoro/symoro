@@ -31,7 +31,7 @@ class GeoParams(object):
         """
         self.frame = frame
         self.ant = frame - 1
-        self.sigma = 0
+        self.sigma = 0 if frame != 0 else 2
         self.mu = 0
         self.gamma = 0
         self.b = 0

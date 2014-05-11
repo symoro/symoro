@@ -182,25 +182,37 @@ class DynParams(object):
     def _init_inertial_terms(self):
         """Initialise inertial terms."""
         for key, term in self._inertial_terms.iteritems():
-            value = term + str(self.link)
-            setattr(self, key, var(value))
+            if self.link != 0:
+                value = var(term + str(self.link))
+            else:
+                value = 0
+            setattr(self, key, value)
 
     def _init_ms_terms(self):
         """Initialise mass tensor terms and mass of the link."""
         for key, term in self._ms_terms.iteritems():
-            value = term + str(self.link)
-            setattr(self, key, var(value))
+            if self.link != 0:
+                value = var(term + str(self.link))
+            else:
+                value = 0
+            setattr(self, key, value)
 
     def _init_fr_terms(self):
         """Initialise rotor inertia and friction parameters."""
         for key, term in self._fr_terms.iteritems():
-            value = term + str(self.link)
-            setattr(self, key, var(value))
+            if self.link != 0:
+                value = var(term + str(self.link))
+            else:
+                value = 0
+            setattr(self, key, value)
 
     def _init_ext_force_terms(self):
         """Initialise external force terms."""
         for key, term in self._ext_force_terms.iteritems():
-            value = term + str(self.link)
-            setattr(self, key, var(value))
+            if self.link != 0:
+                value = var(term + str(self.link))
+            else:
+                value = 0
+            setattr(self, key, value)
 
 
