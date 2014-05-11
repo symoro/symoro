@@ -24,7 +24,7 @@ class FloatingRobot(object):
     act as the gateway for robot modelling.
     """
     def __init__(
-        self, name, links=0, joints=0, frames=0, 
+        self, name, links=0, joints=0, frames=0,
         is_floating=True, structure=tools.TREE
     ):
         """
@@ -50,7 +50,7 @@ class FloatingRobot(object):
         """
         List to hold the dynamic parameters. The indices of the list
         start with 0 and it corresponds to parameters of link 0 (virtual
-        link of the base). 
+        link of the base).
         """
         self.dyns = [DynParams(j) for j in self.link_nums]
         # properties dependent on number of joints
@@ -232,7 +232,7 @@ class FloatingRobot(object):
 
         Returns:
             An iteratable object with the link numbers.
-        Note: 
+        Note:
             Add 1 to number of links. This serves two purposes -
             one, it indicates a virtual link - to represent the base and
             two, it makes sure list index 1 corresponds to link 1 and so
@@ -412,7 +412,7 @@ class FloatingRobot(object):
         ])
         self._misc_params_map = dict([
             ('QP', 'qdots'), ('QDP', 'qddots'), ('GAM', 'torques'),
-            ('ETA', 'etas'), ('K', 'stiffness'), ('G', 'gravity'),
+            ('eta', 'etas'), ('K', 'stiffness'), ('G', 'gravity'),
         ])
 
 

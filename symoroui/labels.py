@@ -31,18 +31,20 @@ BOX_TITLES = dict(
     geom_params="Geometric Parameters",
     dyn_params="Dynamic Parameters and External Forces",
     base_vel_acc="Velocity and Acceleration of the base",
-    joint_vel_acc="Joint Velocity and Acceleration"
+    joint_params="Joint Stiffness, Velocity and Acceleration"
 )
 # named tuple to hold the content field entries
 FieldEntry = namedtuple(
     'FieldEntry', ['label', 'name', 'control', 'place', 'handler', 'id']
 )
 # joint velocity and acceleration params
-JOINT_VEL_ACC = OrderedDict([
+JOINT_PARAMS = OrderedDict([
     ('joint', FieldEntry('Joint', 'joint', 'cmb', (0, 0), 'OnJointChanged', -1)),
-    ('qp', FieldEntry('QP', 'QP', 'txt', (1, 0), 'OnSpeedChanged', -1)),
-    ('qdp', FieldEntry('QDP', 'QDP', 'txt', (2, 0), 'OnSpeedChanged', -1)),
-    ('gam', FieldEntry('GAM', 'GAM', 'txt', (3, 0), 'OnSpeedChanged', -1))
+    ('qp', FieldEntry('QP', 'QP', 'txt', (2, 0), 'OnSpeedChanged', -1)),
+    ('qdp', FieldEntry('QDP', 'QDP', 'txt', (2, 1), 'OnSpeedChanged', -1)),
+    ('gam', FieldEntry('GAM', 'GAM', 'txt', (1, 1), 'OnSpeedChanged', -1)),
+    ('eta', FieldEntry('eta', 'eta', 'cmb', (0, 1), 'OnSpeedChanged', -1)),
+    ('stiff', FieldEntry('k', 'K', 'txt', (1, 0), 'OnSpeedChanged', -1)),
 ])
 # base velocity and acceleration params
 BASE_VEL_ACC = OrderedDict([
@@ -77,18 +79,18 @@ DYN_PARAMS_M = OrderedDict([
 ])
 # friction and rotor inertia params
 DYN_PARAMS_X = OrderedDict([
-    ('ia', FieldEntry('IA', 'IA', 'txt', (2, 0), 'OnDynParamChanged', -1)),
-    ('frc', FieldEntry('FS', 'FS', 'txt', (2, 1), 'OnDynParamChanged', -1)),
-    ('frv', FieldEntry('FV', 'FV', 'txt', (2, 2), 'OnDynParamChanged', -1))
+    ('ia', FieldEntry('IA', 'IA', 'txt', (1, 4), 'OnDynParamChanged', -1)),
+    ('frc', FieldEntry('FS', 'FS', 'txt', (1, 5), 'OnDynParamChanged', -1)),
+    ('frv', FieldEntry('FV', 'FV', 'txt', (1, 6), 'OnDynParamChanged', -1))
 ])
 # external force, moments params
 DYN_PARAMS_F = OrderedDict([
-    ('fx_ext', FieldEntry('FX', 'FX', 'txt', (3, 0), 'OnDynParamChanged', -1)),
-    ('fy_ext', FieldEntry('FY', 'FY', 'txt', (3, 1), 'OnDynParamChanged', -1)),
-    ('fz_ext', FieldEntry('FZ', 'FZ', 'txt', (3, 2), 'OnDynParamChanged', -1)),
-    ('mx_ext', FieldEntry('CX', 'CX', 'txt', (3, 3), 'OnDynParamChanged', -1)),
-    ('my_ext', FieldEntry('CY', 'CY', 'txt', (3, 4), 'OnDynParamChanged', -1)),
-    ('mz_ext', FieldEntry('CZ', 'CZ', 'txt', (3, 5), 'OnDynParamChanged', -1))
+    ('fx_ext', FieldEntry('FX', 'FX', 'txt', (2, 0), 'OnDynParamChanged', -1)),
+    ('fy_ext', FieldEntry('FY', 'FY', 'txt', (2, 1), 'OnDynParamChanged', -1)),
+    ('fz_ext', FieldEntry('FZ', 'FZ', 'txt', (2, 2), 'OnDynParamChanged', -1)),
+    ('mx_ext', FieldEntry('CX', 'CX', 'txt', (2, 3), 'OnDynParamChanged', -1)),
+    ('my_ext', FieldEntry('CY', 'CY', 'txt', (2, 4), 'OnDynParamChanged', -1)),
+    ('mz_ext', FieldEntry('CZ', 'CZ', 'txt', (2, 5), 'OnDynParamChanged', -1))
 ])
 # dynamic params got by concatenation
 DYN_PARAMS = OrderedDict(
