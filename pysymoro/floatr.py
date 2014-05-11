@@ -64,7 +64,7 @@ class FloatingRobot(object):
         """Joint stiffness usually indicated by k."""
         self.stiffness = [0 for j in self.joint_nums]
         """Joint velocities."""
-        self.qdots = [var('QD{0}'.format(j)) for j in self.joint_nums]
+        self.qdots = [var('QP{0}'.format(j)) for j in self.joint_nums]
         """Joint accelerations."""
         self.qddots = [var('QDP{0}'.format(j)) for j in self.joint_nums]
         """Joint torques."""
@@ -138,6 +138,35 @@ class FloatingRobot(object):
         )
         return repr_format
 
+    def get_val(self, idx, name):
+        """
+        Get the robot parameter values. The method is maninly to
+        communicate with the UI.
+
+        Args:
+            idx: The joint/link/frame (index) value.
+            name: The parameter name.
+
+        Returns:
+            The value corresponding to the name and index.
+        """
+        if name is 'Z':
+            return 0
+        elif name in self._dyn_params_map:
+            attr = getattr(self, 'dyns')
+            value = getattr(attr[idx], self._dyn_params_map[name])
+            return value
+        elif name in self._geo_params_map:
+            attr = getattr(self, 'geos')
+            value = getattr(attr[idx], self._geo_params_map[name])
+            return value
+        elif name in self._misc_params_map:
+            attr = getattr(self, self._misc_params_map[name])
+            value = attr[idx]
+            return value
+        elif name in self._base_params_map:
+            return None
+
     def put_val(self, idx, name, value):
         """
         Modify the robot parameter values. This method is mainly to
@@ -152,10 +181,8 @@ class FloatingRobot(object):
         Returns:
             A `OK` if successful and `FAIL` otherwise.
         """
-        # update Z matrix
         if name is 'Z':
             return tools.OK
-            #return self.base_tmat[idx] = val
         elif name in self._dyn_params_map:
             param = {int(idx): {self._dyn_params_map[name]: value}}
             return self.update_params('dyns', param)
@@ -164,12 +191,12 @@ class FloatingRobot(object):
                 value = int(value)
             param = {int(idx): {self._geo_params_map[name]: value}}
             return self.update_params('geos', param)
-        elif name in self._base_params_map:
-            return self.update_params('base', param)
         elif name in self._misc_params_map:
             key = self._misc_params_map[name]
             param = {int(idx): {key: value}}
             return self.update_params('misc', param)
+        elif name in self._base_params_map:
+            return self.update_params('base', param)
         return tools.FAIL
 
     def update_params(self, kind, params):
