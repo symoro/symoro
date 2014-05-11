@@ -215,7 +215,7 @@ class myGLCanvas(GLCanvas):
         symo = symbolmgr.SymbolManager(sydi=self.pars_num)
         loop_solve(self.robo, symo)
         self.l_solver = symo.gen_func('IGM_gen', self.q_pas_sym,
-                                      self.q_act_sym, multival=True)
+                                      self.q_act_sym)
 
     def centralize_to_frame(self, index):
         q_vec = [self.jnt_dict[sym].q for sym in self.q_sym]
