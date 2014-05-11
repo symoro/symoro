@@ -129,7 +129,7 @@ class DialogVisualisation(wx.Dialog):
         return len(self.syms) > 0
 
     def construct_sym(self):
-        params = self.robo.get_geom_head()[4:]
+        params = ['gamma', 'b', 'alpha', 'd', 'theta', 'r']
         q_vec = self.robo.q_vec
         self.syms = set()
         for par in params:

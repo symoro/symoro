@@ -335,7 +335,7 @@ class MainFrame(wx.Frame):
         self.update_dyn_params()
 
     def OnJointChanged(self, event):
-        self.update_vel_params()
+        self.update_joint_params()
 
     def update_params(self, index, pars):
         for par in pars:
@@ -343,34 +343,49 @@ class MainFrame(wx.Frame):
             widget.ChangeValue(str(self.robo.get_val(index, par)))
 
     def update_geo_params(self):
+        pars = self._extract_param_names(ui_labels.GEOM_PARAMS)
         index = int(self.widgets['frame'].Value)
-        for par in self.robo.get_geom_head()[1:4]:
+        for par in pars[1:4]:
             self.widgets[par].SetValue(str(self.robo.get_val(index, par)))
-        self.update_params(index, self.robo.get_geom_head()[4:])
+        self.update_params(index, pars[4:])
 
     def update_dyn_params(self):
-        pars = self.robo.get_dynam_head()[1:]
-        # cut first and last 3 elements
-        pars += self.robo.get_ext_dynam_head()[1:-3]
+        pars = self._extract_param_names(ui_labels.DYN_PARAMS)
         index = int(self.widgets['link'].Value)
         self.update_params(index, pars)
 
-    def update_vel_params(self):
-        pars = self.robo.get_ext_dynam_head()[-3:]
+    def update_joint_params(self):
+        pars = self._extract_param_names(ui_labels.JOINT_PARAMS)
         index = int(self.widgets['joint'].Value)
-        self.update_params(index, pars)
+        self.widgets[pars[-1]].SetValue(
+            str(self.robo.get_val(index, pars[-1]))
+        )
+        self.update_params(index, pars[:-1])
 
     def update_base_twist_params(self):
-        for name in self.robo.get_base_vel_head()[1:]:
-            for i, c in enumerate(['X', 'Y', 'Z']):
-                widget = self.widgets[name + c]
-                widget.ChangeValue(str(self.robo.get_val(i, name)))
+        pars = dict(
+            ui_labels.BASE_VEL_ACC.items() + \
+            ui_labels.GRAVITY_CMPNTS.items()
+        )
+        for key in pars:
+            par = pars[key].name
+            idx = pars[key].id
+            name = par[:-1]
+            widget = self.widgets[par]
+            widget.ChangeValue(str(self.robo.get_val(idx, name)))
 
     def update_z_params(self):
         T = self.robo.Z
         for i in range(12):
             widget = self.widgets['Z' + str(i)]
             widget.ChangeValue(str(T[i]))
+
+    def _extract_param_names(self, params):
+        names = list()
+        for key in params:
+            if key in ['frame', 'link', 'joint']: continue
+            names.append(params[key].name)
+        return names
 
     def feed_data(self):
         # Robot Type
@@ -398,7 +413,7 @@ class MainFrame(wx.Frame):
             cmb.SetSelection(0)
         self.update_geo_params()
         self.update_dyn_params()
-        self.update_vel_params()
+        self.update_joint_params()
         self.update_base_twist_params()
         self.update_z_params()
         self.changed = False
