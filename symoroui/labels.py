@@ -43,7 +43,7 @@ JOINT_PARAMS = OrderedDict([
     ('qp', FieldEntry('QP', 'QP', 'txt', (2, 0), 'OnSpeedChanged', -1)),
     ('qdp', FieldEntry('QDP', 'QDP', 'txt', (2, 1), 'OnSpeedChanged', -1)),
     ('gam', FieldEntry('GAM', 'GAM', 'txt', (1, 1), 'OnSpeedChanged', -1)),
-    ('stiff', FieldEntry('k', 'K', 'txt', (1, 0), 'OnSpeedChanged', -1)),
+    ('stiff', FieldEntry('k', 'k', 'txt', (1, 0), 'OnSpeedChanged', -1)),
     ('eta', FieldEntry('eta', 'eta', 'cmb', (0, 1), 'OnSpeedChanged', -1))
 ])
 # base velocity and acceleration params

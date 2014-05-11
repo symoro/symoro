@@ -412,7 +412,7 @@ class FloatingRobot(object):
         ])
         self._misc_params_map = dict([
             ('QP', 'qdots'), ('QDP', 'qddots'), ('GAM', 'torques'),
-            ('eta', 'etas'), ('K', 'stiffness'), ('G', 'gravity'),
+            ('eta', 'etas'), ('k', 'stiffness'), ('G', 'gravity'),
         ])
 
 
