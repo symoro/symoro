@@ -4,7 +4,7 @@
 
 """
 This module creates the main window user interface and draws the
-interface on the screen for the SYMORO package. 
+interface on the screen for the SYMORO package.
 """
 
 
@@ -58,7 +58,7 @@ class MainFrame(wx.Frame):
         self.statusbar.SetStatusWidths(widths=[-1, -1])
         self.statusbar.SetStatusText(text="Ready", number=0)
         self.statusbar.SetStatusText(
-            text="Location of robot files is %s" 
+            text="Location of robot files is %s"
             % filemgr.get_base_path(), number = 1
         )
 
@@ -73,7 +73,7 @@ class MainFrame(wx.Frame):
             field_id = int(elements[key].id)
             if control is 'cmb':
                 ctrl = wx.ComboBox(
-                    parent=self.panel, style=wx.CB_READONLY, 
+                    parent=self.panel, style=wx.CB_READONLY,
                     size=(width, -1), name=name
                 )
                 ctrl.Bind(wx.EVT_COMBOBOX, handler)
@@ -83,7 +83,7 @@ class MainFrame(wx.Frame):
                 )
             else:
                 ctrl = wx.TextCtrl(
-                    parent=self.panel, size=(width, -1), 
+                    parent=self.panel, size=(width, -1),
                     name=name, id=field_id
                 )
                 ctrl.Bind(wx.EVT_KILL_FOCUS, handler)
@@ -95,11 +95,11 @@ class MainFrame(wx.Frame):
                 ), proportion=0, flag=wx.ALL | wx.ALIGN_RIGHT, border=5
             )
             szr_ele.Add(
-                ctrl, proportion=0, 
+                ctrl, proportion=0,
                 flag=wx.ALL | wx.ALIGN_LEFT, border=1
             )
             szr_grd.Add(
-                szr_ele, pos=(place[0], place[1]), 
+                szr_ele, pos=(place[0], place[1]),
                 flag=wx.ALL | wx.ALIGN_RIGHT, border=2
             )
 
@@ -132,11 +132,11 @@ class MainFrame(wx.Frame):
                 name=ui_labels.ROBOT_TYPE[key].name
             )
             szr_grd_robot_type.Add(
-                wx.StaticText(self.panel, label=label), 
+                wx.StaticText(self.panel, label=label),
                 pos=(idx, 0), flag=wx.LEFT, border=10
             )
             szr_grd_robot_type.Add(
-                self.widgets[name], pos=(idx, 1), 
+                self.widgets[name], pos=(idx, 1),
                 flag=wx.LEFT | wx.RIGHT, border=10
             )
         szr_robot_type.Add(
@@ -152,8 +152,8 @@ class MainFrame(wx.Frame):
         )
         szr_grd_gravity = wx.GridBagSizer(5, 5)
         self.params_in_grid(
-            szr_grd_gravity, elements=ui_labels.GRAVITY_CMPNTS, 
-            rows=1, cols=3, width=70, 
+            szr_grd_gravity, elements=ui_labels.GRAVITY_CMPNTS,
+            rows=1, cols=3, width=70,
         )
         szr_gravity.Add(szr_grd_gravity)
         szr_left_col.Add(szr_gravity, 0, wx.ALL | wx.EXPAND, 0)
@@ -171,7 +171,7 @@ class MainFrame(wx.Frame):
                 idx = (j*4) + i
                 name = 'Z'+str(idx)
                 txt_z_element = wx.TextCtrl(
-                    parent=self.panel, name=name, 
+                    parent=self.panel, name=name,
                     id=idx, size=(60, -1)
                 )
                 self.widgets[name] = txt_z_element
@@ -179,7 +179,7 @@ class MainFrame(wx.Frame):
                     wx.EVT_KILL_FOCUS, self.OnZParamChanged
                 )
                 szr_grd_loc.Add(
-                    txt_z_element, pos=(j + 1, i + 1), 
+                    txt_z_element, pos=(j + 1, i + 1),
                     flag=wx.ALIGN_LEFT, border=5
                 )
             lbl_row = wx.StaticText(self.panel, label='Z'+str(i + 1))
@@ -191,11 +191,11 @@ class MainFrame(wx.Frame):
                 lbl_row, pos=(i+1, 0), flag=wx.RIGHT, border=3
             )
             szr_grd_loc.Add(
-                lbl_col, pos=(0, i+1), 
+                lbl_col, pos=(0, i+1),
                 flag=wx.ALIGN_CENTER_HORIZONTAL, border=3
             )
             szr_grd_loc.Add(
-                lbl_last_row, pos=(4, i+1), 
+                lbl_last_row, pos=(4, i+1),
                 flag=wx.ALIGN_LEFT, border=3
             )
         szr_location.Add(szr_grd_loc, 0, wx.ALL | wx.EXPAND, 5)
@@ -208,7 +208,7 @@ class MainFrame(wx.Frame):
         )
         szr_grd_geom = wx.GridBagSizer(0, 5)
         self.params_in_grid(
-            szr_grd_geom, elements=ui_labels.GEOM_PARAMS, 
+            szr_grd_geom, elements=ui_labels.GEOM_PARAMS,
             rows=2, cols=5, width=70
         )
         szr_geom_params.Add(szr_grd_geom)
@@ -225,7 +225,7 @@ class MainFrame(wx.Frame):
             name=ui_labels.DYN_PARAMS['link'].name
         )
         cmb_link.Bind(
-            wx.EVT_COMBOBOX, 
+            wx.EVT_COMBOBOX,
             getattr(self, ui_labels.DYN_PARAMS['link'].handler)
         )
         self.widgets['link'] = cmb_link
@@ -233,7 +233,7 @@ class MainFrame(wx.Frame):
         szr_link.Add(
             wx.StaticText(
                 self.panel, label=ui_labels.DYN_PARAMS['link'].label
-            ), proportion=0, 
+            ), proportion=0,
             flag=wx.ALL | wx.ALIGN_LEFT, border=5
         )
         szr_link.AddSpacer((4,4))
@@ -259,7 +259,7 @@ class MainFrame(wx.Frame):
         )
         szr_grd_base_velacc = wx.GridBagSizer(0, 0)
         self.params_in_grid(
-            szr_grd_base_velacc, elements=ui_labels.BASE_VEL_ACC, 
+            szr_grd_base_velacc, elements=ui_labels.BASE_VEL_ACC,
             rows=3, cols=4, width=60
         )
         szr_base_velacc.Add(szr_grd_base_velacc)
@@ -273,10 +273,10 @@ class MainFrame(wx.Frame):
         )
         szr_grd_joint_velacc = wx.GridBagSizer(5, 5)
         self.params_in_grid(
-            szr_grd_joint_velacc, elements=ui_labels.JOINT_VEL_ACC, 
-            rows=3, cols=1, width=75, 
+            szr_grd_joint_velacc, elements=ui_labels.JOINT_VEL_ACC,
+            rows=3, cols=1, width=75,
         )
-        szr_joint_velacc.Add(szr_grd_joint_velacc, 
+        szr_joint_velacc.Add(szr_grd_joint_velacc,
             flag=wx.ALL | wx.ALIGN_CENTER, border=2
         )
         szr_velacc.Add(szr_joint_velacc, 1, wx.ALL | wx.EXPAND, 0)
@@ -396,7 +396,7 @@ class MainFrame(wx.Frame):
     def create_menu(self):
         """Method to create the menu bar"""
         menu_bar = wx.MenuBar()
-        # menu item - file 
+        # menu item - file
         file_menu = wx.Menu()
         m_new = wx.MenuItem(
             file_menu, wx.ID_NEW, ui_labels.FILE_MENU['m_new']
@@ -514,7 +514,7 @@ class MainFrame(wx.Frame):
         # menu item - identification
         iden_menu = wx.Menu()
         m_base_inertial_params = wx.MenuItem(
-            iden_menu, wx.ID_ANY, 
+            iden_menu, wx.ID_ANY,
             ui_labels.IDEN_MENU['m_base_inertial_params']
         )
         self.Bind(
@@ -527,13 +527,13 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnDynIdentifModel, m_dyn_iden_model)
         iden_menu.AppendItem(m_dyn_iden_model)
         m_energy_iden_model = wx.MenuItem(
-            iden_menu, wx.ID_ANY, 
+            iden_menu, wx.ID_ANY,
             ui_labels.IDEN_MENU['m_energy_iden_model']
         )
         # TODO: uncomment the 3 lines below to add the event
-#        self.Bind(
-#            wx.EVT_MENU, self.OnEnergyIdentifModel, m_energy_iden_model
-#        )
+        #self.Bind(
+        #    wx.EVT_MENU, self.OnEnergyIdentifModel, m_energy_iden_model
+        #)
         iden_menu.AppendItem(m_energy_iden_model)
         menu_bar.Append(iden_menu, ui_labels.MAIN_MENU['iden_menu'])
         # menu item - visualisation
@@ -549,7 +549,7 @@ class MainFrame(wx.Frame):
 
     def OnNew(self, event):
         dialog = ui_definition.DialogDefinition(
-            ui_labels.MAIN_WIN['prog_name'], 
+            ui_labels.MAIN_WIN['prog_name'],
             self.robo.name, self.robo.nl,
             self.robo.nj, self.robo.structure, self.robo.is_mobile
         )
@@ -591,24 +591,24 @@ class MainFrame(wx.Frame):
 
     def message_error(self, message):
         wx.MessageDialog(
-            None, 
+            None,
             message,
-            'Error', 
+            'Error',
             wx.OK | wx.ICON_ERROR
         ).ShowModal()
 
     def message_warning(self, message):
         wx.MessageDialog(
-            None, 
+            None,
             message,
-            'Error', 
+            'Error',
             wx.OK | wx.ICON_WARNING
         ).ShowModal()
 
     def message_info(self, message):
         wx.MessageDialog(
-            None, 
-            message, 
+            None,
+            message,
             'Information',
             wx.OK | wx.ICON_INFORMATION
         ).ShowModal()
@@ -633,10 +633,10 @@ class MainFrame(wx.Frame):
                 if self.OnSave(None) == tools.FAIL:
                     return
         dialog = wx.FileDialog(
-            self, 
-            message="Choose PAR file", 
+            self,
+            message="Choose PAR file",
             style=wx.OPEN,
-            wildcard='*.par', 
+            wildcard='*.par',
             defaultFile='*.par'
         )
         if dialog.ShowModal() == wx.ID_OK:
@@ -694,7 +694,7 @@ class MainFrame(wx.Frame):
 
     def OnIgmPaul(self, event):
         dialog = ui_geometry.DialogPaul(
-            ui_labels.MAIN_WIN['prog_name'], 
+            ui_labels.MAIN_WIN['prog_name'],
             self.robo.endeffectors,
             str(invgeom.EMPTY)
         )
@@ -776,12 +776,12 @@ class MainFrame(wx.Frame):
             if dialog.ShowModal() == wx.ID_OK:
                 self.par_dict = dialog.get_values()
                 graphics.MainWindow(
-                    ui_labels.MAIN_WIN['prog_name'], self.robo, 
+                    ui_labels.MAIN_WIN['prog_name'], self.robo,
                     self.par_dict, self
                 )
         else:
             graphics.MainWindow(
-                ui_labels.MAIN_WIN['prog_name'], self.robo, 
+                ui_labels.MAIN_WIN['prog_name'], self.robo,
                 self.par_dict, self
             )
 
@@ -796,5 +796,6 @@ class MainFrame(wx.Frame):
             elif result == wx.CANCEL:
                 return
         self.Destroy()
+        wx.GetApp().ExitMainLoop()
 
 
