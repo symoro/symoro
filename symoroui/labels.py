@@ -126,8 +126,9 @@ ROBOT_TYPE = OrderedDict([
     ('num_joints', FieldEntry('Number of joints:', 'NJ', 'lbl', (2, 0), None, -1)),
     ('num_frames', FieldEntry('Number of frames:', 'NF', 'lbl', (3, 0), None, -1)),
     ('structure', FieldEntry('Type of structure:', 'type', 'lbl', (4, 0), None, -1)),
-    ('is_mobile', FieldEntry('Is Mobile:', 'mobile', 'lbl', (5, 0), None, -1)),
-    ('num_loops', FieldEntry('Number of closed loops:', 'loops', 'lbl', (6, 0), None, -1))
+    ('is_floating', FieldEntry('Is Floating Base:', 'floating', 'lbl', (5, 0), None, -1)),
+    ('is_wmr', FieldEntry('Is Wheeled Mobile Robot:', 'wmr', 'lbl', (6, 0), None, -1)),
+    ('num_loops', FieldEntry('Number of closed loops:', 'loops', 'lbl', (7, 0), None, -1))
 ])
 
 # menu bar

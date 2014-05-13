@@ -59,15 +59,21 @@ class DialogDefinition(wx.Dialog):
         self.cmb_structure.Bind(wx.EVT_COMBOBOX, self.OnTypeChanged)
         self.OnTypeChanged(None)
         main_sizer.Add(grid, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 15)
-        self.ch_is_mobile = wx.CheckBox(self, label=' Is mobile')
-        self.ch_is_mobile.Value = is_mobile
+        self.ch_is_floating = wx.CheckBox(self, label=' Is Floating Base')
+        self.ch_is_floating.Value = is_mobile
+        self.ch_is_wmr = wx.CheckBox(
+            self, label=' Is Wheeled Mobile Robot'
+        )
+        self.ch_is_wmr.Value = is_mobile
         self.ch_keep_geo = wx.CheckBox(self, label=' Keep geometric parameters')
         self.ch_keep_geo.Value = True
         self.ch_keep_dyn = wx.CheckBox(self, label=' Keep dynamic parameters')
         self.ch_keep_dyn.Value = True
         self.ch_keep_base = wx.CheckBox(self, label=' Keep base parameters')
         self.ch_keep_base.Value = True
-        main_sizer.Add(self.ch_is_mobile, 0,
+        main_sizer.Add(self.ch_is_floating, 0,
+                       wx.LEFT | wx.RIGHT | wx.ALIGN_LEFT, 15)
+        main_sizer.Add(self.ch_is_wmr, 0,
                        wx.LEFT | wx.RIGHT | wx.ALIGN_LEFT, 15)
         main_sizer.Add(self.ch_keep_geo, 0,
                        wx.TOP | wx.LEFT | wx.ALIGN_LEFT, 15)

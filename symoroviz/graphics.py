@@ -453,6 +453,7 @@ class MainWindow(wx.Frame):
 
         q_box = wx.StaticBoxSizer(wx.StaticBox(self.p, label='Joint variables'))
         q_box.Add(gridJnts, 0, wx.ALL, 10)
+        q_box.FitInside(self.p)
 
         ver_sizer = wx.BoxSizer(wx.VERTICAL)
         ver_sizer.Add(q_box)

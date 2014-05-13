@@ -130,8 +130,7 @@ class MainFrame(wx.Frame):
             label = ui_labels.ROBOT_TYPE[key].label
             name = ui_labels.ROBOT_TYPE[key].name
             ctrl = wx.StaticText(
-                self.panel, size=(150, -1),
-                name=ui_labels.ROBOT_TYPE[key].name
+                self.panel, size=(150, -1), name=name
             )
             self.widgets[name] = ctrl
             self.widget_keys[key] = ctrl
@@ -389,11 +388,13 @@ class MainFrame(wx.Frame):
 
     def feed_data(self):
         # Robot Type
-        names = [('name', self.robo.name), ('NF', self.robo.nf),
-                 ('NL', self.robo.nl), ('NJ', self.robo.nj),
-                 ('type', self.robo.structure),
-                 ('mobile', self.robo.is_mobile),
-                 ('loops', self.robo.nj-self.robo.nl)]
+        names = [
+            ('name', self.robo.name), ('NF', self.robo.nf),
+            ('NL', self.robo.nl), ('NJ', self.robo.nj),
+            ('type', self.robo.structure),
+            ('floating', self.robo.is_mobile), ('wmr', False),
+            ('loops', self.robo.nj-self.robo.nl)
+        ]
         for name, info in names:
             label = self.widgets[name]
             label.SetLabel(str(info))
