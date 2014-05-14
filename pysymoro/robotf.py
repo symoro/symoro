@@ -25,7 +25,7 @@ class FloatingRobot(object):
     """
     def __init__(
         self, name, links=0, joints=0, frames=0,
-        is_floating=True, structure=tools.TREE
+        is_floating=True, structure=tools.TREE, is_wmr=False
     ):
         """
         Constructor period.
@@ -46,6 +46,8 @@ class FloatingRobot(object):
         self.is_floating = is_floating
         """Type of the robot structure - simple, tree, closed-loop"""
         self.structure = structure
+        """To indicate if the robot is a wheeled mobile robot"""
+        self.is_wmr = is_wmr
         # properties dependent on number of links
         """
         List to hold the dynamic parameters. The indices of the list
