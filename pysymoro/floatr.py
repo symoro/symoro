@@ -103,9 +103,6 @@ class FloatingRobot(object):
         str_format = str_format + ("\tFrames: %s\n" % str(self.num_frames))
         str_format = str_format + ("\tFloating: %s\n" % str(self.is_floating))
         str_format = str_format + ("\tStructure: %s\n" % str(self.structure))
-        # add joint type - rigid or flexible
-        str_format = str_format + "\tJoint Type: %s\n" % str(self.etas)
-        str_format = str_format + "\tStiffness: %s\n" % str(self.stiffness)
         str_format = str_format + '\n'
         # add geometric params
         str_format = str_format + "Geometric Parameters:\n"
@@ -126,7 +123,23 @@ class FloatingRobot(object):
         ))
         for dyn in self.dyns:
             str_format = str_format + str(dyn) + '\n'
-        str_format = str_format + '\n' + ('=*' * 60) + '='
+        str_format = str_format + '\n'
+        # add joint params
+        str_format = str_format + "Joint Parameters:\n"
+        str_format = str_format + "-----------------\n"
+        str_format = str_format + ('\t' + ('{:^9}' * 6) + '\n').format(*(
+            'joint', 'eta', 'stiffness', 'qdot', 'qddot', 'torque'
+        ))
+        for jnt in self.joint_nums:
+            jnt_str = ('\t' + ('{:^9}' * 6) + '\n').format(*(
+                str(jnt), str(self.etas[jnt]), str(self.stiffness[jnt]),
+                str(self.qdots[jnt]), str(self.qddots[jnt]),
+                str(self.torques[jnt])
+            ))
+            str_format = str_format + jnt_str
+        str_format = str_format + '\n'
+        # end
+        str_format = str_format + ('=*' * 60) + '='
         return str_format
 
     def __repr__(self):
