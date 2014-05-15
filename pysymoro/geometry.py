@@ -514,8 +514,8 @@ def direct_geometric(robo, frames, trig_subs):
     symo.write_params_table(robo, 'Direct Geometrix model')
     for i, j in frames:
         symo.write_line('Tramsformation matrix %s T %s' % (i, j))
-        print dgm(robo, symo, i, j, fast_form=False,
-                  forced=True, trig_subs=trig_subs)
+        T = dgm(robo, symo, i, j, fast_form=False, trig_subs=trig_subs)
+        symo.mat_replace(T, 'T%sT%s' % (i, j), forced=True, skip=1)
         symo.write_line()
     symo.file_close()
     return symo

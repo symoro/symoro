@@ -264,13 +264,17 @@ class SymbolManager(object):
             2)  >>> A = symo.mat_replace(B+C+..., 'A')
                 # for the case when B+C+... is small enough
         """
-        for i1 in xrange(M.shape[0] - skip):
-            for i2 in xrange(M.shape[1]):
-                if symmet and i1 > i2:
+        if M.shape[0] > 9:
+            form2 = '%02d%02d'
+        else:
+            form2 = '%d%d'
+        for i2 in xrange(M.shape[1]):
+            for i1 in xrange(M.shape[0] - skip):
+                if symmet and i1 < i2:
                     M[i1, i2] = M[i2, i1]
                     continue
                 if M.shape[1] > 1:
-                    name_index = name + str(i1 + 1) + str(i2 + 1)
+                    name_index = name + form2 % (i1 + 1, i2 + 1)
                 else:
                     name_index = name + str(i1 + 1)
                 M[i1, i2] = self.replace(M[i1, i2], name_index, index, forced)
@@ -289,9 +293,16 @@ class SymbolManager(object):
         expr: symbolic expression
             Unfolded expression
         """
-        while self.sydi.keys() & expr.atoms():
+        while set(self.sydi.keys()) & expr.atoms():
             expr = expr.subs(self.sydi)
         return expr
+
+    def mat_unfold(self, mat):
+        for i in xrange(mat.shape[0]):
+            for j in xrange(mat.shape[1]):
+                if isinstance(mat[i, j], Expr):
+                    mat[i, j] = self.unfold(mat[i, j])
+        return mat
 
     def write_param(self, name, header, robo, N):
         """Low-level function for writing the parameters table
@@ -430,7 +441,7 @@ class SymbolManager(object):
 
     def gen_fheader(self, name, *args):
         fun_head = []
-        fun_head.append('def %s_func(*args):\n' % name)
+        fun_head.append('def %s(*args):\n' % name)
         imp_s_1 = 'from numpy import pi, sin, cos, sign\n'
         imp_s_2 = 'from numpy import array, arctan2 as atan2, sqrt\n'
         fun_head.append('    %s' % imp_s_1)
@@ -594,4 +605,4 @@ class SymbolManager(object):
             computes symbols in to_return have been generated.
         """
         exec self.gen_func_string(name, to_return, args)
-        return eval('%s_func' % name)
+        return eval('%s' % name)
