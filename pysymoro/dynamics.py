@@ -20,7 +20,15 @@ from symoroutils import tools
 from symoroutils.paramsinit import ParamsInit
 
 
-chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
+chars = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M',
+         'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+         'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH',
+         'AJ', 'AK', 'AL', 'AM', 'AN', 'AP', 'AQ', 'AR',
+         'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ',
+         'BA', 'BB', 'BC', 'BD', 'BE', 'BF', 'BG', 'BH',
+         'BJ', 'BK', 'BL', 'BM', 'BN', 'BP', 'BQ', 'BR',
+         'BS', 'BT', 'BU', 'BV', 'BW', 'BX', 'BY', 'BZ')
+
 inert_names = ('XXR', 'XYR', 'XZR', 'YYR', 'YZR',
                'ZZR', 'MXR', 'MYR', 'MZR', 'MR')
 
@@ -325,16 +333,19 @@ def compute_torque(robo, symo, j, Fjnt, Njnt, name=None):
     """Internal function. Computes actuation torques - projection of
     joint wrench on the joint axis
     """
-    if name is None:
-        name = str(robo.GAM[j]) + '%s'
     if robo.sigma[j] != 2:
         tau = (robo.sigma[j]*Fjnt[j] + (1 - robo.sigma[j])*Njnt[j])
         tau_total = tau[2] + robo.fric_s(j) + robo.fric_v(j) + robo.tau_ia(j)
-        symo.replace(tau_total, name % j, forced=True)
+        if name is None:
+            name = str(robo.GAM[j])
+        else:
+            name = name % j
+        symo.replace(tau_total, name, forced=True)
 
 
 def inertia_spatial(J, MS, M):
-    return Matrix([(M*sympy.eye(3)).row_join(tools.skew(MS).T), tools.skew(MS).row_join(J)])
+    return Matrix([(M*sympy.eye(3)).row_join(tools.skew(MS).T),
+                   tools.skew(MS).row_join(J)])
 
 
 def compute_joint_torque_deriv(symo, param, arg, index):
