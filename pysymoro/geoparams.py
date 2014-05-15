@@ -8,6 +8,8 @@ This module contains the GeoParams data structure.
 
 import re
 
+from sympy import Matrix
+
 from pysymoro import transform
 
 
@@ -82,6 +84,29 @@ class GeoParams(object):
                     "%s is not an attribute of GeoParams" % key
                 )
         self.tmat.update(params)
+
+    @property
+    def zunit(self):
+        """
+        Get the unit vector along the z-axis which is the joint axis.
+
+        Returns:
+            A (3x1) Matrix.
+        """
+        return Matrix([0, 0, 1])
+
+    @property
+    def axisa(self):
+        """
+        Get the joint axis in screw form.
+
+        Returns:
+            A (6x1) Matrix.
+        """
+        if self.sigma != 2:
+            return Matrix([0, 0, self.sigma, 0, 0, (1 - self.sigma)])
+        else:
+            return Matrix([0, 0, 0, 0, 0, 0])
 
     @property
     def q(self):
