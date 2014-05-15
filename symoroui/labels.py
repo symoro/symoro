@@ -31,33 +31,35 @@ BOX_TITLES = dict(
     geom_params="Geometric Parameters",
     dyn_params="Dynamic Parameters and External Forces",
     base_vel_acc="Velocity and Acceleration of the base",
-    joint_vel_acc="Joint Velocity and Acceleration"
+    joint_params="Joint Stiffness, Velocity and Acceleration"
 )
 # named tuple to hold the content field entries
 FieldEntry = namedtuple(
     'FieldEntry', ['label', 'name', 'control', 'place', 'handler', 'id']
 )
 # joint velocity and acceleration params
-JOINT_VEL_ACC = OrderedDict([
+JOINT_PARAMS = OrderedDict([
     ('joint', FieldEntry('Joint', 'joint', 'cmb', (0, 0), 'OnJointChanged', -1)),
-    ('qp', FieldEntry('QP', 'QP', 'txt', (1, 0), 'OnSpeedChanged', -1)),
-    ('qdp', FieldEntry('QDP', 'QDP', 'txt', (2, 0), 'OnSpeedChanged', -1)),
-    ('gam', FieldEntry('GAM', 'GAM', 'txt', (3, 0), 'OnSpeedChanged', -1))
+    ('qp', FieldEntry('QP', 'QP', 'txt', (2, 0), 'OnSpeedChanged', -1)),
+    ('qdp', FieldEntry('QDP', 'QDP', 'txt', (2, 1), 'OnSpeedChanged', -1)),
+    ('gam', FieldEntry('GAM', 'GAM', 'txt', (1, 1), 'OnSpeedChanged', -1)),
+    ('stiff', FieldEntry('k', 'k', 'txt', (1, 0), 'OnSpeedChanged', -1)),
+    ('eta', FieldEntry('eta', 'eta', 'cmb', (0, 1), 'OnSpeedChanged', -1))
 ])
 # base velocity and acceleration params
 BASE_VEL_ACC = OrderedDict([
-    ('wx', FieldEntry('W0X', 'W0X', 'txt', (0, 0), 'OnBaseTwistChanged', 0)),
-    ('wy', FieldEntry('W0Y', 'W0Y', 'txt', (1, 0), 'OnBaseTwistChanged', 1)),
-    ('wz', FieldEntry('W0Z', 'W0Z', 'txt', (2, 0), 'OnBaseTwistChanged', 2)),
-    ('wpx', FieldEntry('WP0X', 'WP0X', 'txt', (0, 1), 'OnBaseTwistChanged', 0)),
-    ('wpy', FieldEntry('WP0Y', 'WP0Y', 'txt', (1, 1), 'OnBaseTwistChanged', 1)),
-    ('wpz', FieldEntry('WP0Z', 'WP0Z', 'txt', (2, 1), 'OnBaseTwistChanged', 2)),
-    ('vx', FieldEntry('V0X', 'V0X', 'txt', (0, 2), 'OnBaseTwistChanged', 0)),
-    ('vy', FieldEntry('V0Y', 'V0Y', 'txt', (1, 2), 'OnBaseTwistChanged', 1)),
-    ('vz', FieldEntry('V0Z', 'V0Z', 'txt', (2, 2), 'OnBaseTwistChanged', 2)),
-    ('vpx', FieldEntry('VP0X', 'VP0X', 'txt', (0, 3), 'OnBaseTwistChanged', 0)),
-    ('vpy', FieldEntry('VP0Y', 'VP0Y', 'txt', (1, 3), 'OnBaseTwistChanged', 1)),
-    ('vpz', FieldEntry('VP0Z', 'VP0Z', 'txt', (2, 3), 'OnBaseTwistChanged', 2))
+    ('wx', FieldEntry('W0X', 'W0X', 'txt', (0, 1), 'OnBaseTwistChanged', 0)),
+    ('wy', FieldEntry('W0Y', 'W0Y', 'txt', (1, 1), 'OnBaseTwistChanged', 1)),
+    ('wz', FieldEntry('W0Z', 'W0Z', 'txt', (2, 1), 'OnBaseTwistChanged', 2)),
+    ('wpx', FieldEntry('WP0X', 'WP0X', 'txt', (0, 3), 'OnBaseTwistChanged', 0)),
+    ('wpy', FieldEntry('WP0Y', 'WP0Y', 'txt', (1, 3), 'OnBaseTwistChanged', 1)),
+    ('wpz', FieldEntry('WP0Z', 'WP0Z', 'txt', (2, 3), 'OnBaseTwistChanged', 2)),
+    ('vx', FieldEntry('V0X', 'V0X', 'txt', (0, 0), 'OnBaseTwistChanged', 0)),
+    ('vy', FieldEntry('V0Y', 'V0Y', 'txt', (1, 0), 'OnBaseTwistChanged', 1)),
+    ('vz', FieldEntry('V0Z', 'V0Z', 'txt', (2, 0), 'OnBaseTwistChanged', 2)),
+    ('vpx', FieldEntry('VP0X', 'VP0X', 'txt', (0, 2), 'OnBaseTwistChanged', 0)),
+    ('vpy', FieldEntry('VP0Y', 'VP0Y', 'txt', (1, 2), 'OnBaseTwistChanged', 1)),
+    ('vpz', FieldEntry('VP0Z', 'VP0Z', 'txt', (2, 2), 'OnBaseTwistChanged', 2))
 ])
 # inertial params
 DYN_PARAMS_I = OrderedDict([
@@ -77,18 +79,18 @@ DYN_PARAMS_M = OrderedDict([
 ])
 # friction and rotor inertia params
 DYN_PARAMS_X = OrderedDict([
-    ('ia', FieldEntry('IA', 'IA', 'txt', (2, 0), 'OnDynParamChanged', -1)),
-    ('frc', FieldEntry('FS', 'FS', 'txt', (2, 1), 'OnDynParamChanged', -1)),
-    ('frv', FieldEntry('FV', 'FV', 'txt', (2, 2), 'OnDynParamChanged', -1))
+    ('ia', FieldEntry('IA', 'IA', 'txt', (1, 4), 'OnDynParamChanged', -1)),
+    ('frc', FieldEntry('FS', 'FS', 'txt', (1, 5), 'OnDynParamChanged', -1)),
+    ('frv', FieldEntry('FV', 'FV', 'txt', (1, 6), 'OnDynParamChanged', -1))
 ])
 # external force, moments params
 DYN_PARAMS_F = OrderedDict([
-    ('fx_ext', FieldEntry('FX', 'FX', 'txt', (3, 0), 'OnDynParamChanged', -1)),
-    ('fy_ext', FieldEntry('FY', 'FY', 'txt', (3, 1), 'OnDynParamChanged', -1)),
-    ('fz_ext', FieldEntry('FZ', 'FZ', 'txt', (3, 2), 'OnDynParamChanged', -1)),
-    ('mx_ext', FieldEntry('CX', 'CX', 'txt', (3, 3), 'OnDynParamChanged', -1)),
-    ('my_ext', FieldEntry('CY', 'CY', 'txt', (3, 4), 'OnDynParamChanged', -1)),
-    ('mz_ext', FieldEntry('CZ', 'CZ', 'txt', (3, 5), 'OnDynParamChanged', -1))
+    ('fx_ext', FieldEntry('FX', 'FX', 'txt', (2, 0), 'OnDynParamChanged', -1)),
+    ('fy_ext', FieldEntry('FY', 'FY', 'txt', (2, 1), 'OnDynParamChanged', -1)),
+    ('fz_ext', FieldEntry('FZ', 'FZ', 'txt', (2, 2), 'OnDynParamChanged', -1)),
+    ('mx_ext', FieldEntry('CX', 'CX', 'txt', (2, 3), 'OnDynParamChanged', -1)),
+    ('my_ext', FieldEntry('CY', 'CY', 'txt', (2, 4), 'OnDynParamChanged', -1)),
+    ('mz_ext', FieldEntry('CZ', 'CZ', 'txt', (2, 5), 'OnDynParamChanged', -1))
 ])
 # dynamic params got by concatenation
 DYN_PARAMS = OrderedDict(
@@ -124,8 +126,9 @@ ROBOT_TYPE = OrderedDict([
     ('num_joints', FieldEntry('Number of joints:', 'NJ', 'lbl', (2, 0), None, -1)),
     ('num_frames', FieldEntry('Number of frames:', 'NF', 'lbl', (3, 0), None, -1)),
     ('structure', FieldEntry('Type of structure:', 'type', 'lbl', (4, 0), None, -1)),
-    ('is_mobile', FieldEntry('Is Mobile:', 'mobile', 'lbl', (5, 0), None, -1)),
-    ('num_loops', FieldEntry('Number of closed loops:', 'loops', 'lbl', (6, 0), None, -1))
+    ('is_floating', FieldEntry('Is Floating Base:', 'floating', 'lbl', (5, 0), None, -1)),
+    ('is_wmr', FieldEntry('Is Wheeled Mobile Robot:', 'wmr', 'lbl', (6, 0), None, -1)),
+    ('num_loops', FieldEntry('Number of closed loops:', 'loops', 'lbl', (7, 0), None, -1))
 ])
 
 # menu bar

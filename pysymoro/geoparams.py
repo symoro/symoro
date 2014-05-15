@@ -6,6 +6,10 @@ This module contains the GeoParams data structure.
 """
 
 
+import re
+
+from sympy import Matrix
+
 from pysymoro import transform
 
 
@@ -29,7 +33,7 @@ class GeoParams(object):
         """
         self.frame = frame
         self.ant = frame - 1
-        self.sigma = 0
+        self.sigma = 0 if frame != 0 else 2
         self.mu = 0
         self.gamma = 0
         self.b = 0
@@ -45,19 +49,20 @@ class GeoParams(object):
             self.update_params(params)
 
     def __str__(self):
-        pattern = '\t%s'
-        str_format = (pattern * 11) % (
+        row_format = '\t' + ('{:^8}' * 11)
+        str_format = row_format.format(*(
             str(self.frame), str(self.ant),
             str(self.sigma), str(self.mu),
             str(self.gamma), str(self.b),
             str(self.alpha), str(self.d),
             str(self.theta), str(self.r),
             str(self.q)
-        )
+        ))
         return str_format
 
     def __repr__(self):
-        repr_format = str(self).lstrip().replace('\t', ', ')
+        repr_format = str(self).lstrip().rstrip()
+        repr_format = re.sub('\s+', ', ', repr_format)
         repr_format = '(' + repr_format + ')'
         return repr_format
 
@@ -79,6 +84,29 @@ class GeoParams(object):
                     "%s is not an attribute of GeoParams" % key
                 )
         self.tmat.update(params)
+
+    @property
+    def zunit(self):
+        """
+        Get the unit vector along the z-axis which is the joint axis.
+
+        Returns:
+            A (3x1) Matrix.
+        """
+        return Matrix([0, 0, 1])
+
+    @property
+    def axisa(self):
+        """
+        Get the joint axis in screw form.
+
+        Returns:
+            A (6x1) Matrix.
+        """
+        if self.sigma != 2:
+            return Matrix([0, 0, self.sigma, 0, 0, (1 - self.sigma)])
+        else:
+            return Matrix([0, 0, 0, 0, 0, 0])
 
     @property
     def q(self):

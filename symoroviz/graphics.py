@@ -378,8 +378,10 @@ class MainWindow(wx.Frame):
 
         self.solve_loops = False
         self.canvas = myGLCanvas(self, robo, self.params_dict, size=(600, 600))
-        self.p = wx.Panel(self)
+        self.p = wx.lib.scrolledpanel.ScrolledPanel(self, -1)
+        self.p.SetMinSize((350,600))
         self.init_ui()
+        self.p.SetupScrolling()
         self.update_spin_controls()
 
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -480,7 +482,7 @@ class MainWindow(wx.Frame):
         # border = wx.BoxSizer()
         # border.Add(sizer, flag=wx.ALL | wx.EXPAND, border=5)
 
-        self.p.SetSizerAndFit(top_sizer)
+        self.p.SetSizer(top_sizer)
 
     def OnChangeRepresentation(self, evt):
         self.canvas.representation(evt.EventObject.GetValue())

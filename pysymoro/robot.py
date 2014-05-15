@@ -102,11 +102,15 @@ class Robot(object):
         self.M = [var('M{0}'.format(i)) for i in num]
         """  joint torques: list of var"""
         self.GAM = [var('GAM{0}'.format(i)) for i in numj]
-        J_str = 'XX{0},XY{0},XZ{0},XY{0},YY{0},YZ{0},XZ{0},YZ{0},ZZ{0}'
         """  inertia tensor of link: list of 3x3 matrix"""
+        J_str = 'XX{0},XY{0},XZ{0},XY{0},YY{0},YZ{0},XZ{0},YZ{0},ZZ{0}'
         self.J = [Matrix(3, 3, var(J_str.format(i))) for i in num]
         """  gravity vector: 3x1 matrix"""
         self.G = Matrix([0, 0, var('G3')])
+        """  eta - rigid or flexible"""
+        self.eta = [0 for j in numj]
+        """  k - joint stiffness"""
+        self.k = [0 for j in numj]
 
     # member methods:
     def put_val(self, j, name, val):
@@ -139,6 +143,10 @@ class Robot(object):
             i = dynam_head.index(name)
             params[i-1] = val
             self.put_inert_param(params, j)
+        elif name == 'eta':
+            self.eta[j] = int(val)
+        elif name == 'k':
+            self.k[j] = val
         elif name == 'Z':
             self.Z[j] = val
         return OK
@@ -162,6 +170,10 @@ class Robot(object):
             params = self.get_inert_param(j)
             i = dynam_head.index(name)
             return params[i-1]
+        elif name == 'eta':
+            return self.eta[j]
+        elif name == 'k':
+            return self.k[j]
         elif name == 'Z':
             return self.Z[j]
 
