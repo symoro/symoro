@@ -11,9 +11,10 @@ as well.
 from sympy import eye, var
 from sympy import Matrix
 
+from pysymoro.screw import Screw
 from pysymoro.dynparams import DynParams
 from pysymoro.geoparams import GeoParams
-from pysymoro.screw import Screw
+from pysymoro import dynmodel
 from symoroutils import filemgr
 from symoroutils import tools
 
@@ -266,6 +267,20 @@ class FloatingRobot(object):
             errmsg = errmsg + ("Current input: {0}").format(kind)
             raise ValueError(errmsg)
         return tools.OK
+
+    def compute_idym(self):
+        """
+        Compute the Inverse Dynamic Model of the robot using the
+        recursive Newton-Euler algorithm.
+        """
+        self.idym = dynmodel.inverse_dynamic_model(self)
+
+    def compute_ddym(self):
+        """
+        Compute the Direct Dynamic Model of the robot using the
+        recursive Newton-Euler algorithm.
+        """
+        self.ddym = dynmodel.direct_dynamic_model(self)
 
     @property
     def link_nums(self):
