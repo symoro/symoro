@@ -35,6 +35,18 @@ class Screw(object):
         self._val[0:3, 0] = lin
         self._val[3:6, 0] = ang
 
+    def __str__(self):
+        row_format = '[' + ('{:}; ' * 5) + ('{:}') + ']'
+        str_format = row_format.format(*(
+            str(self._val[0]), str(self._val[1]), str(self._val[2]),
+            str(self._val[3]), str(self._val[4]), str(self._val[5])
+        ))
+        return str_format
+
+    def __repr__(self):
+        repr_format = 'Screw({0})'.format(str(self))
+        return repr_format
+
 #    def __init__(self, value=zeros(6, 1)):
 #        """
 #        Another Constructor.
