@@ -11,7 +11,7 @@ from sympy import sign
 
 from pysymoro.screw import Screw
 from pysymoro.screw6 import Screw6
-from symoroutil.tools import skew
+from symoroutils.tools import skew
 
 
 class DynModel(object):
@@ -53,18 +53,17 @@ class DynModel(object):
         # add header
         str_format = str_format + "DynModel:\n"
         str_format = str_format + "---------\n"
-        # add link velocity
-        str_format = str_format + "vels: \n"
-        str_format = str_format + self._str_items(self.vels)
-        # add gyroscopic acceleration
-        str_format = str_format + "gammas: \n"
-        str_format = str_format + self._str_items(self.gammas)
-        # add wrench - external + coriolis + centrifugal
-        str_format = str_format + "betas: \n"
-        str_format = str_format + self._str_items(self.betas)
-        # add relative acceleration
-        str_format = str_format + "zetas: \n"
-        str_format = str_format + self._str_items(self.zetas)
+        # get all the attributes currently in the class
+        attrs = [attr for attr in dir(self) if not attr.startswith('_')]
+        # add each attribute
+        for attr in attrs:
+            items = getattr(self, attr)
+            if hasattr(items, '__iter__'):
+                attr_str = self._str_items(items)
+            else:
+                attr_str = str(items) + '\n'
+            str_format = str_format + str(attr) + ": \n"
+            str_format = str_format + attr_str
         return str_format
 
     def __repr__(self):
