@@ -89,7 +89,7 @@ class FloatingRobot(object):
         """Base velocity 6x1 column vector - a Screw."""
         self.base_vel = Screw()
         """Base acceleration 6x1 column vector - a Screw."""
-        self.base_acc = Screw()
+        self.base_accel = Screw()
         """Transformation matrix of base wrt a reference frame at time 0."""
         self.base_tmat = eye(4)
         # call init methods
@@ -464,8 +464,8 @@ class FloatingRobot(object):
             ('alpha', 'alpha'), ('d', 'd'), ('theta', 'theta'), ('r', 'r')
         ])
         self._base_params_map = dict([
-            ('V0', 'base_vel'), ('VP0', 'base_acc'),
-            ('W0', 'base_vel'), ('WP0', 'base_acc')
+            ('V0', 'base_vel'), ('VP0', 'base_accel'),
+            ('W0', 'base_vel'), ('WP0', 'base_accel')
         ])
         self._misc_params_map = dict([
             ('QP', 'qdots'), ('QDP', 'qddots'), ('GAM', 'torques'),

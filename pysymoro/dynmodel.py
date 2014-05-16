@@ -7,7 +7,10 @@ dynamic models (inverse and direct).
 """
 
 
+from sympy import sign
+
 from pysymoro.screw import Screw
+from pysymoro.screw6 import Screw6
 from symoroutil.tools import skew
 
 
@@ -26,10 +29,24 @@ class DynModel(object):
                 numbers. This is usually the `joint_nums` attribute in
                 `Robot` class.
         """
+        # link velocity
         self.vels = list(None for j in joints)
+        # gyroscopic acceleration
         self.gammas = list(None for j in joints)
+        # wrench - external+coriolis+centrifugal
         self.betas = list(None for j in joints)
+        # relative acceleration
         self.zetas = list(None for j in joints)
+        # composite spatial inertia matrix
+        self.composite_inertias = list(None for j in joints)
+        # composite wrench
+        self.composite_betas = list(None for j in joints)
+        # link acceleration
+        self.accels = list(None for j in joints)
+        # reaction wrench
+        self.wrenchs = list(None for j in joints)
+        # joint torque
+        self.torques = list(None for j in joints)
 
     def __str__(self):
         str_format = ""
@@ -72,6 +89,38 @@ class DynModel(object):
         return str_format
 
 
+def _init_composite_inertia(model, robo, j):
+    """
+    Initialise the composite spatial inertia matrix of link j.
+
+    Args:
+        model: An instance of DynModel
+        robo: An instance of Robot
+        j: link number
+
+    Returns:
+        An instance of DynModel that contains all the new values.
+    """
+    model.composite_inertias[j] = robo.dyns[j].spatial_inertia
+    return model
+
+
+def _init_composite_beta(model, robo, j):
+    """
+    Initialise the composite beta wrench of link j.
+
+    Args:
+        model: An instance of DynModel
+        robo: An instance of Robot
+        j: link number
+
+    Returns:
+        An instance of DynModel that contains all the new values.
+    """
+    model.composite_betas[j] = model.betas[j]
+    return model
+
+
 def _compute_link_velocity(model, robo, j, i):
     """
     Compute the velocity of link j whose antecedent is i.
@@ -96,6 +145,33 @@ def _compute_link_velocity(model, robo, j, i):
     j_v_j.val = (j_s_i * i_v_i) + (qdot_j * j_a_j)
     # store computed velocity in model
     model.vels[j] = j_v_j
+    return model
+
+
+def _compute_link_acceleration(model, robo, j, i):
+    """
+    Compute the acceleration of link j whose antecedent is i.
+
+    Args:
+        model: An instance of DynModel
+        robo: An instance of Robot
+        j: link number
+        i: antecendent value
+
+    Returns:
+        An instance of DynModel that contains all the new values.
+    """
+    j_vdot_j = Screw()
+    if i == 0 and not robo.is_floating:
+        model.accels[i] = robo.base_accel
+    # local variables
+    j_s_i = robo.geos[j].tmat.s_j_wrt_i
+    i_vdot_i = model.accels[i].val
+    j_zeta_j = model.zetas[j].val
+    # actual computation
+    j_vdot_j.val = (j_s_i * i_vdot_i) + j_zeta_j
+    # store computed velocity in model
+    model.accels[j] = j_vdot_j
     return model
 
 
@@ -189,6 +265,145 @@ def _compute_beta_wrench(model, robo, j):
     return model
 
 
+def _compute_composite_inertia(model, robo, j, i):
+    """
+    Compute the composite spatial inertia matrix for link i.
+
+    Args:
+        model: An instance of DynModel
+        robo: An instance of Robot
+        j: link number
+        i: antecedent value
+
+    Returns:
+        An instance of DynModel that contains all the new values.
+    """
+    i_inertia_i_c = Screw6()
+    # local variables
+    j_s_i = robo.geos[j].tmat.s_i_wrt_j
+    i_inertia_i = model.composite_inertias[i].val
+    j_inertia_j_c = model.composite_inertias[j].val
+    # actual computation
+    i_inertia_i_c.val = i_inertia_i + \
+        (j_s_i.transpose() * j_inertia_j_c * j_s_i)
+    # store computed matrix in model
+    model.composite_inertias[i] = i_inertia_i_c
+    return model
+
+
+def _compute_composite_beta(model, robo, j, i):
+    """
+    Compute the composite beta wrench for link i.
+
+    Args:
+        model: An instance of DynModel
+        robo: An instance of Robot
+        j: link number
+        i: antecedent value
+
+    Returns:
+        An instance of DynModel that contains all the new values.
+    """
+    i_beta_i_c = Screw()
+    # local variables
+    j_s_i = robo.geos[j].tmat.s_i_wrt_j
+    i_beta_i = model.composite_betas[i].val
+    j_beta_j_c = model.composite_betas[j].val
+    j_inertia_j_c = model.composite_inertias[j].val
+    j_zeta_j = model.zetas[j].val
+    # actual computation
+    i_beta_i_c.val = i_beta_i - (j_s_i.transpose() * j_beta_j_c) + \
+        (j_s_i.transpose() * j_inertia_j_c * j_zeta_j)
+    # store computed beta in model
+    model.composite_betas[i] = i_beta_i_c
+    return model
+
+
+def _compute_reaction_wrench(model, robo, j):
+    """
+    Compute the reaction wrench for link j.
+
+    Args:
+        model: An instance of DynModel
+        robo: An instance of Robot
+        j: link number
+
+    Returns:
+        An instance of DynModel that contains all the new values.
+    """
+    j_f_j = Screw()
+    # local variables
+    j_vdot_j = model.accels[j].val
+    j_inertia_j_c = model.composite_inertias[j].val
+    j_beta_j_c = model.composite_betas[j].val
+    # actual computation
+    j_f_j.val = (j_inertia_j_c * j_vdot_j) - j_beta_j_c
+    # store computed reaction wrench in model
+    model.wrenchs[j] = j_f_j
+    return model
+
+
+def _compute_joint_torque(model, robo, j):
+    """
+    Compute the joint torque for joint j.
+
+    Args:
+        model: An instance of DynModel
+        robo: An instance of Robot
+        j: joint number
+
+    Returns:
+        An instance of DynModel that contains all the new values.
+    """
+    # local variables
+    qdot_j = robo.qdots[j]
+    qddot_j = robo.qddots[j]
+    j_a_j = robo.geos[j].axisa
+    ia_j = robo.dyns[j].ia
+    f_cj = robo.dyns[j].frc
+    f_vj = robo.dyns[j].frv
+    j_f_j = model.wrenchs[j].val
+    # actual computation
+    wrench_term = j_f_j.transpose() * j_a_j
+    actuator_inertia_term = ia_j * qddot_j
+    coriolis_friction_term = f_cj * sign(qdot_j)
+    viscous_friction_term = f_vj * qdot_j
+    gamma_j = wrench_term + actuator_inertia_term + \
+        viscous_friction_term + coriolis_friction_term
+    # store computed torque in model
+    model.torques[j] = gamma_j
+    return model
+
+
+def _compute_base_acceleration(model, robo):
+    """
+    Compute the base acceleration for a robot with floating base without
+    and with taking gravity into account.
+
+    Args:
+        model: An instance of DynModel
+        robo: An instance of Robot
+
+    Returns:
+        An instance of DynModel that contains all the new values.
+    """
+    o_vdot_o = Screw()
+    gravity = Screw()
+    # local variables
+    gravity.lin = robo.gravity
+    o_inertia_o_c = model.composite_inertias[0].val
+    o_beta_o_c = model.composite_betas[0].val
+    # actual computation
+    # TODO: replace sympy's matrix inversion with custom function
+    o_vdot_o.val = o_inertia_o_c.inv() * o_beta_o_c
+    # store computed base acceleration without gravity effect in model
+    model.base_accel_no_gravity = o_vdot_o
+    # compute base acceleration taking gravity into account
+    o_vdot_o.val = o_vdot_o.val + gravity.val
+    # store in model
+    model.accels[0] = o_vdot_o
+    return model
+
 def inverse_dynamic_model(robo):
     """
     Compute the inverse dynamic model for the given robot by using the
@@ -201,10 +416,9 @@ def inverse_dynamic_model(robo):
         The inverse dynamic model of the robot.
     """
     # some book keeping variables
-    nums = robo.joint_nums
-    model = DynModel(nums)
+    model = DynModel(robo.joint_nums)
     # first forward recursion
-    for j in nums:
+    for j in robo.joint_nums:
         if j == 0: continue
         # antecedent index
         i = robo.geos[j].ant
@@ -217,18 +431,36 @@ def inverse_dynamic_model(robo):
         # compute j^zeta_j : relative acceleration (6x1)
         # TODO: check joint flexibility
         model = _compute_relative_acceleration(model, robo, j)
-    # backward recursion
-    for j in reversed(nums):
+    # first backward recursion - initialisation step
+    for j in reversed(robo.joint_nums):
+        # initialise j^I_j^c : composite spatial inertia matrix
+        model = _init_composite_inertia(model, robo, j)
+        # initialise j^beta_j^c : composite wrench
+        model = _init_composite_beta(model, robo, j)
+    # second backward recursion - compute composite terms
+    for j in reversed(robo.joint_nums):
+        if j == 0:
+            if not robo.is_floating: continue
+            else:
+                # compute 0^\dot{V}_0 : base acceleration
+                model = _compute_base_acceleration(model, robo)
         # antecedent index
         i = robo.geos[j].ant
-        if j != 0:
-            pass
-        else:
-            pass
+        # compute i^I_i^c : composite spatial inertia matrix
+        model = _compute_composite_inertia(model, robo, j, i)
+        # compute i^beta_i^c : composite wrench
+        model = _compute_composite_beta(model, robo, j, i)
     # second forward recursion
-    for j in robo.nums:
+    for j in robo.joint_nums:
         if j == 0: continue
-        pass
+        # antecedent index
+        i = robo.geos[j].ant
+        # compute j^\dot{V}_j : link acceleration
+        model = _compute_link_acceleration(model, robo, j, i)
+        # compute j^F_j : reaction wrench
+        model = _compute_reaction_wrench(model, robo, j)
+        # compute gamma_j : joint torque
+        model = _compute_joint_torque(model, robo, j)
     return model
 
 
