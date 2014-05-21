@@ -84,7 +84,8 @@ class SymbolManager(object):
             return sym
         names, short_form = tools.trignometric_info(sym)
         names = list(names)
-        names.sort()
+        if short_form:
+            names.sort()
         sym2 = sym
         for n1, n2 in itertools.combinations(names, 2):
             if short_form:
@@ -211,11 +212,12 @@ class SymbolManager(object):
         Generaly only complex expressions, which contain + - * / ** operations
         will be replaced by a new symbol
         """
-        inv_sym = -old_sym
-        is_simple = old_sym.is_Atom or inv_sym.is_Atom
-        if is_simple and not forced:
-            return old_sym
-        elif not forced:
+        if not forced:
+            if not isinstance(old_sym, Expr):
+                return old_sym
+            inv_sym = -old_sym
+            if old_sym.is_Atom or inv_sym.is_Atom:
+                return old_sym
             for i in (1, -1):
                 if i * old_sym in self.revdi:
                     return i * self.revdi[i * old_sym]
