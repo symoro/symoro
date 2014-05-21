@@ -47,17 +47,6 @@ class Screw(object):
         repr_format = 'Screw({0})'.format(str(self))
         return repr_format
 
-#    def __init__(self, value=zeros(6, 1)):
-#        """
-#        Another Constructor.
-#
-#        Args:
-#            value: A 6x1 Matrix set to 0 by default.
-#        """
-#        if value.rows != 6 or value.cols != 1:
-#            raise ShapeError("Matrix size has to be 6x1.")
-#        self._val = value
-
     @property
     def val(self):
         """

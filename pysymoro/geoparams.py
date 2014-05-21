@@ -62,7 +62,7 @@ class GeoParams(object):
 
     def __repr__(self):
         repr_format = str(self).lstrip().rstrip()
-        repr_format = re.sub('\s+', ', ', repr_format)
+        repr_format = re.sub(r'\s+', ', ', repr_format)
         repr_format = '(' + repr_format + ')'
         return repr_format
 
@@ -122,7 +122,7 @@ class GeoParams(object):
             returned.
         """
         if self.sigma == 2:
-            return None
+            return 0
         return ((1 - self.sigma) * self.theta) + (self.sigma * self.r)
 
 

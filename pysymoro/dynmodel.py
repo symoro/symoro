@@ -137,9 +137,9 @@ def _compute_link_velocity(model, robo, j, i):
     if i == 0: model.vels[i] = robo.base_vel
     # local variables
     j_s_i = robo.geos[j].tmat.s_i_wrt_j
-    i_v_i = models.vels[i].val
     qdot_j = robo.qdots[j]
     j_a_j = robo.geos[j].axisa
+    i_v_i = model.vels[i].val
     # actual computation
     j_v_j.val = (j_s_i * i_v_i) + (qdot_j * j_a_j)
     # store computed velocity in model
@@ -443,6 +443,7 @@ def inverse_dynamic_model(robo):
             else:
                 # compute 0^\dot{V}_0 : base acceleration
                 model = _compute_base_acceleration(model, robo)
+                continue
         # antecedent index
         i = robo.geos[j].ant
         # compute i^I_i^c : composite spatial inertia matrix
@@ -474,6 +475,9 @@ def direct_dynamic_model(robo):
     Returns:
         The direct dynamic model of the robot.
     """
-    pass
+    # some book keeping variables
+    model = DynModel(robo.joint_nums)
+    # TODO: complete direct dynamic model
+    return model
 
 

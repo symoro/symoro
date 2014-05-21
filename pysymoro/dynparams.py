@@ -104,7 +104,7 @@ class DynParams(object):
         row_format = '\t' + ('{:^7}' * 20)
         str_format = row_format.format(*(
             str(self.link),
-            str(self.xx), str(self.xy), str(self.xz), 
+            str(self.xx), str(self.xy), str(self.xz),
             str(self.yy), str(self.yz), str(self.zz),
             str(self.msx), str(self.msy), str(self.msz), str(self.mass),
             str(self.ia), str(self.frc), str(self.frv),
@@ -115,7 +115,7 @@ class DynParams(object):
 
     def __repr__(self):
         repr_format = str(self).lstrip().rstrip()
-        repr_format = re.sub('\s+', ', ', repr_format)
+        repr_format = re.sub(r'\s+', ', ', repr_format)
         repr_format = '(' + repr_format + ')'
         return repr_format
 
