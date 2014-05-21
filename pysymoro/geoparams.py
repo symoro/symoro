@@ -93,7 +93,10 @@ class GeoParams(object):
         Returns:
             A (3x1) Matrix.
         """
-        return Matrix([0, 0, 1])
+        if self.sigma != 2:
+            return Matrix([0, 0, 1])
+        else:
+            return Matrix([0, 0, 0])
 
     @property
     def axisa(self):

@@ -11,9 +11,10 @@ as well.
 from sympy import eye, var
 from sympy import Matrix
 
+from pysymoro.screw import Screw
 from pysymoro.dynparams import DynParams
 from pysymoro.geoparams import GeoParams
-from pysymoro.screw import Screw
+from pysymoro import dynmodel
 from symoroutils import filemgr
 from symoroutils import tools
 
@@ -88,7 +89,7 @@ class FloatingRobot(object):
         """Base velocity 6x1 column vector - a Screw."""
         self.base_vel = Screw()
         """Base acceleration 6x1 column vector - a Screw."""
-        self.base_acc = Screw()
+        self.base_accel = Screw()
         """Transformation matrix of base wrt a reference frame at time 0."""
         self.base_tmat = eye(4)
         # call init methods
@@ -266,6 +267,20 @@ class FloatingRobot(object):
             errmsg = errmsg + ("Current input: {0}").format(kind)
             raise ValueError(errmsg)
         return tools.OK
+
+    def compute_idym(self):
+        """
+        Compute the Inverse Dynamic Model of the robot using the
+        recursive Newton-Euler algorithm.
+        """
+        self.idym = dynmodel.inverse_dynamic_model(self)
+
+    def compute_ddym(self):
+        """
+        Compute the Direct Dynamic Model of the robot using the
+        recursive Newton-Euler algorithm.
+        """
+        self.ddym = dynmodel.direct_dynamic_model(self)
 
     @property
     def link_nums(self):
@@ -449,8 +464,8 @@ class FloatingRobot(object):
             ('alpha', 'alpha'), ('d', 'd'), ('theta', 'theta'), ('r', 'r')
         ])
         self._base_params_map = dict([
-            ('V0', 'base_vel'), ('VP0', 'base_acc'),
-            ('W0', 'base_vel'), ('WP0', 'base_acc')
+            ('V0', 'base_vel'), ('VP0', 'base_accel'),
+            ('W0', 'base_vel'), ('WP0', 'base_accel')
         ])
         self._misc_params_map = dict([
             ('QP', 'qdots'), ('QDP', 'qddots'), ('GAM', 'torques'),

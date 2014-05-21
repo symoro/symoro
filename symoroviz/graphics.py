@@ -402,15 +402,15 @@ class MainWindow(wx.Frame):
         self.tButton = wx.ToggleButton(self.p, label="All Frames")
         self.tButton.SetValue(True)
         self.tButton.Bind(wx.EVT_TOGGLEBUTTON, self.OnShowAllFrames)
-        gridControl.Add(self.tButton, pos=(1, 0), flag=wx.ALIGN_CENTER)
+        gridControl.Add(self.tButton, pos=(3, 0), flag=wx.ALIGN_CENTER)
 
         btnReset = wx.Button(self.p, label="Reset All")
         btnReset.Bind(wx.EVT_BUTTON, self.OnResetJoints)
-        gridControl.Add(btnReset, pos=(3, 0), flag=wx.ALIGN_CENTER)
+        gridControl.Add(btnReset, pos=(5, 0), flag=wx.ALIGN_CENTER)
 
         btnRandom = wx.Button(self.p, label="Random")
         btnRandom.Bind(wx.EVT_BUTTON, self.OnFindRandom)
-        gridControl.Add(btnRandom, pos=(4, 0), flag=wx.ALIGN_CENTER)
+        gridControl.Add(btnRandom, pos=(6, 0), flag=wx.ALIGN_CENTER)
 
         self.spin_ctrls = {}
         gridJnts = wx.GridBagSizer(hgap=10, vgap=10)
@@ -440,7 +440,7 @@ class MainWindow(wx.Frame):
             self.radioBox = wx.RadioBox(self.p, choices=choise_list,
                                         style=wx.RA_SPECIFY_ROWS)
             self.radioBox.Bind(wx.EVT_RADIOBOX, self.OnSelectLoops)
-            gridControl.Add(self.radioBox, pos=(5, 0), flag=wx.ALIGN_CENTER)
+            gridControl.Add(self.radioBox, pos=(7, 0), flag=wx.ALIGN_CENTER)
 
         choices = []
         for jnt in self.canvas.jnt_objs:
@@ -451,23 +451,23 @@ class MainWindow(wx.Frame):
         self.check_list.SetChecked(range(len(choices)))
         self.check_list.Bind(wx.EVT_CHECKLISTBOX, self.CheckFrames)
         self.check_list.Bind(wx.EVT_LISTBOX, self.SelectFrames)
-        gridControl.Add(self.check_list, pos=(2, 0), flag=wx.ALIGN_CENTER)
+        gridControl.Add(self.check_list, pos=(4, 0), flag=wx.ALIGN_CENTER)
 
-        q_box = wx.StaticBoxSizer(wx.StaticBox(self.p, label='Joint variables'))
-        q_box.Add(gridJnts, 0, wx.ALL, 10)
-
-        ver_sizer = wx.BoxSizer(wx.VERTICAL)
-        ver_sizer.Add(q_box)
         lbl_length = wx.StaticText(self.p, label='Joint size')
         self.jnt_slider = wx.Slider(self.p, minValue=1, maxValue=100)
         self.jnt_slider.SetValue(100*self.canvas.length)
         self.jnt_slider.Bind(wx.EVT_SCROLL, self.OnSliderChanged)
-        ver_sizer.Add(lbl_length, 0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, 15)
-        ver_sizer.Add(self.jnt_slider, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 5)
+        gridControl.Add(lbl_length, pos=(1, 0), flag=wx.ALIGN_CENTER)
+        gridControl.Add(self.jnt_slider, pos=(2, 0), flag=wx.ALIGN_CENTER)
 
-        top_sizer.Add(ver_sizer, 0, wx.ALL, 10)
-        top_sizer.AddSpacer(10)
+        q_box = wx.StaticBoxSizer(wx.StaticBox(self.p, label='Joint variables'))
+        q_box.Add(gridJnts, 0, wx.ALL, 10)
+        ver_sizer = wx.BoxSizer(wx.VERTICAL)
+        ver_sizer.Add(q_box)
+
         top_sizer.Add(gridControl, 0, wx.ALL, 10)
+        top_sizer.AddSpacer(10)
+        top_sizer.Add(ver_sizer, 0, wx.ALL, 10)
 
         # button1 = wx.Button(self.panel, label="TEXT 1")
         # button2 = wx.Button(self.panel, label="TEXT 2")
