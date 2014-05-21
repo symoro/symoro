@@ -7,6 +7,7 @@ dynamic models (inverse and direct).
 """
 
 
+from sympy import Matrix
 from sympy import sign
 
 from pysymoro.screw import Screw
@@ -189,7 +190,7 @@ def _compute_gyroscopic_acceleration(model, robo, j, i):
     """
     j_gamma_j = Screw()
     # local variables
-    j_rot_i = robo.geos[j].tmat.rot_inv
+    j_rot_i = robo.geos[j].tmat.inv_rot
     i_trans_j = robo.geos[j].tmat.trans
     i_omega_i = model.vels[i].ang
     sigma_j = robo.geos[j].sigma
@@ -364,9 +365,9 @@ def _compute_joint_torque(model, robo, j):
     j_f_j = model.wrenchs[j].val
     # actual computation
     wrench_term = j_f_j.transpose() * j_a_j
-    actuator_inertia_term = ia_j * qddot_j
-    coriolis_friction_term = f_cj * sign(qdot_j)
-    viscous_friction_term = f_vj * qdot_j
+    actuator_inertia_term = Matrix([ia_j * qddot_j])
+    coriolis_friction_term = Matrix([f_cj * sign(qdot_j)])
+    viscous_friction_term = Matrix([f_vj * qdot_j])
     gamma_j = wrench_term + actuator_inertia_term + \
         viscous_friction_term + coriolis_friction_term
     # store computed torque in model
@@ -432,6 +433,9 @@ def inverse_dynamic_model(robo):
         model = _compute_relative_acceleration(model, robo, j)
     # first backward recursion - initialisation step
     for j in reversed(robo.joint_nums):
+        if j == 0:
+            # compute 0^beta_0
+            model = _compute_beta_wrench(model, robo, j)
         # initialise j^I_j^c : composite spatial inertia matrix
         model = _init_composite_inertia(model, robo, j)
         # initialise j^beta_j^c : composite wrench
