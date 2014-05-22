@@ -223,10 +223,7 @@ class SymbolManager(object):
                     return i * self.revdi[i * old_sym]
         new_sym = var(str(name) + str(index))
         self.add_to_dict(new_sym, old_sym)
-        if is_simple:
-            return old_sym
-        else:
-            return new_sym
+        return new_sym
 
     def mat_replace(self, M, name, index='',
                     forced=False, skip=0, symmet=False):
