@@ -378,7 +378,9 @@ def _compute_joint_torque(model, robo, j):
 def _compute_base_acceleration(model, robo):
     """
     Compute the base acceleration for a robot with floating base without
-    and with taking gravity into account.
+    and with taking gravity into account. In the case of a robot with
+    fixed base, this function returns just the effect of gravity as the
+    base acceleration.
 
     Args:
         model: An instance of DynModel
@@ -394,8 +396,9 @@ def _compute_base_acceleration(model, robo):
     o_inertia_o_c = model.composite_inertias[0].val
     o_beta_o_c = model.composite_betas[0].val
     # actual computation
-    # TODO: replace sympy's matrix inversion with custom function
-    o_vdot_o.val = o_inertia_o_c.inv() * o_beta_o_c
+    if robo.is_floating:
+        # TODO: replace sympy's matrix inversion with custom function
+        o_vdot_o.val = o_inertia_o_c.inv() * o_beta_o_c
     # store computed base acceleration without gravity effect in model
     model.base_accel_no_gravity = o_vdot_o
     # compute base acceleration taking gravity into account
@@ -403,6 +406,7 @@ def _compute_base_acceleration(model, robo):
     # store in model
     model.accels[0] = o_vdot_o
     return model
+
 
 def inverse_dynamic_model(robo):
     """
@@ -443,11 +447,11 @@ def inverse_dynamic_model(robo):
     # second backward recursion - compute composite terms
     for j in reversed(robo.joint_nums):
         if j == 0:
-            if not robo.is_floating: continue
-            else:
-                # compute 0^\dot{V}_0 : base acceleration
-                model = _compute_base_acceleration(model, robo)
-                continue
+            # compute 0^\dot{V}_0 : base acceleration
+            # for fixed base robots, the value returned is just the
+            # effect of gravity
+            model = _compute_base_acceleration(model, robo)
+            continue
         # antecedent index
         i = robo.geos[j].ant
         # compute i^I_i^c : composite spatial inertia matrix

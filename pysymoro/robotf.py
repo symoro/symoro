@@ -472,4 +472,7 @@ class FloatingRobot(object):
             ('eta', 'etas'), ('k', 'stiffness'), ('G', 'gravity'),
         ])
 
+    # methods for backward-compatability with the old Robot (for fixed
+    # base) class.
+
 
