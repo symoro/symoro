@@ -2,29 +2,26 @@
 # -*- coding: utf-8 -*-
 
 
-"""Unit test module for GeoParams class."""
+"""Unit test module for invgeom module."""
 
 
 import unittest
 
-
 from sympy import var, Matrix
 from numpy import random, amax, matrix, eye, zeros
 
-
+from pysymoro import geometry
 from pysymoro import invgeom
 from symoroutils import samplerobots
 from symoroutils import symbolmgr
-from pysymoro import geometry
 
 
 class TestIGM(unittest.TestCase):
-    """Unit test for GeoParams class."""
+    """Unit test for invgeom module."""
     def setUp(self):
         self.symo = symbolmgr.SymbolManager()
 
     def test_igm_2r(self):
-        print "######## test_igm ##########"
         robo = samplerobots.planar2r()
         nTm = Matrix(4, 4, 12 * [invgeom.EMPTY] + [0, 0, 0, 1])
         nTm[0, 3], nTm[1, 3] = var('p1, p2')
@@ -45,7 +42,6 @@ class TestIGM(unittest.TestCase):
                 self.assertLess(amax(matrix(f06(q))-Ttest), 1e-12)
 
     def test_igm_rx90(self):
-        print "######## test_igm ##########"
         robo = samplerobots.rx90()
         #robo.r[6] = var('R6')
         #robo.gamma[6] = var('G6')  # invgeom.T_GENERAL
@@ -66,7 +62,6 @@ class TestIGM(unittest.TestCase):
                 self.assertLess(amax(matrix(f06(q))-Ttest), 1e-12)
 
     def test_loop(self):
-        print "######## test_loop ##########"
         self.robo = samplerobots.sr400()
         invgeom.loop_solve(self.robo, self.symo)
         self.symo.gen_func_string('IGM_gen', self.robo.q_vec,
