@@ -8,7 +8,7 @@ solutions for inverse geompetric problem.
 
 from heapq import heapify, heappop
 from sympy import var, sin, cos, eye, atan2, sqrt, pi
-from sympy import Matrix, Symbol, Expr
+from sympy import Matrix, Symbol, Expr, trigsimp
 
 from pysymoro.geometry import transform_list, to_matrix
 from symoroutils import symbolmgr
@@ -25,7 +25,11 @@ eq_dict = {(1, 0, 0): 0, (0, 1, 0): 1, (1, 1, 0): 2,
            (0, 2, 0): 3, (0, 2, 1): 4}
 
 
-def _paul_solve(robo, symo, nTm, n, m, knowns=set()):
+def _paul_solve(robo, symo, nTm, n, m, known_vars=None):
+    if known_vars is None:
+        knowns = set()
+    else:
+        knowns = set(known_vars)
     chain = robo.loop_chain(m, n)
     th_all = set()
     r_all = set()
@@ -52,6 +56,7 @@ def _paul_solve(robo, symo, nTm, n, m, knowns=set()):
         repeat = False
         iTm = nTm.copy()
         tr_list = transform_list(robo, n, m)
+        _replace_EMPTY(iTm, tr_list)
         tr_list.reverse()
         tr_const, tr_list = _extract_const_transforms(tr_list, knowns)
         for trc in tr_const:
@@ -63,9 +68,10 @@ def _paul_solve(robo, symo, nTm, n, m, knowns=set()):
                 iTm = trc.matrix_inv() * iTm
             tr = tr_list.pop(0)
             if tr.val.atoms(Symbol) - knowns:
-                M_eq = tr.matrix() * to_matrix(tr_list, simplify=False) - iTm
+                M_eq = tr.matrix() * to_matrix(tr_list, simplify=False)
                 while True:
-                    found = _look_for_eq(symo, M_eq, knowns, th_all, r_all)
+                    found = _look_for_eq(symo, M_eq - iTm,
+                                         knowns, th_all, r_all)
                     repeat |= found
                     if not found or th_all | r_all <= knowns:
                         break
@@ -75,6 +81,14 @@ def _paul_solve(robo, symo, nTm, n, m, knowns=set()):
         if not repeat or th_all | r_all <= knowns:
             break
     return knowns
+
+
+def _replace_EMPTY(T, tr_list):
+    T_sym = to_matrix(tr_list, simplify=True)
+    for e1 in xrange(4):
+        for e2 in xrange(4):
+            if T[e1, e2].has(EMPTY):
+                T[e1, e2] = T_sym[e1, e2]
 
 
 def _extract_const_transforms(tr_list, knowns):
@@ -100,9 +114,9 @@ def _look_for_eq(symo, M_eq, knowns, th_all, r_all):
     eq_candidates = [list() for list_index in xrange(5)]
     for e1 in xrange(3):
         for e2 in xrange(4):
-            if M_eq[e1, e2].has(EMPTY):
-                continue
             eq = M_eq[e1, e2]
+            if not isinstance(eq, Expr) or eq.is_Atom:
+                continue
             th_vars = (eq.atoms(Symbol) & th_all) - knowns
             arg_ops = [at.count_ops()-1 for at in eq.atoms(sin, cos)
                        if not at.atoms(Symbol) & knowns]
@@ -166,9 +180,9 @@ def _try_solve_0(symo, eq_sys, knowns):
         X = tools.get_max_coef(eq, r)
         if X != 0:
             Y = X*r - eq
-            print "type 1"
-            X = symo.replace(symo.CS12_simp(X), 'X', r)
-            Y = symo.replace(symo.CS12_simp(Y), 'Y', r)
+            symo.write_line("# Solving type 1")
+            X = symo.replace(trigsimp(X), 'X', r)
+            Y = symo.replace(trigsimp(Y), 'Y', r)
             symo.add_to_dict(r, Y/X)
             knowns.add(r)
             res = True
@@ -240,9 +254,9 @@ def _try_solve_2(symo, eq_sys, knowns):
             continue
         symo.write_line("# Solving type %s" % eq_type)
         if eq_type == 4:
-            _solve_type_4(symo, X1, Y1, X2, Y2, th, r)
+            _solve_type_4(symo, X1, -Y1, X2, -Y2, th, r)
         else:
-            _solve_type_5(symo, X1, Y1, Z1, X2, Y2, Z2, th, r)
+            _solve_type_5(symo, X1, -Y1, -Z1, X2, -Y2, -Z2, th, r)
         knowns |= {th, r}
         return True
     return False
@@ -306,8 +320,8 @@ def _try_solve_4(symo, eq_sys, knowns):
     for i in xrange(len(eq_sys)):
         all_ok = False
         for j in xrange(len(eq_sys)):
-            eqj, rs_j, ths_i = eq_sys[j]
-            eqi, rs_i, ths_j = eq_sys[i]
+            eqj, rs_j, ths_j = eq_sys[j]
+            eqi, rs_i, ths_i = eq_sys[i]
             if i == j or set(ths_i) != set(ths_j):
                 continue
             th12 = ths_i[0] + ths_i[1]
@@ -322,6 +336,7 @@ def _try_solve_4(symo, eq_sys, knowns):
             X1, Y1, Z1, i_ok = _get_coefs(eqi, C1, C12, th1, th2)
             X2, Y2, Z2, j_ok = _get_coefs(eqj, S1, S12, th1, th2)
             all_ok = (X1*Y2 == Y1*X2 and i_ok and j_ok)
+            all_ok &= X1 != 0 and Y1 != 0
             all_ok &= not eqi.has(S1) and not eqi.has(S12)
             all_ok &= not eqj.has(C1) and not eqj.has(C12)
             if all_ok:
@@ -329,7 +344,7 @@ def _try_solve_4(symo, eq_sys, knowns):
         if not all_ok:
             continue
         symo.write_line("# Solving type 8")
-        _solve_type_8(symo, X1, Y1, Z1, Z2, th1, th2)
+        _solve_type_8(symo, X1, Y1, -Z1, -Z2, th1, th2)
         knowns |= {th1, th2}
         res = True
     return res
@@ -340,9 +355,9 @@ def _solve_type_2(symo, X, Y, Z, th):
     X*S + Y*C = Z
     """
     symo.write_line("# X*sin({0}) + Y*cos({0}) = Z".format(th))
-    X = symo.replace(symo.CS12_simp(X), 'X', th)
-    Y = symo.replace(symo.CS12_simp(Y), 'Y', th)
-    Z = symo.replace(symo.CS12_simp(Z), 'Z', th)
+    X = symo.replace(trigsimp(X), 'X', th)
+    Y = symo.replace(trigsimp(Y), 'Y', th)
+    Z = symo.replace(trigsimp(Z), 'Z', th)
     YPS = var('YPS'+str(th))
     if X == tools.ZERO and Y != tools.ZERO:
         C = symo.replace(Z/Y, 'C', th)
@@ -371,12 +386,12 @@ def _solve_type_3(symo, X1, Y1, Z1, X2, Y2, Z2, th):
     """
     symo.write_line("# X1*sin({0}) + Y1*cos({0}) = Z1".format(th))
     symo.write_line("# X2*sin({0}) + Y2*cos({0}) = Z2".format(th))
-    X1 = symo.replace(symo.CS12_simp(X1), 'X1', th)
-    Y1 = symo.replace(symo.CS12_simp(Y1), 'Y1', th)
-    Z1 = symo.replace(symo.CS12_simp(Z1), 'Z1', th)
-    X2 = symo.replace(symo.CS12_simp(X2), 'X2', th)
-    Y2 = symo.replace(symo.CS12_simp(Y2), 'Y2', th)
-    Z2 = symo.replace(symo.CS12_simp(Z2), 'Z2', th)
+    X1 = symo.replace(trigsimp(X1), 'X1', th)
+    Y1 = symo.replace(trigsimp(Y1), 'Y1', th)
+    Z1 = symo.replace(trigsimp(Z1), 'Z1', th)
+    X2 = symo.replace(trigsimp(X2), 'X2', th)
+    Y2 = symo.replace(trigsimp(Y2), 'Y2', th)
+    Z2 = symo.replace(trigsimp(Z2), 'Z2', th)
     if X1 == tools.ZERO and Y2 == tools.ZERO:
         symo.add_to_dict(th, atan2(Z2/X2, Z1/Y1))
     elif X2 == tools.ZERO and Y1 == tools.ZERO:
@@ -395,10 +410,10 @@ def _solve_type_4(symo, X1, Y1, X2, Y2, th, r):
     """
     symo.write_line("# X1*sin({0})*{1} = Y1".format(th, r))
     symo.write_line("# X2*cos({0})*{1} = Y2".format(th, r))
-    X1 = symo.replace(symo.CS12_simp(X1), 'X1', th)
-    Y1 = symo.replace(symo.CS12_simp(Y1), 'Y1', th)
-    X2 = symo.replace(symo.CS12_simp(X2), 'X2', th)
-    Y2 = symo.replace(symo.CS12_simp(Y2), 'Y2', th)
+    X1 = symo.replace(trigsimp(X1), 'X1', th)
+    Y1 = symo.replace(trigsimp(Y1), 'Y1', th)
+    X2 = symo.replace(trigsimp(X2), 'X2', th)
+    Y2 = symo.replace(trigsimp(Y2), 'Y2', th)
     YPS = var('YPS' + r)
     symo.add_to_dict(YPS, (tools.ONE, - tools.ONE))
     symo.add_to_dict(r, YPS*sqrt((Y1/X1)**2 + (Y2/X2)**2))
@@ -412,12 +427,12 @@ def _solve_type_5(symo, X1, Y1, Z1, X2, Y2, Z2, th, r):
     """
     symo.write_line("# X1*sin({0}) = Y1 + Z1*{1}".format(th, r))
     symo.write_line("# X2*cos({0}) = Y2 + Z2*{1}".format(th, r))
-    X1 = symo.replace(symo.CS12_simp(X1), 'X1', th)
-    Y1 = symo.replace(symo.CS12_simp(Y1), 'Y1', th)
-    Z1 = symo.replace(symo.CS12_simp(Z1), 'Z1', th)
-    X2 = symo.replace(symo.CS12_simp(X2), 'X2', th)
-    Y2 = symo.replace(symo.CS12_simp(Y2), 'Y2', th)
-    Z2 = symo.replace(symo.CS12_simp(Z2), 'Z2', th)
+    X1 = symo.replace(trigsimp(X1), 'X1', th)
+    Y1 = symo.replace(trigsimp(Y1), 'Y1', th)
+    Z1 = symo.replace(trigsimp(Z1), 'Z1', th)
+    X2 = symo.replace(trigsimp(X2), 'X2', th)
+    Y2 = symo.replace(trigsimp(Y2), 'Y2', th)
+    Z2 = symo.replace(trigsimp(Z2), 'Z2', th)
     V1 = symo.replace(Y1/X1, 'V1', r)
     W1 = symo.replace(Z1/X1, 'W1', r)
     V2 = symo.replace(Y2/X2, 'V2', r)
@@ -435,12 +450,12 @@ def _solve_type_7(symo, V, W, X, Y, Z1, Z2, eps, th_i, th_j):
     symo.write_line(s.format(th_j, th_i))
     s = "# eps*(V*sin({0}) - W*cos({0})) = X*sin({1}) - Y*cos({1}) + Z2"
     symo.write_line(s.format(th_j, th_i))
-    V = symo.replace(symo.CS12_simp(V), 'V', th_i)
-    W = symo.replace(symo.CS12_simp(W), 'W', th_i)
-    X = symo.replace(symo.CS12_simp(X), 'X', th_i)
-    Y = symo.replace(symo.CS12_simp(Y), 'Y', th_i)
-    Z1 = symo.replace(symo.CS12_simp(Z1), 'Z1', th_i)
-    Z2 = symo.replace(symo.CS12_simp(Z2), 'Z2', th_i)
+    V = symo.replace(trigsimp(V), 'V', th_i)
+    W = symo.replace(trigsimp(W), 'W', th_i)
+    X = symo.replace(trigsimp(X), 'X', th_i)
+    Y = symo.replace(trigsimp(Y), 'Y', th_i)
+    Z1 = symo.replace(trigsimp(Z1), 'Z1', th_i)
+    Z2 = symo.replace(trigsimp(Z2), 'Z2', th_i)
     B1 = symo.replace(2*(Z1*Y + Z2*X), 'B1', th_i)
     B2 = symo.replace(2*(Z1*X - Z2*Y), 'B2', th_i)
     B3 = symo.replace(V**2 + W**2 - X**2 - Y**2 - Z1**2 - Z2**2, 'B3', th_i)
@@ -457,17 +472,17 @@ def _solve_type_8(symo, X, Y, Z1, Z2, th_i, th_j):
     """
     symo.write_line("# X*cos({0}) + Y*cos({0} + {1}) = Z1".format(th_i, th_j))
     symo.write_line("# X*sin({0}) + Y*sin({0} + {1}) = Z2".format(th_i, th_j))
-    X = symo.replace(symo.CS12_simp(X), 'X', th_j)
-    Y = symo.replace(symo.CS12_simp(Y), 'Y', th_j)
-    Z1 = symo.replace(symo.CS12_simp(Z1), 'Z1', th_j)
-    Z2 = symo.replace(symo.CS12_simp(Z2), 'Z2', th_j)
+    X = symo.replace(trigsimp(X), 'X', th_j)
+    Y = symo.replace(trigsimp(Y), 'Y', th_j)
+    Z1 = symo.replace(trigsimp(Z1), 'Z1', th_j)
+    Z2 = symo.replace(trigsimp(Z2), 'Z2', th_j)
     Cj = symo.replace((Z1**2 + Z2**2 - X**2 - Y**2) / (2*X*Y), 'C', th_j)
     YPS = var('YPS%s' % th_j)
-    symo.add_to_dict(YPS, (tools.ONE, - tools.ONE))
+    symo.add_to_dict(YPS, (tools.ONE, -tools.ONE))
     symo.add_to_dict(th_j, atan2(YPS*sqrt(1 - Cj**2), Cj))
     Q1 = symo.replace(X + Y*cos(th_j), 'Q1', th_i)
-    Q2 = symo.replace(X + Y*sin(th_j), 'Q2', th_i)
-    Den = symo.replace(Q1**2+Q2**2, 'Den', th_i)
+    Q2 = symo.replace(Y*sin(th_j), 'Q2', th_i)
+    Den = symo.replace(Q1**2 + Q2**2, 'Den', th_i)
     Si = symo.replace((Q1*Z2 - Q2*Z1)/Den, 'S', th_i)
     Ci = symo.replace((Q1*Z1 + Q2*Z2)/Den, 'C', th_i)
     symo.add_to_dict(th_i, atan2(Si, Ci))

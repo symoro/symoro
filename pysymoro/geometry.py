@@ -6,6 +6,7 @@ This module of SYMORO package computes the geometric models.
 """
 
 from sympy import Matrix, zeros, eye, sin, cos
+from copy import copy
 
 from symoroutils import symbolmgr
 from symoroutils import tools
@@ -156,11 +157,11 @@ class TransConvolve:
         self.symo = symo
         self.trig_subs = trig_subs and symo is not None
         self.T_tmp = eye(4)
-        self.siplify = simplify
+        self.simplify = simplify
 
     def process(self, tr):
         if tr.type == 0:  # rotation
-            if self.rot.axis == tr.axis and self.siplify:
+            if self.rot.axis == tr.axis and self.simplify:
                 self.rot.val += tr.val
                 self.rot.name += tr.name
             else:  # translation
@@ -168,7 +169,7 @@ class TransConvolve:
                 if self.trig_subs:
                     self.symo.trig_replace(self.rot_mat, self.rot.val,
                                            self.rot.name)
-                self.rot = tr
+                self.rot = copy(tr)
         elif tr.type == 1:
             self.trans += self.rot_mat * self.rot.rot() * tr.trans()
             if self.trig_subs:
@@ -188,7 +189,7 @@ class TransConvolve:
                 if self.trig_subs:
                     self.symo.trig_replace(self.rot_mat, self.rot.val,
                                            self.rot.name)
-                self.rot = tr
+                self.rot = copy(tr)
         elif tr.type == 1:
             self.trans += tr.trans()
 
