@@ -33,15 +33,19 @@ class Robot(object):
     Responsible for low-level geometric transformation
     and direct geometric model generation.
     Also provides different representations of parameters."""
-    def __init__(self, name, NL=0, NJ=0, NF=0, is_mobile=False,
-                 structure=TREE):
+    def __init__(self, name, NL=0, NJ=0, NF=0, is_floating=False,
+                 structure=TREE, is_wmr=False):
         # member variables:
         """  name of the robot: string"""
         self.name = name
         """ directory name"""
         self.directory = filemgr.get_folder_path(name)
         """ whether the base frame is floating: bool"""
-        self.is_mobile = is_mobile
+        self.is_floating = is_floating
+        # backward compatability
+        self.is_mobile = self.is_floating
+        """ whether the robot is wheeled mobile robot"""
+        self.is_wmr = is_wmr
         """  number of links: int"""
         self.nl = NL
         """  number of joints: int"""

@@ -392,7 +392,8 @@ class MainFrame(wx.Frame):
             ('name', self.robo.name), ('NF', self.robo.nf),
             ('NL', self.robo.nl), ('NJ', self.robo.nj),
             ('type', self.robo.structure),
-            ('floating', self.robo.is_mobile), ('wmr', False),
+            ('floating', self.robo.is_floating),
+            ('wmr', self.robo.is_wmr),
             ('loops', self.robo.nj-self.robo.nl)
         ]
         for name, info in names:
@@ -578,7 +579,8 @@ class MainFrame(wx.Frame):
         dialog = ui_definition.DialogDefinition(
             ui_labels.MAIN_WIN['prog_name'],
             self.robo.name, self.robo.nl,
-            self.robo.nj, self.robo.structure, self.robo.is_mobile
+            self.robo.nj, self.robo.structure,
+            self.robo.is_floating, self.robo.is_wmr
         )
         if dialog.ShowModal() == wx.ID_OK:
             result = dialog.get_values()
@@ -611,6 +613,7 @@ class MainFrame(wx.Frame):
                 new_robo.v0 = self.robo.v0
                 new_robo.vdot0 = self.robo.vdot0
                 new_robo.G = self.robo.G
+            new_robo.is_wmr = result['is_wmr']
             self.robo = new_robo
             self.robo.directory = filemgr.get_folder_path(self.robo.name)
             self.feed_data()
