@@ -108,7 +108,7 @@ class DialogDefinition(wx.Dialog):
         nl = int(self.spin_links.Value)
         nj = int(self.spin_joints.Value)
         return {'init_pars': (name, nl, nj, 2*nj - nl,
-                               #self.ch_is_mobile.Value,
+                               self.ch_is_mobile.Value,
                                self.cmb_structure.Value),
                 'keep_geo': self.ch_keep_geo.Value,
                 'keep_dyn': self.ch_keep_dyn.Value,
