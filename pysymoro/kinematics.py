@@ -6,7 +6,7 @@ This module of SYMORO package computes the kinematic models.
 """
 
 
-from sympy import Matrix, zeros
+from sympy import Matrix, zeros, trigsimp
 
 from pysymoro.geometry import dgm, Transform
 from pysymoro.geometry import compute_rot_trans, Z_AXIS
@@ -83,6 +83,7 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
     M = []
     if chain is None:
         chain = robo.chain(n)
+        print chain
         chain.reverse()
 #    chain_ext = chain + [robo.ant[min(chain)]]
 #    if not i in chain_ext:
@@ -115,6 +116,7 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
     jTn = dgm(robo, symo, j, n, fast_form=False, trig_subs=trig_subs)
     jPn = Transform.P(jTn)
     L = -tools.skew(iRj*jPn)
+    L = L.applyfunc(trigsimp)
     if forced:
         symo.mat_replace(Jac, 'J', '', forced)
         L = symo.mat_replace(L, 'L', '', forced)
