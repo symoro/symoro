@@ -192,8 +192,6 @@ def _compute_link_acceleration(model, robo, j, i):
         An instance of DynModel that contains all the new values.
     """
     j_vdot_j = Screw()
-    if i == 0 and not robo.is_floating:
-        model.accels[i] = robo.base_accel
     # local variables
     j_s_i = robo.geos[j].tmat.s_j_wrt_i
     i_vdot_i = model.accels[i].val
@@ -644,14 +642,14 @@ def _compute_base_acceleration(model, robo):
     gravity = Screw()
     # local variables
     gravity.lin = robo.gravity
-    if model.model_type is 'inverse':
-        o_inertia_o_c = model.composite_inertias[0].val
-        o_beta_o_c = model.composite_betas[0].val
-    elif model.model_type is 'direct':
-        o_inertia_o_c = model.star_inertias[0].val
-        o_beta_o_c = model.star_betas[0].val
-    # actual computation
     if robo.is_floating:
+        if model.model_type is 'inverse':
+            o_inertia_o_c = model.composite_inertias[0].val
+            o_beta_o_c = model.composite_betas[0].val
+        elif model.model_type is 'direct':
+            o_inertia_o_c = model.star_inertias[0].val
+            o_beta_o_c = model.star_betas[0].val
+        # actual computation
         # TODO: replace sympy's matrix inversion with custom function
         o_vdot_o.val = o_inertia_o_c.inv() * o_beta_o_c
     # store computed base acceleration without gravity effect in model
