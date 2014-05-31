@@ -84,7 +84,7 @@ class DynModel(object):
         # get all the attributes currently in the class
         attrs = [
             attr for attr in dir(self) \
-            if not attr.startswith('_') or not 'model_type'
+            if not attr.startswith('_')
         ]
         # add each attribute
         for attr in attrs:
@@ -92,7 +92,7 @@ class DynModel(object):
             if hasattr(items, '__iter__'):
                 attr_str = self._str_items(items)
             else:
-                attr_str = str(items) + '\n'
+                attr_str = '\t' + str(items) + '\n'
             str_format = str_format + str(attr) + ": \n"
             str_format = str_format + attr_str
         return str_format
@@ -148,6 +148,38 @@ def _init_composite_beta(model, robo, j):
         An instance of DynModel that contains all the new values.
     """
     model.composite_betas[j] = model.betas[j]
+    return model
+
+
+def _init_star_inertia(model, robo, j):
+    """
+    Initialise the star spatial inertia matrix of link j.
+
+    Args:
+        model: An instance of DynModel
+        robo: An instance of Robot
+        j: link number
+
+    Returns:
+        An instance of DynModel that contains all the new values.
+    """
+    model.star_inertias[j] = robo.dyns[j].spatial_inertia
+    return model
+
+
+def _init_star_beta(model, robo, j):
+    """
+    Initialise the star beta wrench of link j.
+
+    Args:
+        model: An instance of DynModel
+        robo: An instance of Robot
+        j: link number
+
+    Returns:
+        An instance of DynModel that contains all the new values.
+    """
+    model.star_betas[j] = model.betas[j]
     return model
 
 
@@ -531,8 +563,8 @@ def _compute_star_inertia(model, robo, j, i):
     """
     i_inertia_i_s = Screw6()
     # local variables
-    i_inertia_i = robo.dyns[i].spatial_inertia.val
     j_s_i = robo.geos[j].tmat.s_j_wrt_i
+    i_inertia_i = model.star_inertias[i].val
     j_k_j = model.no_qddot_inertias[j].val
     # actual computation
     i_inertia_i_s.val = i_inertia_i + (j_s_i.transpose() * j_k_j * j_s_i)
@@ -558,7 +590,7 @@ def _compute_star_beta(model, robo, j, i):
     i_beta_i_s = Screw()
     # local variables
     j_s_i = robo.geos[j].tmat.s_j_wrt_i
-    i_beta_i = model.betas[i].val
+    i_beta_i = model.star_betas[i].val
     j_alpha_j = model.alphas[j].val
     # actual computation
     i_beta_i_s.val = i_beta_i - (j_s_i.transpose() * j_alpha_j)
@@ -749,13 +781,18 @@ def direct_dynamic_model(robo):
         model = _compute_gyroscopic_acceleration(model, robo, j, i)
         # compute j^beta_j : external+coriolis+centrifugal wrench (6x1)
         model = _compute_beta_wrench(model, robo, j)
-    # backward recursion
+    # first backward recursion - initialisation step
+    for j in reversed(robo.joint_nums):
+        if j == 0:
+            # compute 0^beta_0
+            model = _compute_beta_wrench(model, robo, j)
+        # initialise j^I_j^c : composite spatial inertia matrix
+        model = _init_star_inertia(model, robo, j)
+        # initialise j^beta_j^c : composite wrench
+        model = _init_star_beta(model, robo, j)
+    # second backward recursion - compute star terms
     for j in reversed(robo.joint_nums):
         if j == 0: continue
-        if j == robo.num_joints:
-            # initialise star_inertia, star_beta
-            model.star_inertias[j] = robo.dyns[j].spatial_inertia
-            model.star_betas[j] = model.betas[j]
         # antecedent index
         i = robo.geos[j].ant
         # compute H_j : joint inertia (scalar term)
