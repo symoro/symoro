@@ -454,12 +454,12 @@ def _compute_joint_inertia(model, robo, j):
     h_j = 0
     # local variables
     j_a_j = robo.geos[j].axisa
-    ia_j = robo.dyns[j].ia
+    ia_j = Matrix([robo.dyns[j].ia])
     j_inertia_j_s = model.star_inertias[j].val
     # actual computation
     h_j = (j_a_j.transpose() * j_inertia_j_s * j_a_j) + ia_j
     # store in model
-    model.joint_inertias[j] = h_j
+    model.joint_inertias[j] = h_j[0, 0]
     return model
 
 
@@ -482,7 +482,7 @@ def _compute_no_qddot_inertia(model, robo, j):
     j_inertia_j_s = model.star_inertias[j].val
     h_j = Matrix([model.joint_inertias[j]])
     # actual computation
-    j_k_j.val = j_inertia_j_s - (j_inertia_j_s * j_a_j * h_jinv() * \
+    j_k_j.val = j_inertia_j_s - (j_inertia_j_s * j_a_j * h_j.inv() * \
         j_a_j.transpose() * j_inertia_j_s)
     # store in model
     model.no_qddot_inertias[j] = j_k_j
@@ -786,9 +786,9 @@ def direct_dynamic_model(robo):
         if j == 0:
             # compute 0^beta_0
             model = _compute_beta_wrench(model, robo, j)
-        # initialise j^I_j^c : composite spatial inertia matrix
+        # initialise j^I_j^* : star spatial inertia matrix
         model = _init_star_inertia(model, robo, j)
-        # initialise j^beta_j^c : composite wrench
+        # initialise j^beta_j^* : star beta wrench
         model = _init_star_beta(model, robo, j)
     # second backward recursion - compute star terms
     for j in reversed(robo.joint_nums):
@@ -803,7 +803,7 @@ def direct_dynamic_model(robo):
         model = _compute_tau(model, robo, j)
         # compute j^alpha_j : wrench as a function of tau
         model = _compute_alpha_wrench(model, robo, j)
-        # compute i^I_i^* : star spatial inertia
+        # compute i^I_i^* : star spatial inertia matrix
         model = _compute_star_inertia(model, robo, j, i)
         # compute i^beta_i^* : star beta wrench
         model = _compute_star_beta(model, robo, j, i)

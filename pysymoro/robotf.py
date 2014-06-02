@@ -105,6 +105,7 @@ class FloatingRobot(object):
         str_format = str_format + ("\tJoints: %s\n" % str(self.num_joints))
         str_format = str_format + ("\tFrames: %s\n" % str(self.num_frames))
         str_format = str_format + ("\tFloating: %s\n" % str(self.is_floating))
+        str_format = str_format + ("\tWMR: %s\n" % str(self.is_wmr))
         str_format = str_format + ("\tStructure: %s\n" % str(self.structure))
         str_format = str_format + '\n'
         # add geometric params
