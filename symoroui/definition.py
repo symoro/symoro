@@ -77,11 +77,19 @@ class DialogDefinition(wx.Dialog):
                        wx.TOP | wx.LEFT | wx.ALIGN_LEFT, 15)
         hor_sizer = wx.BoxSizer(wx.HORIZONTAL)
         ok_btn = wx.Button(self, wx.ID_OK, "OK")
+        ok_btn.Bind(wx.EVT_BUTTON, self.OnOK)
         cancel_btn = wx.Button(self, wx.ID_CANCEL, "Cancel")
+        cancel_btn.Bind(wx.EVT_BUTTON, self.OnCancel)
         hor_sizer.Add(ok_btn, 0, wx.ALL, 25)
         hor_sizer.Add(cancel_btn, 0, wx.ALL, 25)
         main_sizer.Add(hor_sizer)
         self.SetSizerAndFit(main_sizer)
+
+    def OnOK(self, _):
+        self.EndModal(wx.ID_OK)
+
+    def OnCancel(self, _):
+        self.EndModal(wx.ID_CANCEL)
 
     def OnTypeChanged(self, _):
         if self.cmb_structure.GetSelection() == 2:
