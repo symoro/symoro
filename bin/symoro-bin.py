@@ -3,7 +3,7 @@
 
 
 """
-This is the main executable script of SYMORO. 
+This is the main executable script of SYMORO.
 """
 
 
@@ -20,10 +20,10 @@ def main():
     app = wx.App(redirect=False)
     style = wx.DEFAULT_FRAME_STYLE ^ wx.MAXIMIZE_BOX ^ wx.RESIZE_BORDER
     frame = layout.MainFrame(
-        parent=None, 
+        parent=None,
         id=wx.ID_ANY,
-        title=ui_labels.MAIN_WIN['window_title'], 
-        size=(-1, -1), 
+        title=ui_labels.MAIN_WIN['window_title'],
+        size=(-1, -1),
         style=style
     )
     frame.Show()
