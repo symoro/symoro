@@ -15,7 +15,6 @@ import wx
 from symoroui import layout
 from symoroui import labels as ui_labels
 
-
 def main():
     app = wx.App(redirect=False)
     style = wx.DEFAULT_FRAME_STYLE ^ wx.MAXIMIZE_BOX ^ wx.RESIZE_BORDER
@@ -28,7 +27,6 @@ def main():
     )
     frame.Show()
     app.MainLoop()
-
 
 if __name__ == "__main__":
     main()
