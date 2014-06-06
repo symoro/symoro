@@ -60,6 +60,19 @@ class Screw6(object):
                 arguments. See Usage.""" % (str(len(kwargs)))
             )
 
+    def __str__(self):
+        row_format = '[' + ((('{},' * 6) + ';') * 6) + ']'
+        elements = list()
+        for i in range(self._val.rows):
+            for j in range(self._val.cols):
+                elements.append(str(self._val[i, j]))
+        str_format = row_format.format(*elements)
+        return str_format
+
+    def __repr__(self):
+        repr_format = 'Screw6()'
+        return repr_format
+
     @property
     def val(self):
         """
