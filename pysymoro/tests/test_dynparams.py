@@ -126,6 +126,24 @@ class TestDynParams(unittest.TestCase):
         self.assertEqual(self.data.yy, self.param_yy)
         self.assertEqual(self.data.zz, self.param_zz)
 
+    def test_set_to_zero(self):
+        """Test set_to_zero()"""
+        link = 3
+        data = DynParams(link)
+        data.set_to_zero()
+        # check link value remains unchanged
+        self.assertEqual(data.link, link)
+        # check other values are zero (just a few)
+        self.assertEqual(data.xx, 0)
+        self.assertEqual(data.yy, 0)
+        self.assertEqual(data.zz, 0)
+        self.assertEqual(data.msx, 0)
+        self.assertEqual(data.mass, 0)
+        self.assertEqual(data.ia, 0)
+        self.assertEqual(data.frv, 0)
+        self.assertEqual(data.fx_ext, 0)
+        self.assertEqual(data.mz_ext, 0)
+
 
 def run_tests():
     """Load and run the unittests"""

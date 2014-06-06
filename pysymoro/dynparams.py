@@ -137,6 +137,26 @@ class DynParams(object):
                     "%s is not an attribute of DynParams" % key
                 )
 
+    def set_to_zero(self):
+        """
+        Set all the dynamic parameter values to zero.
+        """
+        # attributes that shouldn't be set to zero
+        outliers = [
+            'link', 'update_params', 'inertia', 'mass_tensor',
+            'spatial_inertia', 'wrench', 'force', 'moment'
+        ]
+        # get all the attributes of the class ignoring system attributes
+        attrs = [
+            attr for attr in dir(self) \
+            if not attr.startswith('_')
+        ]
+        for attr in attrs:
+            # ignore attributes in outliers
+            if attr in outliers:
+                continue
+            setattr(self, attr, 0)
+
     @property
     def inertia(self):
         """Get inertia (3x3) matrix."""
