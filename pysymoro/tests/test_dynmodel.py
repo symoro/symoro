@@ -42,7 +42,7 @@ def planar2r():
     return robo
 
 
-def planar2r_numerical():
+def planar2r_numerical(is_floating=False):
     # numerical values (random in some case)
     L1 = 0.5
     L2 = 0.4
@@ -60,7 +60,8 @@ def planar2r_numerical():
     IA2 = 0.0
     G3 = 9.81
     # create robot
-    robo = Robot('planar2r', 2, 2, 3, False, tools.SIMPLE)
+    robo = Robot('planar2r', 2, 2, 3, is_floating, tools.SIMPLE)
+    robo.set_dyns_to_zero()
     # update geometric params
     params = {
         1: {'sigma': 0, 'mu': 1},
@@ -181,7 +182,6 @@ class TestDynModelPlanar2rFixed(unittest.TestCase):
         )
         # compute DDyM
         robo.compute_ddym()
-        # assertions
         # check if the result of IDyM (computed torques) are zero
         self.assertEqual(robo.idym.torques[1], 0.0)
         self.assertEqual(robo.idym.torques[2], 0.0)
@@ -198,6 +198,78 @@ class TestDynModelPlanar2rFixed(unittest.TestCase):
         velocity and acceleration are set to random meaningful values.
         """
         robo = planar2r_numerical()
+        # initialise joint position, velocity, acceleration to random
+        # values
+        random.seed(math.pi)
+        q = list(random.uniform(-math.pi, math.pi) for j in range(2))
+        qdot = list(random.uniform(-math.pi, math.pi) for j in range(2))
+        qddot = list(random.uniform(-math.pi, math.pi) for j in range(2))
+        # set joint state
+        robo = set_planar2r_joint_state(robo, q, qdot, qddot)
+        # compute IDyM
+        robo.compute_idym()
+        # set torque values for DDyM
+        robo = set_planar2r_joint_torque(
+            robo, [robo.idym.torques[1], robo.idym.torques[2]]
+        )
+        # compute DDyM
+        robo.compute_ddym()
+        #
+        print('\n')
+        print(q)
+        print(qdot)
+        print(qddot)
+        print(robo.idym.torques)
+        print(robo.ddym.qddots)
+        # check if input to IDyM is same as output of DDyM
+        self.assertEqual(robo.ddym.qddots[1], robo.qddots[1])
+        self.assertEqual(robo.ddym.qddots[2], robo.qddots[2])
+
+
+class TestDynModelPlanar2rFloating(unittest.TestCase):
+    """
+    Unit test for testing the inverse and direct dynamic model
+    computation for floating base robots algorithm. This testing is done
+    numerically.
+    """
+    def setUp(self):
+        pass
+
+    def test_when_zero(self):
+        """
+        Test the dynamic model computation when joint position,
+        velocity and acceleration are set to zero.
+        """
+        robo = planar2r_numerical(is_floating=True)
+        # set joint state
+        robo = set_planar2r_joint_state(
+            robo, [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]
+        )
+        # compute IDyM
+        robo.compute_idym()
+        # set torque values for DDyM
+        robo = set_planar2r_joint_torque(
+            robo, [robo.idym.torques[1], robo.idym.torques[2]]
+        )
+        # compute DDyM
+        robo.compute_ddym()
+        # assertions
+        # check if the result of IDyM (computed torques) are zero
+        self.assertEqual(robo.idym.torques[1], 0.0)
+        self.assertEqual(robo.idym.torques[2], 0.0)
+        # check if the result of DDyM (computed qddots) are zero
+        self.assertEqual(robo.ddym.qddots[1], 0.0)
+        self.assertEqual(robo.ddym.qddots[2], 0.0)
+        # check if input to IDyM is same as output of DDyM
+        self.assertEqual(robo.ddym.qddots[1], robo.qddots[1])
+        self.assertEqual(robo.ddym.qddots[2], robo.qddots[2])
+
+    def test_when_random(self):
+        """
+        Test the dynamic model computation when joint position,
+        velocity and acceleration are set to random meaningful values.
+        """
+        robo = planar2r_numerical(is_floating=True)
         # initialise joint position, velocity, acceleration to random
         # values
         random.seed(math.pi)
