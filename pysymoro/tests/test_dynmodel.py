@@ -58,7 +58,7 @@ def planar2r_numerical(is_floating=False):
     FV2 = 0.18
     IA1 = 0.0
     IA2 = 0.0
-    G3 = 9.81
+    G3 = -9.81
     # create robot
     robo = Robot('planar2r', 2, 2, 3, is_floating, tools.SIMPLE)
     robo.set_dyns_to_zero()
@@ -77,18 +77,6 @@ def planar2r_numerical(is_floating=False):
         2: {
             'zz': ZZ2, 'frc': FC2, 'frv': FV2, 'ia': IA2, 'mass': M2,
             'msx': MX2, 'msy': MY2
-        }
-    }
-    robo.update_params('dyns', params)
-    # update external forces
-    params = {
-        1: {
-            'fx_ext': 0, 'fy_ext': 0, 'fz_ext': 0,
-            'mx_ext': 0, 'my_ext': 0, 'mz_ext': 0
-        },
-        2: {
-            'fx_ext': 0, 'fy_ext': 0, 'fz_ext': 0,
-            'mx_ext': 0, 'my_ext': 0, 'mz_ext': 0
         }
     }
     robo.update_params('dyns', params)
@@ -182,6 +170,7 @@ class TestDynModelPlanar2rFixed(unittest.TestCase):
         )
         # compute DDyM
         robo.compute_ddym()
+        print(robo.idym)
         # check if the result of IDyM (computed torques) are zero
         self.assertEqual(robo.idym.torques[1], 0.0)
         self.assertEqual(robo.idym.torques[2], 0.0)
