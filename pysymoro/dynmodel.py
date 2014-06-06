@@ -7,6 +7,8 @@ dynamic models (inverse and direct).
 """
 
 
+import copy
+
 from sympy import Matrix
 from sympy import sign
 
@@ -685,7 +687,7 @@ def _compute_base_acceleration(model, robo):
         # TODO: replace sympy's matrix inversion with custom function
         o_vdot_o.val = o_inertia_o_c.inv() * o_beta_o_c
     # store computed base acceleration without gravity effect in model
-    model.base_accel_no_gravity = o_vdot_o
+    model.base_accel_no_gravity = copy.copy(o_vdot_o)
     # compute base acceleration taking gravity into account
     o_vdot_o.val = o_vdot_o.val + gravity.val
     # store in model
