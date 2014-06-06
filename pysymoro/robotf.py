@@ -269,6 +269,24 @@ class FloatingRobot(object):
             raise ValueError(errmsg)
         return tools.OK
 
+    def set_dyns_to_zero(self, links=None):
+        """
+        Set all the dynamic parameter values to zero for a specified
+        list of links. If no link is specified, dynamic parameters for
+        all links are set to zero.
+
+        Args:
+            links: An iterable object with the link numbers.
+        """
+        if links == None:
+            links = self.link_nums
+        for link in links:
+            if link in self.link_nums:
+                self.dyns[link].set_to_zero()
+            else:
+                err_msg = "Link number {} does not belong to the robot."
+                raise IndexError(err_msg.format(link))
+
     def compute_idym(self):
         """
         Compute the Inverse Dynamic Model of the robot using the
