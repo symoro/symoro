@@ -60,7 +60,10 @@ def planar2r_numerical(is_floating=False):
     IA2 = 0.0
     G3 = -9.81
     # create robot
-    robo = Robot('planar2r', 2, 2, 3, is_floating, tools.SIMPLE)
+    robo = Robot(
+        'planar2r', 2, 2, 3, is_floating,
+        tools.SIMPLE, is_symbolic=False
+    )
     robo.set_dyns_to_zero()
     # update geometric params
     params = {
@@ -170,7 +173,6 @@ class TestDynModelPlanar2rFixed(unittest.TestCase):
         )
         # compute DDyM
         robo.compute_ddym()
-        print(robo.idym)
         # check if the result of IDyM (computed torques) are zero
         self.assertEqual(robo.idym.torques[1], 0.0)
         self.assertEqual(robo.idym.torques[2], 0.0)
@@ -197,6 +199,7 @@ class TestDynModelPlanar2rFixed(unittest.TestCase):
         robo = set_planar2r_joint_state(robo, q, qdot, qddot)
         # compute IDyM
         robo.compute_idym()
+        print(robo.idym)
         # set torque values for DDyM
         robo = set_planar2r_joint_torque(
             robo, [robo.idym.torques[1], robo.idym.torques[2]]

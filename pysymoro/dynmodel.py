@@ -23,7 +23,7 @@ class DynModel(object):
         Hold the various components obtained during the computation of
         dynamic models (inverse and direct).
     """
-    def __init__(self, joints, model_type='inverse'):
+    def __init__(self, joints, is_symbolic, model_type='inverse'):
         """
         Constructor period.
 
@@ -39,6 +39,8 @@ class DynModel(object):
         """
         # model type - inverse or dynamic
         self.model_type = model_type
+        # symbolic or numeric
+        self.is_symboilc = is_symbolic
         # link velocity
         self.vels = list(None for j in joints)
         # gyroscopic acceleration
@@ -707,7 +709,7 @@ def inverse_dynamic_model(robo):
         The inverse dynamic model of the robot.
     """
     # some book keeping variables
-    model = DynModel(robo.joint_nums, 'inverse')
+    model = DynModel(robo.joint_nums, robo.is_symbolic, 'inverse')
     # first forward recursion
     for j in robo.joint_nums:
         if j == 0: continue
@@ -771,7 +773,7 @@ def direct_dynamic_model(robo):
         The direct dynamic model of the robot.
     """
     # some book keeping variables
-    model = DynModel(robo.joint_nums, 'direct')
+    model = DynModel(robo.joint_nums, robo.is_symbolic, 'direct')
     # first forward recursion
     for j in robo.joint_nums:
         if j == 0: continue
