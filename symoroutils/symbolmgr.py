@@ -608,3 +608,5 @@ class SymbolManager(object):
         """
         exec self.gen_func_string(name, to_return, args)
         return eval('%s' % name)
+
+
