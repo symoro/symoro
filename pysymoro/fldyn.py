@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 
 import sympy
 from sympy import Matrix
@@ -74,7 +76,7 @@ def compute_zeta(robo, symo, j, gamma, jaj, zeta):
 
 
 def replace_composite_terms(
-    grandJ, beta, j, composite_inertia, composite_beta
+    symo, grandJ, beta, j, composite_inertia, composite_beta
 ):
     """
     Replace composite inertia and beta (internal function).
@@ -100,7 +102,7 @@ def compute_composite_terms(
     """
     i = robo.ant[j]
     expr1 = jTant[j].transpose() * composite_inertia[j]
-    expr1 = symo.mat_replace(expr1, 'GX' j)
+    expr1 = symo.mat_replace(expr1, 'GX', j)
     expr2 = expr1 * jTant[j]
     expr2 = symo.mat_replace(expr2, 'TKT', j, symmet=True)
     expr3 = expr1 * zeta[j]
@@ -110,7 +112,7 @@ def compute_composite_terms(
     composite_inertia[i] = composite_inertia[i] + expr2
     composite_beta[i] = composite_beta[i] - expr4 + expr3
     replace_composite_terms(
-        composite_inertia, composite_beta, i,
+        symo, composite_inertia, composite_beta, i,
         composite_inertia, composite_beta
     )
 
@@ -123,9 +125,26 @@ def compute_link_accel(robo, symo, j, jTant, zeta, grandVp):
         grandVp is the output parameter
     """
     i = robo.ant[j]
-    grandVp[j] = (jTant * grandVp[i]) + zeta[j]
+    grandVp[j] = (jTant[j] * grandVp[i]) + zeta[j]
     grandVp[j][:3, 0] = symo.mat_replace(grandVp[j][:3, 0], 'VP', j)
     grandVp[j][3:, 0] = symo.mat_replace(grandVp[j][3:, 0], 'WP', j)
+
+
+def compute_base_accel(
+    robo, symo, composite_inertia, composite_beta, grandVp
+):
+    """
+    Compute base acceleration (internal function).
+
+    Note:
+        grandVp is the output parameter
+    """
+    if robo.is_floating:
+        grandVp[0] = composite_inertia[0].inv() * composite_beta[0]
+    else:
+        grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
+    grandVp[0][:3, 0] = symo.mat_replace(grandVp[0][:3, 0], 'VP', 0)
+    grandVp[0][3:, 0] = symo.mat_replace(grandVp[0][3:, 0], 'WP', 0)
 
 
 def compute_reaction_wrench(
@@ -145,7 +164,7 @@ def compute_reaction_wrench(
     react_wrench[j][3:, 0] = symo.mat_replace(wrench[3:, 0], 'N', j)
 
 
-def compute_torque(robo, symo, j, jaj, react_wrench):
+def compute_torque(robo, symo, j, jaj, react_wrench, torque):
     """
     Compute torque (internal function).
 
@@ -189,9 +208,6 @@ def fl_inverse_dynamic_model(robo):
         #H_inv = ParamsInit.init_scalar(robo)
         #juj = ParamsInit.init_vec(robo, 6)   # Jj*aj / Hj
         #Tau = ParamsInit.init_scalar(robo)
-    # base acceleration initialisation
-    # TODO: move to second forward recursion
-    grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
     # first forward recursion
@@ -224,12 +240,14 @@ def fl_inverse_dynamic_model(robo):
             # compute 0^beta_0
             compute_beta(robo, symo, j, w, beta)
         replace_composite_terms(
-            grandJ, beta, j, composite_inertia, composite_beta
+            symo, grandJ, beta, j, composite_inertia, composite_beta
         )
     # second backward recursion - compute composite term
     for j in reversed(xrange(0, robo.NL)):
         if j == 0:
-            # TODO: compute base acceleration
+            compute_base_accel(
+                robo, symo, composite_inertia, composite_beta, grandVp
+            )
             continue
         # compute i^I_i^c and i^beta_i^c
         compute_composite_terms(
