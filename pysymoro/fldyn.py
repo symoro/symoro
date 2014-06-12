@@ -1,7 +1,6 @@
 
 import sympy
 from sympy import Matrix
-from copy import copy, deepcopy
 
 from pysymoro.geometry import compute_screw_transform
 from pysymoro.geometry import compute_rot_trans, Transform
@@ -31,13 +30,16 @@ def compute_beta(robo, symo, j, w, beta):
     =====
     beta is the output parameter
     """
-    E1 = symo.mat_replace(robo.J[j]*w[j], 'JW', j)
-    E2 = symo.mat_replace(tools.skew(w[j])*E1, 'KW', j)
-    E3 = tools.skew(w[j])*robo.MS[j]
-    E4 = symo.mat_replace(tools.skew(w[j])*E3, 'SW', j)
-    E5 = -robo.Nex[j] - E2
-    E6 = -robo.Fex[j] - E4
-    beta[j] = Matrix([E6, E5])
+    expr1 = robo.J[j] * w[j]
+    expr1 = symo.mat_replace(expr1, 'JW', j)
+    expr2 = tools.skew(w[j]) * expr1
+    expr2 = symo.mat_replace(expr2, 'KW', j)
+    expr3 = tools.skew(w[j]) * robo.MS[j]
+    expr4 = tools.skew(w[j]) * expr3
+    expr4 = symo.mat_replace(expr4, 'SW', j)
+    expr5 = -robo.Nex[j] - expr2
+    expr6 = -robo.Fex[j] - expr4
+    beta[j] = Matrix([expr6, expr5])
 
 
 def compute_gamma(robo, symo, j, antRj, antPj, w, wi, gamma):
@@ -48,17 +50,16 @@ def compute_gamma(robo, symo, j, antRj, antPj, w, wi, gamma):
     =====
     gamma is the output parameter
     """
-    E1 = symo.mat_replace(
-        tools.skew(wi[j]) * Matrix([0, 0, robo.qdot[j]]),
-        'WQ', j
-    )
-    E2 = (1 - robo.sigma[j]) * E1
-    E3 = 2 * robo.sigma[j] * E1
-    E4 = tools.skew(w[robo.ant[j]]) * antPj[j]
-    E5 = tools.skew(w[robo.ant[j]]) * E4
-    E6 = antRj[j].T * E5
-    E7 = symo.mat_replace(E6 + E3, 'LW', j)
-    gamma[j] = Matrix([E7, E2])
+    expr1 = tools.skew(wi[j]) * Matrix([0, 0, robo.qdot[j]])
+    expr1 = symo.mat_replace(expr1, 'WQ', j)
+    expr2 = (1 - robo.sigma[j]) * expr1
+    expr3 = 2 * robo.sigma[j] * expr1
+    expr4 = tools.skew(w[robo.ant[j]]) * antPj[j]
+    expr5 = tools.skew(w[robo.ant[j]]) * expr4
+    expr6 = antRj[j].transpose() * expr5
+    expr7 = expr6 + expr3
+    expr7 = symo.mat_replace(expr7, 'LW', j)
+    gamma[j] = Matrix([expr7, expr2])
 
 
 def compute_zeta(robo, symo, j, gamma, jaj, zeta):
@@ -125,6 +126,7 @@ def compute_link_accel(robo, symo, j, jTant, zeta, grandVp):
     grandVp[j] = (jTant * grandVp[i]) + zeta[j]
     grandVp[j][:3, 0] = symo.mat_replace(grandVp[j][:3, 0], 'VP', j)
     grandVp[j][3:, 0] = symo.mat_replace(grandVp[j][3:, 0], 'WP', j)
+
 
 def compute_reaction_wrench(
     robo, symo, j, grandVp,
