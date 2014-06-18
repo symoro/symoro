@@ -229,7 +229,7 @@ def _compute_link_acceleration(model, robo, j, i):
     """
     j_vdot_j = Screw()
     # local variables
-    j_s_i = robo.geos[j].tmat.s_j_wrt_i
+    j_s_i = robo.geos[j].tmat.s_i_wrt_j
     i_vdot_i = model.accels[i].val
     j_zeta_j = model.zetas[j].val
     # actual computation
@@ -379,7 +379,7 @@ def _compute_composite_beta(model, robo, j, i):
     j_inertia_j_c = model.composite_inertias[j].val
     j_zeta_j = model.zetas[j].val
     # actual computation
-    i_beta_i_c.val = i_beta_i - (j_s_i.transpose() * j_beta_j_c) + \
+    i_beta_i_c.val = i_beta_i + (j_s_i.transpose() * j_beta_j_c) - \
         (j_s_i.transpose() * j_inertia_j_c * j_zeta_j)
     # store computed beta in model
     model.composite_betas[i] = i_beta_i_c
@@ -689,9 +689,9 @@ def _compute_base_acceleration(model, robo):
         # TODO: replace sympy's matrix inversion with custom function
         o_vdot_o.val = o_inertia_o_c.inv() * o_beta_o_c
     # store computed base acceleration without gravity effect in model
-    model.base_accel_no_gravity = copy.copy(o_vdot_o)
-    # compute base acceleration taking gravity into account
-    o_vdot_o.val = o_vdot_o.val + gravity.val
+    model.base_accel_w_gravity = copy.copy(o_vdot_o)
+    # compute base acceleration removing gravity effect
+    o_vdot_o.val = o_vdot_o.val - gravity.val
     # store in model
     model.accels[0] = o_vdot_o
     return model

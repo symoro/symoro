@@ -61,7 +61,7 @@ def planar2r():
     robo.b = [0, 0, 0, 0]
     robo.alpha = [0, 0, 0, 0]
     robo.d = [0, 0, var('L2'), var('L3')]
-    robo.theta = [0, var('th1'), var('th2'), 0]
+    robo.theta = [0, var('q1'), var('q2'), 0]
     robo.r = [0, 0, 0, 0]
     robo.num = range(0, 3)
     robo.Nex = [zeros(3, 1) for i in robo.num]
@@ -80,9 +80,9 @@ def planar2r():
     robo.wdot0 = zeros(3, 1)
     robo.v0 = zeros(3, 1)
     robo.vdot0 = zeros(3, 1)
-    robo.q = var('O, th1, th2')
-    robo.qdot = var('O, th1d, th2d')
-    robo.qddot = var('O, th1dd, th2dd')
+    robo.q = var('O, q1, q2')
+    robo.qdot = var('O, QP1, QP2')
+    robo.qddot = var('O, QDP1, QDP2')
     return robo
 
 
