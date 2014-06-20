@@ -42,6 +42,7 @@ def compute_beta(robo, symo, j, w, beta):
     expr5 = -robo.Nex[j] - expr2
     expr6 = -robo.Fex[j] - expr4
     beta[j] = Matrix([expr6, expr5])
+    beta[j] = symo.mat_replace(beta[j], 'BETA', j)
 
 
 def compute_gamma(robo, symo, j, antRj, antPj, w, wi, gamma):
@@ -62,6 +63,7 @@ def compute_gamma(robo, symo, j, antRj, antPj, w, wi, gamma):
     expr7 = expr6 + expr3
     expr7 = symo.mat_replace(expr7, 'LW', j)
     gamma[j] = Matrix([expr7, expr2])
+    gamma[j] = symo.mat_replace(gamma[j], 'GYACC', j)
 
 
 def compute_zeta(robo, symo, j, gamma, jaj, zeta):
@@ -110,7 +112,7 @@ def compute_composite_terms(
     expr4 = jTant[j].transpose() * composite_beta[j]
     expr4 = symo.mat_replace(expr4, 'SBE', j)
     composite_inertia[i] = composite_inertia[i] + expr2
-    composite_beta[i] = composite_beta[i] - expr4 + expr3
+    composite_beta[i] = composite_beta[i] + expr4 - expr3
     replace_composite_terms(
         symo, composite_inertia, composite_beta, i,
         composite_inertia, composite_beta

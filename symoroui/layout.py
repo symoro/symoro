@@ -17,6 +17,7 @@ from pysymoro.robot import Robot
 from pysymoro import geometry
 from pysymoro import kinematics
 from pysymoro import dynamics
+from pysymoro import fldyn
 from pysymoro import invgeom
 from symoroutils import parfile
 from symoroutils import filemgr
@@ -776,6 +777,7 @@ class MainFrame(wx.Frame):
 
     def OnInverseDynamic(self, event):
         dynamics.inverse_dynamic_NE(self.robo)
+        fldyn.fl_inverse_dynamic_model(self.robo)
         self.model_success('idm')
 
     def OnInertiaMatrix(self, event):
