@@ -13,13 +13,13 @@ from symoroutils import tools
 from symoroutils.paramsinit import ParamsInit
 
 
-def inertia_spatial(J, MS, M):
+def inertia_spatial(inertia, ms_tensor, mass):
     """
     Compute spatial inertia matrix (internal function).
     """
     return Matrix([
-        (M * sympy.eye(3)).row_join(tools.skew(MS).T),
-        tools.skew(MS).row_join(J)
+        (mass * sympy.eye(3)).row_join(tools.skew(ms_tensor).transpose()),
+        tools.skew(ms_tensor).row_join(inertia)
     ])
 
 
@@ -77,6 +77,48 @@ def compute_zeta(robo, symo, j, gamma, jaj, zeta):
     zeta[j] = symo.mat_replace(expr, 'ZETA', j)
 
 
+def compute_composite_inertia(
+    robo, symo, j, antRj, antPj,
+    comp_inertia3, comp_ms, comp_mass, composite_inertia
+):
+    i = robo.ant[j]
+    i_ms_j_c = antRj[j] * comp_ms[j]
+    i_ms_j_c = symo.mat_replace(i_ms_j_c, 'AS', j)
+    expr1 = antRj[j] * comp_inertia3[j]
+    expr1 = symo.mat_replace(expr1, 'AJ', j)
+    expr2 = expr1 * antRj[j].transpose()
+    expr2 = symo.mat_replace(expr2, 'AJA', j)
+    expr3 = tools.skew(antPj[j]) * tools.skew(i_ms_j_c)
+    expr3 = symo.mat_replace(expr3, 'PAS', j)
+    comp_inertia3[i] += expr2 - (expr3 + expr3.transpose()) + \
+        (comp_mass[j] * tools.skew(antPj[j]) * \
+        tools.skew(antPj[j]).transpose())
+    comp_ms[i] = comp_ms[i] + i_ms_j_c + (antPj[j] * comp_mass[j])
+    comp_mass[i] = comp_mass[i] + comp_mass[j]
+    composite_inertia[i] = inertia_spatial(
+        comp_inertia3[i], comp_ms[i], comp_mass[i]
+    )
+
+
+def compute_composite_beta(
+    robo, symo, j, jTant, zeta, composite_inertia, composite_beta
+):
+    """
+    Compute composite beta (internal function).
+
+    Note:
+        composite_beta is the output parameter
+    """
+    i = robo.ant[j]
+    expr1 = composite_inertia[j] * zeta[j]
+    expr1 = symo.mat_replace(expr1, 'IZ', j)
+    expr2 = jTant[j].transpose() * expr1
+    expr2 = symo.mat_replace(expr2, 'SIZ', j)
+    expr3 = jTant[j].transpose() * composite_beta[j]
+    expr3 = symo.mat_replace(expr3, 'SBE', j)
+    composite_beta[i] = composite_beta[i] + expr3 - expr2
+
+
 def replace_composite_terms(
     symo, grandJ, beta, j, composite_inertia, composite_beta
 ):
@@ -113,10 +155,6 @@ def compute_composite_terms(
     expr4 = symo.mat_replace(expr4, 'SBE', j)
     composite_inertia[i] = composite_inertia[i] + expr2
     composite_beta[i] = composite_beta[i] + expr4 - expr3
-    replace_composite_terms(
-        symo, composite_inertia, composite_beta, i,
-        composite_inertia, composite_beta
-    )
 
 
 def compute_link_accel(robo, symo, j, jTant, zeta, grandVp):
@@ -203,6 +241,7 @@ def fl_inverse_dynamic_model(robo):
     zeta = ParamsInit.init_vec(robo, 6)
     composite_inertia = ParamsInit.init_mat(robo, 6)
     composite_beta = ParamsInit.init_vec(robo, 6)
+    comp_inertia3, comp_ms, comp_mass = ParamsInit.init_jplus(robo)
     grandVp = ParamsInit.init_vec(robo, 6)
     react_wrench = ParamsInit.init_vec(robo, 6)
     torque = ParamsInit.init_scalar(robo)
@@ -252,8 +291,19 @@ def fl_inverse_dynamic_model(robo):
             )
             continue
         # compute i^I_i^c and i^beta_i^c
-        compute_composite_terms(
-            robo, symo, j, jTant, zeta,
+        #compute_composite_terms(
+        #    robo, symo, j, jTant, zeta,
+        #    composite_inertia, composite_beta
+        #)
+        compute_composite_inertia(
+            robo, symo, j, antRj, antPj,
+            comp_inertia3, comp_ms, comp_mass, composite_inertia
+        )
+        compute_composite_beta(
+            robo, symo, j, jTant, zeta, composite_inertia, composite_beta
+        )
+        replace_composite_terms(
+            symo, composite_inertia, composite_beta, robo.ant[j],
             composite_inertia, composite_beta
         )
     # second forward recursion
