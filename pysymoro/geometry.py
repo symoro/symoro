@@ -146,14 +146,14 @@ class CompTransf:
         if self.type == 1:
             return _trans_vec(self.axis, self.val)
         else:
-            return zeros(3, 1)
+            return zeros((3, 1))
 
 
 class TransConvolve:
     def __init__(self, symo=None, trig_subs=False, simplify=True):
         self.rot = CompTransf(0, 0, 0)
         self.rot_mat = eye(3)
-        self.trans = zeros(3, 1)
+        self.trans = zeros((3, 1))
         self.symo = symo
         self.trig_subs = trig_subs and symo is not None
         self.T_tmp = eye(4)
@@ -383,7 +383,7 @@ def compute_screw_transform(robo, symo, j, antRj, antPj, jTant):
     jRant = antRj[j].T
     ET = symo.mat_replace(-jRant*tools.skew(antPj[j]), 'JPR', j)
     jTant[j] = (Matrix([jRant.row_join(ET),
-                        zeros(3, 3).row_join(jRant)]))
+                        zeros((3, 3)).row_join(jRant)]))
 
 
 def _rot(axis=2, th=0):
@@ -430,7 +430,7 @@ def _trans_vec(axis=2, p=0):
     v: Matrix 3x1
     """
     assert axis in {0, 1, 2}
-    v = zeros(3, 1)
+    v = zeros((3, 1))
     v[axis] = p
     return v
 

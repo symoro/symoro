@@ -18,15 +18,15 @@ class SymbolManager(object):
     def __init__(self, file_out='disp', sydi=dict()):
         """Default values correspond to empty dictionary and screen output.
         """
+        # Output descriptor. Can be None, 'disp', file. Defines the output
+        # destination.
         self.file_out = file_out
-        """Output descriptor. Can be None, 'disp', file
-        defines the output destination"""
+        # sydi saves all substitutions.
         self.sydi = dict((k, sydi[k]) for k in sydi)
-        """Dictionary. All the substitutions are saved in it"""
+        # revdi saves all backward substitutions, i.e. reverse of self.sydi.
         self.revdi = dict((sydi[k], k) for k in sydi)
-        """Dictionary. Revers to the self.sydi"""
+        # order_list keeps the order of variables to be computed.
         self.order_list = sydi.keys()
-        """keeps the order of variables to be compute"""
 
     def simp(self, sym):
         sym = factor(sym)
@@ -147,6 +147,7 @@ class SymbolManager(object):
         """Internal function.
         Extends symbol dictionary by (new_sym, old_sym) pair
         """
+        # TODO: rename to _add_to_dict.
         new_sym = sympify(new_sym)
         if new_sym.as_coeff_Mul()[0] == -tools.ONE:
             new_sym = -new_sym
@@ -389,7 +390,7 @@ class SymbolManager(object):
         self.write_line(str(A) + ' = ' + str(B))
 
     def write_line(self, line=''):
-        """Writes string data into tha output with new line symbol
+        """Writes string data into the output with new line symbol
 
         Parameters
         ==========
@@ -432,18 +433,18 @@ class SymbolManager(object):
 
     def gen_fheader(self, name, *args):
         fun_head = []
-        fun_head.append('def %s_func(*args):\n' % name)
+        fun_head.append('def {0}_func(*args):\n'.format(name))
         imp_s_1 = 'from numpy import pi, sin, cos, sign\n'
         imp_s_2 = 'from numpy import array, arctan2 as atan2, sqrt\n'
-        fun_head.append('    %s' % imp_s_1)
-        fun_head.append('    %s' % imp_s_2)
-        for i, var_list in enumerate(args):
+        fun_head.append('    {0}'.format(imp_s_1))
+        fun_head.append('    {0}'.format(imp_s_2))
+        for i in xrange(len(args)):
             v_str_list = self.convert_syms(args[i], True)
-            fun_head.append('    %s=args[%s]\n' % (v_str_list, i))
+            fun_head.append('    {0}=args[{1}]\n'.format(v_str_list, i))
         return fun_head
 
     def convert_syms(self, syms, rpl_liter=False):
-        """Converts 'syms' structure to sintactically correct string
+        """Converts 'syms' structure to a syntaxically correct string
 
         Parameters
         ==========
@@ -566,7 +567,6 @@ class SymbolManager(object):
         wr_syms = self.extract_syms(args)   # set of defined symbols
         fun_body = self.gen_fbody(name, to_return, wr_syms, multival)
         fun_string = "".join(fun_head + fun_body)
+        # TODO: use lambda function instead of eval
         exec fun_string
-        return eval('%s_func' % name)
-
-
+        return eval('{0}_func'.format(name))

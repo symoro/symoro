@@ -86,9 +86,9 @@ def dynamic_identification_NE(robo):
     w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
     # virtual robot with only one non-zero parameter at once
     robo_tmp = deepcopy(robo)
-    robo_tmp.IA = sympy.zeros(robo.NL, 1)
-    robo_tmp.FV = sympy.zeros(robo.NL, 1)
-    robo_tmp.FS = sympy.zeros(robo.NL, 1)
+    robo_tmp.IA = sympy.zeros((robo.NL, 1))
+    robo_tmp.FV = sympy.zeros((robo.NL, 1))
+    robo_tmp.FS = sympy.zeros((robo.NL, 1))
     for k in xrange(1, robo.NL):
         param_vec = robo.get_inert_param(k)
         F = ParamsInit.init_vec(robo)
@@ -100,7 +100,7 @@ def dynamic_identification_NE(robo):
             robo_tmp.num = [str(l) + str(param_vec[i])
                             for l in xrange(k + 1)]
             # set the parameter to 1
-            mask = sympy.zeros(10, 1)
+            mask = sympy.zeros((10, 1))
             mask[i] = 1
             robo_tmp.put_inert_param(mask, k)
             # compute the total forcec of the link k
@@ -114,7 +114,7 @@ def dynamic_identification_NE(robo):
             for j in xrange(k + 1):
                 compute_torque(robo_tmp, symo, j, Fjnt, Njnt, 'DG')
         # reset all the parameters to zero
-        robo_tmp.put_inert_param(sympy.zeros(10, 1), k)
+        robo_tmp.put_inert_param(sympy.zeros((10, 1)), k)
         # compute model for the joint parameters
         compute_joint_torque_deriv(symo, robo.IA[k],
                                    robo.qddot[k], k)
@@ -204,7 +204,7 @@ def inertia_matrix(robo):
     AJE1 = ParamsInit.init_vec(robo)
     f = ParamsInit.init_vec(robo, ext=1)
     n = ParamsInit.init_vec(robo, ext=1)
-    A = sympy.zeros(robo.NL, robo.NL)
+    A = sympy.zeros((robo.NL, robo.NL))
     symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'inm')
     title = 'Inertia Matrix using composite links'
@@ -269,7 +269,7 @@ def pseudo_force_NE(robo):
         Dictionary with the information of all the sybstitution
     """
     robo_pseudo = deepcopy(robo)
-    robo_pseudo.qddot = sympy.zeros(robo_pseudo.NL, 1)
+    robo_pseudo.qddot = sympy.zeros((robo_pseudo.NL, 1))
     symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'ccg')
     title = 'Pseudo forces using Newton - Euler Algorith'
@@ -649,8 +649,8 @@ def compute_lambda(robo, symo, j, antRj, antPj, lam):
     lamJMS = symo.mat_replace(Matrix(lamJMS_list).T, 'LamMS', j)
     lamJM = symo.mat_replace(vec_mut_M(antPj[j]), 'LamM', j)
     lamJ = lamJJ.row_join(lamJMS).row_join(lamJM)
-    lamMS = sympy.zeros(3, 6).row_join(antRj[j]).row_join(antPj[j])
-    lamM = sympy.zeros(1, 10)
+    lamMS = sympy.zeros((3, 6)).row_join(antRj[j]).row_join(antPj[j])
+    lamM = sympy.zeros((1, 10))
     lamM[9] = 1
     lam[j] = Matrix([lamJ, lamMS, lamM])
 
@@ -727,7 +727,7 @@ def group_param_fix(robo, symo, j, lam):
         Kant = robo.get_inert_param(robo.ant[j])
         Kant += lam[j]*Kj
         robo.put_inert_param(Kant, robo.ant[j])
-    robo.put_inert_param(sympy.zeros(10, 1), j)
+    robo.put_inert_param(sympy.zeros((10, 1)), j)
 
 
 def group_param_prism(robo, symo, j, antRj):
@@ -745,7 +745,7 @@ def group_param_prism(robo, symo, j, antRj):
     if robo.ant[j] != -1:
         antJj = antRj[j]*robo.J[j]*antRj[j].T
         robo.J[robo.ant[j]] += antJj
-    robo.J[j] = sympy.zeros(3, 3)
+    robo.J[j] = sympy.zeros((3, 3))
 
 
 def group_param_prism_spec(robo, symo, j, antRj, antPj):

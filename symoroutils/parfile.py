@@ -53,7 +53,7 @@ def _extract_vals(robo, key, line):
     items_proc = []
     prev_item = False
     for i, v in enumerate(items):
-        if v.find('atan2') == -1 and not prev_item:
+        if ('atan2' not in v) and not prev_item:
             items_proc.append(v)
         elif prev_item:
             items_proc.append('%s,%s' % (items[i-1], v))
@@ -135,17 +135,16 @@ def readpar(robo_name, file_path):
         f.seek(0)
         flag = tools.OK
         for line in f.readlines():
-            if line.find('(*') != -1:
+            if '(*' in line:
                 continue
             line = line.replace('Pi', 'pi')
             match = re.match(r'^(.*)=.*\{(.*)', line)
             if match:
-                acc_line == ''
                 key = match.group(1).strip()
                 acc_line = match.group(2).strip()
             else:
                 acc_line += line
-            if acc_line.find('}') != -1:
+            if '}' in acc_line:
                 if key in _keyword_repl:
                     key = _keyword_repl[key]
                 if key in _keywords:

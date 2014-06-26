@@ -111,7 +111,7 @@ def _extract_const_transforms(tr_list, knowns):
 
 def _look_for_eq(symo, M_eq, knowns, th_all, r_all):
     cont_search = False
-    eq_candidates = [list() for list_index in xrange(5)]
+    eq_candidates = [[]] * 5
     for e1 in xrange(3):
         for e2 in xrange(4):
             eq = M_eq[e1, e2]
@@ -437,7 +437,9 @@ def _solve_type_5(symo, X1, Y1, Z1, X2, Y2, Z2, th, r):
     W1 = symo.replace(Z1/X1, 'W1', r)
     V2 = symo.replace(Y2/X2, 'V2', r)
     W2 = symo.replace(Z2/X2, 'W2', r)
+    # TODO: add parameter x to call to _solve_square
     _solve_square(W1**2 + W2**2, 2*(V1*W1 + V2*W2), V1**2 + V2**2, r)
+    # TODO: add parameters Z2 and the to call to _solve_type_3
     _solve_type_3(X1, tools.ZERO, Y1 + Z1*r, tools.ZERO, X2, Y2 + Z2*r)
 
 
