@@ -86,11 +86,9 @@ def make_file_path(robot, ext=None):
         The file path (string) created.
     """
     if ext is None:
-        fname = '%s.par' % get_clean_name(robot.name)
+        fname = '{0}.par'.format(get_clean_name(robot.name))
     else:
-        fname = '%s_%s.txt' % (get_clean_name(robot.name), ext)
+        fname = '{0}_{1}.txt'.format(get_clean_name(robot.name), ext)
     file_path = os.path.join(robot.directory, fname)
     make_folders(robot.directory)
     return file_path
-
-

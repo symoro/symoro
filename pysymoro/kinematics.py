@@ -12,7 +12,6 @@ from pysymoro.geometry import dgm, Transform
 from pysymoro.geometry import compute_rot_trans, Z_AXIS
 from symoroutils import symbolmgr
 from symoroutils import tools
-from symoroutils import samplerobots
 from symoroutils.paramsinit import ParamsInit
 
 
@@ -297,7 +296,7 @@ def jacobian(robo, n, i, j):
 def jacobian_determinant(robo, n, i, j, rows, cols):
     symo = symbolmgr.SymbolManager(None)
     J, L = _jac(robo, symo, n, i, j, trig_subs=False)
-    J_reduced = zeros(len(rows), len(cols))
+    J_reduced = zeros((len(rows), len(cols)))
     for i, i_old in enumerate(rows):
         for j, j_old in enumerate(cols):
             J_reduced[i, j] = J[i_old, j_old]

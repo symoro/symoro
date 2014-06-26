@@ -113,7 +113,7 @@ def get_max_coef(sym, x_term):
 
 
 def get_pos_neg(str_term):
-    if str_term.find('m') != -1:
+    if 'm' in str_term:
         s_split = str_term.split('m')
         return s_split[0], s_split[1]
     else:
