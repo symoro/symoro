@@ -1,27 +1,45 @@
 SYMORO
 ======
 
-SYmbolic MOdeling of RObots software. The language is python and the key library is sympy.
+SYOMRO is a software package for SYmbolic MOdeling of RObots.
 
-This is an open-source version of SYMORO software written in Python. Hence you do not need Mathematica license to use it. 
-
-For more details on SYMORO, please see http://www.irccyn.ec-nantes.fr/spip.php?article601&lang=en
+This software package is developed as part of the OpenSYMORO project by
+the robotics team at [IRCCyN][lk:irccyn] under the supervision of Wisama
+Khalil.
 
 
 Requirements
 ------------
 + python (>= 2.7, &nbsp;&nbsp; 3.* is not supported)
-+ sympy (>= 0.7.3)
++ sympy (== 0.7.3)
 + numpy (>= 1.6.1)
-+ wxPython (>= 2.8.12.1)
++ wxPython (>= 2.8.12)
 + OpenGL (>= 3.0.1b2)
 
 
-Installation and Usage
-----------------------
+Getting Started
+---------------
 + Run `python setup.py develop` the very first time so that
   python-egg-info is set up correctly and the relevant folders are
   included in the PATH.
 + To use the software, run `symoro-bin`. This script is present in
   the `bin/` folder.
++ If you have any queries, contact [Aravind][el:aravind].
+
+
+Licence
+-------
+See [LICENCE][lk:licence].
+
+
+Contributors
+------------
+See [Contributors][lk:contributors].
+
+
+[lk:irccyn]: http://www.irccyn.ec-nantes.fr/
+[el:aravind]: mailto:Aravindkumar.Vijayalingam@eleves.ec-nantes.fr
+[lk:licence]: https://github.com/symoro/symoro/blob/master/LICENCE
+[lk:contributors]: https://github.com/symoro/symoro/graphs/contributors
+
 
