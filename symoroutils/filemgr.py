@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
 
+# This file is part of the OpenSYMORO project. Please see
+# https://github.com/symoro/symoro/blob/master/LICENCE for the licence.
+
+
 """Perform file management operations for the SYMORO package."""
 
 

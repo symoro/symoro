@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 
 
+# This file is part of the OpenSYMORO project. Please see
+# https://github.com/symoro/symoro/blob/master/LICENCE for the licence.
+
+
 """
 This module contains the miscellaneous helper functions needed by the
 SYMORO software package.

@@ -1,10 +1,15 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+
+# This file is part of the OpenSYMORO project. Please see
+# https://github.com/symoro/symoro/blob/master/LICENCE for the licence.
+
 
 """
 This module of SYMORO package provides symbolic
 solutions for inverse geompetric problem.
 """
+
 
 from heapq import heapify, heappop
 from sympy import var, sin, cos, eye, atan2, sqrt, pi
