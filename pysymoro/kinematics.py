@@ -80,7 +80,7 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
     """
 #    symo.write_geom_param(robo, 'Jacobian')
     # TODO: Check projection frames, rewrite DGM call for higher efficiency
-    M = []
+    J_col_list = []
     if chain is None:
         chain = robo.chain(n)
         print chain
@@ -109,8 +109,8 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
             J_col = dvdq.col_join(iak)
         else:
             J_col = Matrix([0, 0, 0, 0, 0, 0])
-        M.append(J_col.T)
-    Jac = Matrix(M).T
+        J_col_list.append(J_col.T)
+    Jac = Matrix(J_col_list).T
     Jac = Jac.applyfunc(symo.simp)
     iRj = Transform.R(iTk_dict[i, j])
     jTn = dgm(robo, symo, j, n, fast_form=False, trig_subs=trig_subs)
