@@ -19,11 +19,7 @@ Requirements
 
 Getting Started
 ---------------
-+ Run `python setup.py develop` the very first time so that
-  python-egg-info is set up correctly and the relevant folders are
-  included in the PATH.
-+ To use the software, run `symoro-bin`. This script is present in
-  the `bin/` folder.
++ For setting up SYMORO, see [Setup][lk:setup].
 + If you have any queries, contact [Aravind][el:aravind].
 
 
@@ -38,6 +34,7 @@ See [Contributors][lk:contributors].
 
 
 [lk:irccyn]: http://www.irccyn.ec-nantes.fr/
+[lk:setup]: https://github.com/symoro/symoro/wiki/Setup
 [el:aravind]: mailto:Aravindkumar.Vijayalingam@eleves.ec-nantes.fr
 [lk:licence]: https://github.com/symoro/symoro/blob/master/LICENCE
 [lk:contributors]: https://github.com/symoro/symoro/graphs/contributors
