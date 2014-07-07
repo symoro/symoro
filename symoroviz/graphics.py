@@ -219,7 +219,7 @@ class myGLCanvas(GLCanvas):
         symo = symbolmgr.SymbolManager(sydi=self.pars_num)
         loop_solve(self.robo, symo)
         self.l_solver = symo.gen_func('IGM_gen', self.q_pas_sym,
-                                      self.q_act_sym, multival=True)
+                                      self.q_act_sym)
 
     def centralize_to_frame(self, index):
         q_vec = [self.jnt_dict[sym].q for sym in self.q_sym]
@@ -383,8 +383,10 @@ class MainWindow(wx.Frame):
 
         self.solve_loops = False
         self.canvas = myGLCanvas(self, robo, self.params_dict, size=(600, 600))
-        self.p = wx.Panel(self)
+        self.p = wx.lib.scrolledpanel.ScrolledPanel(self, -1)
+        self.p.SetMinSize((350,600))
         self.init_ui()
+        self.p.SetupScrolling()
         self.update_spin_controls()
 
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -405,15 +407,15 @@ class MainWindow(wx.Frame):
         self.tButton = wx.ToggleButton(self.p, label="All Frames")
         self.tButton.SetValue(True)
         self.tButton.Bind(wx.EVT_TOGGLEBUTTON, self.OnShowAllFrames)
-        gridControl.Add(self.tButton, pos=(1, 0), flag=wx.ALIGN_CENTER)
+        gridControl.Add(self.tButton, pos=(3, 0), flag=wx.ALIGN_CENTER)
 
         btnReset = wx.Button(self.p, label="Reset All")
         btnReset.Bind(wx.EVT_BUTTON, self.OnResetJoints)
-        gridControl.Add(btnReset, pos=(3, 0), flag=wx.ALIGN_CENTER)
+        gridControl.Add(btnReset, pos=(5, 0), flag=wx.ALIGN_CENTER)
 
         btnRandom = wx.Button(self.p, label="Random")
         btnRandom.Bind(wx.EVT_BUTTON, self.OnFindRandom)
-        gridControl.Add(btnRandom, pos=(4, 0), flag=wx.ALIGN_CENTER)
+        gridControl.Add(btnRandom, pos=(6, 0), flag=wx.ALIGN_CENTER)
 
         self.spin_ctrls = {}
         gridJnts = wx.GridBagSizer(hgap=10, vgap=10)
@@ -443,7 +445,7 @@ class MainWindow(wx.Frame):
             self.radioBox = wx.RadioBox(self.p, choices=choise_list,
                                         style=wx.RA_SPECIFY_ROWS)
             self.radioBox.Bind(wx.EVT_RADIOBOX, self.OnSelectLoops)
-            gridControl.Add(self.radioBox, pos=(5, 0), flag=wx.ALIGN_CENTER)
+            gridControl.Add(self.radioBox, pos=(7, 0), flag=wx.ALIGN_CENTER)
 
         choices = []
         for jnt in self.canvas.jnt_objs:
@@ -454,23 +456,23 @@ class MainWindow(wx.Frame):
         self.check_list.SetChecked(range(len(choices)))
         self.check_list.Bind(wx.EVT_CHECKLISTBOX, self.CheckFrames)
         self.check_list.Bind(wx.EVT_LISTBOX, self.SelectFrames)
-        gridControl.Add(self.check_list, pos=(2, 0), flag=wx.ALIGN_CENTER)
+        gridControl.Add(self.check_list, pos=(4, 0), flag=wx.ALIGN_CENTER)
 
-        q_box = wx.StaticBoxSizer(wx.StaticBox(self.p, label='Joint variables'))
-        q_box.Add(gridJnts, 0, wx.ALL, 10)
-
-        ver_sizer = wx.BoxSizer(wx.VERTICAL)
-        ver_sizer.Add(q_box)
         lbl_length = wx.StaticText(self.p, label='Joint size')
         self.jnt_slider = wx.Slider(self.p, minValue=1, maxValue=100)
         self.jnt_slider.SetValue(100*self.canvas.length)
         self.jnt_slider.Bind(wx.EVT_SCROLL, self.OnSliderChanged)
-        ver_sizer.Add(lbl_length, 0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, 15)
-        ver_sizer.Add(self.jnt_slider, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 5)
+        gridControl.Add(lbl_length, pos=(1, 0), flag=wx.ALIGN_CENTER)
+        gridControl.Add(self.jnt_slider, pos=(2, 0), flag=wx.ALIGN_CENTER)
 
-        top_sizer.Add(ver_sizer, 0, wx.ALL, 10)
-        top_sizer.AddSpacer(10)
+        q_box = wx.StaticBoxSizer(wx.StaticBox(self.p, label='Joint variables'))
+        q_box.Add(gridJnts, 0, wx.ALL, 10)
+        ver_sizer = wx.BoxSizer(wx.VERTICAL)
+        ver_sizer.Add(q_box)
+
         top_sizer.Add(gridControl, 0, wx.ALL, 10)
+        top_sizer.AddSpacer(10)
+        top_sizer.Add(ver_sizer, 0, wx.ALL, 10)
 
         # button1 = wx.Button(self.panel, label="TEXT 1")
         # button2 = wx.Button(self.panel, label="TEXT 2")
@@ -485,7 +487,7 @@ class MainWindow(wx.Frame):
         # border = wx.BoxSizer()
         # border.Add(sizer, flag=wx.ALL | wx.EXPAND, border=5)
 
-        self.p.SetSizerAndFit(top_sizer)
+        self.p.SetSizer(top_sizer)
 
     def OnChangeRepresentation(self, evt):
         self.canvas.representation(evt.EventObject.GetValue())

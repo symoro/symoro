@@ -21,13 +21,14 @@ from symoroutils import tools
 
 class DialogDefinition(wx.Dialog):
     """Creates the dialog box to define a new robot."""
-    def __init__(self, prefix, name, nl, nj, structure, is_mobile, parent=None):
+    def __init__(self, prefix, name, nl, nj, structure, is_floating,
+            is_wmr, parent=None):
         super(DialogDefinition, self).__init__(parent, style=wx.SYSTEM_MENU |
                                 wx.CAPTION | wx.CLOSE_BOX | wx.CLIP_CHILDREN)
-        self.init_ui(name, nl, nj, is_mobile, structure)
+        self.init_ui(name, nl, nj, is_floating, is_wmr, structure)
         self.SetTitle(prefix + ": New robot definition")
 
-    def init_ui(self, name, nl, nj, is_mobile, structure):
+    def init_ui(self, name, nl, nj, is_floating, is_wmr, structure):
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         #title
         label_main = wx.StaticText(self, label="Robot definition")
@@ -62,15 +63,21 @@ class DialogDefinition(wx.Dialog):
         self.cmb_structure.Bind(wx.EVT_COMBOBOX, self.OnTypeChanged)
         self.OnTypeChanged(None)
         main_sizer.Add(grid, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 15)
-        self.ch_is_mobile = wx.CheckBox(self, label=' Is mobile')
-        self.ch_is_mobile.Value = is_mobile
+        self.ch_is_floating = wx.CheckBox(self, label=' Is Floating Base')
+        self.ch_is_floating.Value = is_floating
+        self.ch_is_wmr = wx.CheckBox(
+            self, label=' Is Wheeled Mobile Robot'
+        )
+        self.ch_is_wmr.Value = is_wmr
         self.ch_keep_geo = wx.CheckBox(self, label=' Keep geometric parameters')
         self.ch_keep_geo.Value = True
         self.ch_keep_dyn = wx.CheckBox(self, label=' Keep dynamic parameters')
         self.ch_keep_dyn.Value = True
         self.ch_keep_base = wx.CheckBox(self, label=' Keep base parameters')
         self.ch_keep_base.Value = True
-        main_sizer.Add(self.ch_is_mobile, 0,
+        main_sizer.Add(self.ch_is_floating, 0,
+                       wx.LEFT | wx.RIGHT | wx.ALIGN_LEFT, 15)
+        main_sizer.Add(self.ch_is_wmr, 0,
                        wx.LEFT | wx.RIGHT | wx.ALIGN_LEFT, 15)
         main_sizer.Add(self.ch_keep_geo, 0,
                        wx.TOP | wx.LEFT | wx.ALIGN_LEFT, 15)
@@ -110,12 +117,22 @@ class DialogDefinition(wx.Dialog):
         name = self.FindWindowByName('name').Value
         nl = int(self.spin_links.Value)
         nj = int(self.spin_joints.Value)
-        return {'init_pars': (name, nl, nj, 2*nj - nl,
-                               self.ch_is_mobile.Value,
-                               self.cmb_structure.Value),
-                'keep_geo': self.ch_keep_geo.Value,
-                'keep_dyn': self.ch_keep_dyn.Value,
-                'keep_base': self.ch_keep_base.Value}
+        params = {
+            'init_pars': (
+                name, nl, nj, 2*nj - nl,
+                self.ch_is_floating.Value, self.cmb_structure.Value
+            ),
+            'name': name,
+            'num_links': nl,
+            'num_joints': nj,
+            'structure': self.cmb_structure.Value,
+            'is_floating': self.ch_is_floating.Value,
+            'is_wmr': self.ch_is_wmr.Value,
+            'keep_geo': self.ch_keep_geo.Value,
+            'keep_dyn': self.ch_keep_dyn.Value,
+            'keep_base': self.ch_keep_base.Value
+        }
+        return params
 
 
 class DialogVisualisation(wx.Dialog):
@@ -132,7 +149,7 @@ class DialogVisualisation(wx.Dialog):
         return len(self.syms) > 0
 
     def construct_sym(self):
-        params = self.robo.get_geom_head()[4:]
+        params = ['gamma', 'b', 'alpha', 'd', 'theta', 'r']
         q_vec = self.robo.q_vec
         self.syms = set()
         for par in params:

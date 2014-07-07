@@ -44,17 +44,16 @@ class DialogJacobian(wx.Dialog):
         choices = [str(i) for i in reversed(chain + [0])]
         label = wx.StaticText(self, label='Projection frame ( i )')
         sizer.Add(label, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
+        self.cmb_proj = wx.ComboBox(self, size=(50, -1),
+                                    choices=choices, style=wx.CB_READONLY)
+        self.cmb_proj.SetSelection(0)
+        sizer.Add(self.cmb_proj, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 10)
+        label = wx.StaticText(self, label='Intermediate frame ( j )')
+        sizer.Add(label, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
         self.cmb_inter = wx.ComboBox(self, size=(50, -1),
                                      choices=choices, style=wx.CB_READONLY)
         self.cmb_inter.SetSelection(0)
         sizer.Add(self.cmb_inter, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 10)
-        label = wx.StaticText(self, label='Intermediate frame ( j )')
-        sizer.Add(label, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 2)
-        self.cmb_proj = wx.ComboBox(self, size=(50, -1),
-                                    choices=choices, style=wx.CB_READONLY)
-        self.cmb_proj.SetSelection(len(choices)-1)
-        self.cmb_proj.SetSelection(0)
-        sizer.Add(self.cmb_proj, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 10)
         hor_sizer = wx.BoxSizer(wx.HORIZONTAL)
         ok_btn = wx.Button(self, wx.ID_OK, "OK")
         ok_btn.Bind(wx.EVT_BUTTON, self.OnOK)

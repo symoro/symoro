@@ -524,3 +524,4 @@ def _get_coefs(eq, A1, A2, *xs):
     is_ok = True
     is_ok &= _check_const((X, Y, Z), *xs)
     return X, Y, Z, is_ok
+

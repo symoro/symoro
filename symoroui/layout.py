@@ -20,6 +20,7 @@ from pysymoro.robot import Robot
 from pysymoro import geometry
 from pysymoro import kinematics
 from pysymoro import dynamics
+from pysymoro import fldyn
 from pysymoro import invgeom
 from symoroutils import parfile
 from symoroutils import filemgr
@@ -44,8 +45,9 @@ class MainFrame(wx.Frame):
         self.create_menu()
         # set default robot
         self.robo = samplerobots.planar2r()
-        # object to store different ui elements
+        # object to store different ui elements and their keys
         self.widgets = {}
+        self.widget_keys = {}
         # object to store parameter values got from dialog box input
         self.par_dict = {}
         # setup panel and sizer for content
@@ -91,6 +93,7 @@ class MainFrame(wx.Frame):
                 )
                 ctrl.Bind(wx.EVT_KILL_FOCUS, handler)
             self.widgets[name] = ctrl
+            self.widget_keys[key] = ctrl
             szr_ele = wx.BoxSizer(wx.HORIZONTAL)
             szr_ele.Add(
                 wx.StaticText(
@@ -178,6 +181,7 @@ class MainFrame(wx.Frame):
                     id=idx, size=(60, -1)
                 )
                 self.widgets[name] = txt_z_element
+                self.widget_keys[name.lower()] = txt_z_element
                 txt_z_element.Bind(
                     wx.EVT_KILL_FOCUS, self.OnZParamChanged
                 )
@@ -232,6 +236,7 @@ class MainFrame(wx.Frame):
             getattr(self, ui_labels.DYN_PARAMS['link'].handler)
         )
         self.widgets['link'] = cmb_link
+        self.widget_keys['link'] = cmb_link
         szr_link = wx.BoxSizer(wx.HORIZONTAL)
         szr_link.Add(
             wx.StaticText(
@@ -271,13 +276,13 @@ class MainFrame(wx.Frame):
         # right col - joint velocity and acceleration box
         szr_joint_velacc = wx.StaticBoxSizer(
             wx.StaticBox(
-                self.panel, label=ui_labels.BOX_TITLES['joint_vel_acc']
+                self.panel, label=ui_labels.BOX_TITLES['joint_params']
             ), wx.HORIZONTAL
         )
         szr_grd_joint_velacc = wx.GridBagSizer(5, 5)
         self.params_in_grid(
-            szr_grd_joint_velacc, elements=ui_labels.JOINT_VEL_ACC,
-            rows=3, cols=1, width=75,
+            szr_grd_joint_velacc, elements=ui_labels.JOINT_PARAMS,
+            rows=3, cols=2, width=75,
         )
         szr_joint_velacc.Add(szr_grd_joint_velacc,
             flag=wx.ALL | wx.ALIGN_CENTER, border=2
@@ -332,7 +337,7 @@ class MainFrame(wx.Frame):
         self.update_dyn_params()
 
     def OnJointChanged(self, event):
-        self.update_vel_params()
+        self.update_joint_params()
 
     def update_params(self, index, pars):
         for par in pars:
@@ -340,28 +345,36 @@ class MainFrame(wx.Frame):
             widget.ChangeValue(str(self.robo.get_val(index, par)))
 
     def update_geo_params(self):
+        pars = self._extract_param_names(ui_labels.GEOM_PARAMS)
         index = int(self.widgets['frame'].Value)
-        for par in self.robo.get_geom_head()[1:4]:
+        for par in pars[1:4]:
             self.widgets[par].SetValue(str(self.robo.get_val(index, par)))
-        self.update_params(index, self.robo.get_geom_head()[4:])
+        self.update_params(index, pars[4:])
 
     def update_dyn_params(self):
-        pars = self.robo.get_dynam_head()[1:]
-        # cut first and last 3 elements
-        pars += self.robo.get_ext_dynam_head()[1:-3]
+        pars = self._extract_param_names(ui_labels.DYN_PARAMS)
         index = int(self.widgets['link'].Value)
         self.update_params(index, pars)
 
-    def update_vel_params(self):
-        pars = self.robo.get_ext_dynam_head()[-3:]
+    def update_joint_params(self):
+        pars = self._extract_param_names(ui_labels.JOINT_PARAMS)
         index = int(self.widgets['joint'].Value)
-        self.update_params(index, pars)
+        self.widgets[pars[-1]].SetValue(
+            str(self.robo.get_val(index, pars[-1]))
+        )
+        self.update_params(index, pars[:-1])
 
     def update_base_twist_params(self):
-        for name in self.robo.get_base_vel_head()[1:]:
-            for i, c in enumerate(['X', 'Y', 'Z']):
-                widget = self.widgets[name + c]
-                widget.ChangeValue(str(self.robo.get_val(i, name)))
+        pars = dict(
+            ui_labels.BASE_VEL_ACC.items() + \
+            ui_labels.GRAVITY_CMPNTS.items()
+        )
+        for key in pars:
+            par = pars[key].name
+            idx = pars[key].id
+            name = par[:-1]
+            widget = self.widgets[par]
+            widget.ChangeValue(str(self.robo.get_val(idx, name)))
 
     def update_z_params(self):
         T = self.robo.Z
@@ -369,28 +382,43 @@ class MainFrame(wx.Frame):
             widget = self.widgets['Z' + str(i)]
             widget.ChangeValue(str(T[i]))
 
+    def _extract_param_names(self, params):
+        names = list()
+        for key in params:
+            if key in ['frame', 'link', 'joint']: continue
+            names.append(params[key].name)
+        return names
+
     def feed_data(self):
         # Robot Type
-        names = [('name', self.robo.name), ('NF', self.robo.nf),
-                 ('NL', self.robo.nl), ('NJ', self.robo.nj),
-                 ('type', self.robo.structure),
-                 ('mobile', self.robo.is_mobile),
-                 ('loops', self.robo.nj-self.robo.nl)]
+        names = [
+            ('name', self.robo.name), ('NF', self.robo.nf),
+            ('NL', self.robo.nl), ('NJ', self.robo.nj),
+            ('type', self.robo.structure),
+            ('floating', self.robo.is_floating),
+            ('wmr', self.robo.is_wmr),
+            ('loops', self.robo.nj-self.robo.nl)
+        ]
         for name, info in names:
             label = self.widgets[name]
             label.SetLabel(str(info))
-        lsts = [('frame', [str(i) for i in range(1, self.robo.NF)]),
-                ('link',  [str(i) for i in range(int(not self.robo.is_mobile),
-                                                 self.robo.NL)]),
-                ('joint', [str(i) for i in range(1, self.robo.NJ)]),
-                ('ant', ['0']), ('sigma', ['0', '1', '2']), ('mu', ['0', '1'])]
+        lsts = [
+            ('frame', [str(i) for i in range(1, self.robo.NF)]),
+            ('link',  [
+                str(i) for i in range(int(not self.robo.is_mobile),
+                self.robo.NL)
+            ]),
+            ('joint', [str(i) for i in range(1, self.robo.NJ)]),
+            ('ant', ['0']), ('sigma', ['0', '1', '2']),
+            ('mu', ['0', '1']), ('eta', ['0', '1'])
+        ]
         for name, lst in lsts:
             cmb = self.widgets[name]
             cmb.SetItems(lst)
             cmb.SetSelection(0)
         self.update_geo_params()
         self.update_dyn_params()
-        self.update_vel_params()
+        self.update_joint_params()
         self.update_base_twist_params()
         self.update_z_params()
         self.changed = False
@@ -554,7 +582,8 @@ class MainFrame(wx.Frame):
         dialog = ui_definition.DialogDefinition(
             ui_labels.MAIN_WIN['prog_name'],
             self.robo.name, self.robo.nl,
-            self.robo.nj, self.robo.structure, self.robo.is_mobile
+            self.robo.nj, self.robo.structure,
+            self.robo.is_floating, self.robo.is_wmr
         )
         if dialog.ShowModal() == wx.ID_OK:
             result = dialog.get_values()
@@ -587,6 +616,7 @@ class MainFrame(wx.Frame):
                 new_robo.v0 = self.robo.v0
                 new_robo.vdot0 = self.robo.vdot0
                 new_robo.G = self.robo.G
+            new_robo.is_wmr = result['is_wmr']
             self.robo = new_robo
             self.robo.directory = filemgr.get_folder_path(self.robo.name)
             self.feed_data()
@@ -749,6 +779,7 @@ class MainFrame(wx.Frame):
 
     def OnInverseDynamic(self, event):
         dynamics.inverse_dynamic_NE(self.robo)
+        fldyn.fl_inverse_dynamic_model(self.robo)
         self.model_success('idm')
 
     def OnInertiaMatrix(self, event):

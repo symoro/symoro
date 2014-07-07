@@ -10,7 +10,7 @@ This module of SYMORO package computes the kinematic models.
 """
 
 
-from sympy import Matrix, zeros
+from sympy import Matrix, zeros, trigsimp
 
 from pysymoro.geometry import dgm, Transform
 from pysymoro.geometry import compute_rot_trans, Z_AXIS
@@ -84,9 +84,10 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
     """
     #  symo.write_geom_param(robo, 'Jacobian')
     # TODO: Check projection frames, rewrite DGM call for higher efficiency
-    M = []
+    J_col_list = []
     if chain is None:
         chain = robo.chain(n)
+        print chain
         chain.reverse()
     # chain_ext = chain + [robo.ant[min(chain)]]
     # if not i in chain_ext:
@@ -112,13 +113,14 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
             J_col = dvdq.col_join(iak)
         else:
             J_col = Matrix([0, 0, 0, 0, 0, 0])
-        M.append(J_col.T)
-    Jac = Matrix(M).T
+        J_col_list.append(J_col.T)
+    Jac = Matrix(J_col_list).T
     Jac = Jac.applyfunc(symo.simp)
     iRj = Transform.R(iTk_dict[i, j])
     jTn = dgm(robo, symo, j, n, fast_form=False, trig_subs=trig_subs)
     jPn = Transform.P(jTn)
     L = -tools.skew(iRj*jPn)
+    L = L.applyfunc(trigsimp)
     if forced:
         symo.mat_replace(Jac, 'J', '', forced)
         L = symo.mat_replace(L, 'L', '', forced)
