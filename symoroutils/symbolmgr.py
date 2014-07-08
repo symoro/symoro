@@ -412,7 +412,7 @@ class SymbolManager(object):
             Data to be written. If empty, it adds an empty line
         """
         if self.file_out == 'disp':
-            print line
+            print(line)
         elif self.file_out is not None:
             self.file_out.write(str(line) + '\n')
 

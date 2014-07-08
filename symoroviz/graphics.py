@@ -79,7 +79,6 @@ class myGLCanvas(GLCanvas):
         if minv == inf:
             minv = 1.
         self.length = 0.4 * minv
-        #print self.length
         for jnt in self.jnt_objs:
             if isinstance(jnt, PrismaticJoint):
                 jnt.r = 3.5 * self.length

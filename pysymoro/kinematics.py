@@ -87,7 +87,6 @@ def _jac(robo, symo, n, i, j, chain=None, forced=False, trig_subs=False):
     J_col_list = []
     if chain is None:
         chain = robo.chain(n)
-        print chain
         chain.reverse()
     # chain_ext = chain + [robo.ant[min(chain)]]
     # if not i in chain_ext:

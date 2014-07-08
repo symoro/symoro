@@ -38,7 +38,6 @@ def planar2r():
         2: {'gravity': var('G3')},
     }
     robo.update_params('misc', params)
-    print(robo)
     return robo
 
 
