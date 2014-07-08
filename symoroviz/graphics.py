@@ -396,7 +396,7 @@ class MainWindow(wx.Frame):
             self, robo, self.params_dict, size=(600, 600)
         )
         self.p = wx.lib.scrolledpanel.ScrolledPanel(self, -1)
-        self.p.SetMinSize((350,600))
+        self.p.SetMinSize((350,650))
         self.init_ui()
         self.p.SetupScrolling()
         self.update_spin_controls()
@@ -423,6 +423,27 @@ class MainWindow(wx.Frame):
         btnRandom = wx.Button(self.p, label="Random")
         btnRandom.Bind(wx.EVT_BUTTON, self.OnFindRandom)
         gridControl.Add(btnRandom, pos=(6, 0), flag=wx.ALIGN_CENTER)
+        btnHome = wx.Button(self.p, label="Default Position")
+        btnHome.Bind(wx.EVT_BUTTON, self.OnHomePosition)
+        gridControl.Add(btnHome, pos=(7,0), flag=wx.ALIGN_CENTER)
+        move_help = """
+        To Translate:
+        Left button +
+        move mouse
+
+        To Rotate:
+        Right button +
+        move mouse
+
+        To Zoom:
+        Left and Right
+        button + move
+        mouse
+        """
+        gridControl.Add(
+            wx.StaticText(self.p, label=move_help),
+            pos=(8,0), flag=wx.ALIGN_LEFT
+        )
         self.spin_ctrls = {}
         gridJnts = wx.GridBagSizer(hgap=10, vgap=10)
         p_index = 0
@@ -530,6 +551,9 @@ class MainWindow(wx.Frame):
 
     def OnFindRandom(self, evt):
         pass
+
+    def OnHomePosition(self, evt):
+        self.canvas.centralize_to_frame(0)
 
     def OnSetJointVar(self, evt):
         """Sets joint values from the spin-controls
