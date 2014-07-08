@@ -24,15 +24,18 @@ from symoroutils import samplerobots
 from symoroutils import symbolmgr
 from symoroutils import tools
 
-from objects import Frame, RevoluteJoint, FixedJoint, PrismaticJoint
+from symoroviz.objects import Frame
+from symoroviz.objects import RevoluteJoint
+from symoroviz.objects import FixedJoint
+from symoroviz.objects import PrismaticJoint
 
 #TODO: Fullscreen camera rotation bug
 #TODO: X-, Z-axis
 #TODO: Random button
 
-class myGLCanvas(GLCanvas):
+class VizGlCanvas(GLCanvas):
     def __init__(self, parent, robo, params, size=(600, 600)):
-        super(myGLCanvas, self).__init__(parent, size=size)
+        super(VizGlCanvas, self).__init__(parent, size=size)
         self.Bind(wx.EVT_PAINT, self.OnPaintAll)
         self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Bind(wx.EVT_LEFT_DOWN, self.OnMouseDown)
@@ -49,9 +52,9 @@ class myGLCanvas(GLCanvas):
         self.q_pas_sym = self.robo.q_passive
         self.q_act_sym = self.robo.q_active
         self.pars_num = params
-        self.init = 0
-        self.distance = 5.
-        self.fov = 40.
+        self.init = 0.0
+        self.distance = 5.0
+        self.fov = 40.0
         self.jnt_objs = []
         self.construct_hierarchy()
         self.dgms = {}
@@ -98,7 +101,6 @@ class myGLCanvas(GLCanvas):
                 except:
                     if val in self.q_sym:
                         params.append(0.)
-
             if self.robo.sigma[child_i] == 0:
                 child_frame = RevoluteJoint(*params)
             elif self.robo.sigma[child_i] == 1:
@@ -112,8 +114,10 @@ class myGLCanvas(GLCanvas):
     def get_joints_dictionary(self):
         result = {}
         for jnt_i in range(self.robo.NF):
-            result[jnt_i] = [i for i, child in enumerate(self.robo.ant)
-                             if child == jnt_i]
+            result[jnt_i] = [
+                i for i, child in enumerate(self.robo.ant)
+                if child == jnt_i
+            ]
         return result
 
     def construct_hierarchy(self):
@@ -152,17 +156,25 @@ class myGLCanvas(GLCanvas):
     def OnMouseMotion(self, evt):
         if evt.Dragging():
             x, y = evt.GetPosition()
-            if evt.LeftIsDown():
-                dx, dy = x - self.lastx, y - self.lasty
-                self.lastx, self.lasty = x, y
-                coef = self.distance/self.length*sin(radians(self.fov/2.))
-                self.hor_angle += dx*coef/self.size.width
-                self.ver_angle += dy*coef/self.size.height
-                self.ver_angle = max(min(pi/2, self.ver_angle), -pi/2)
-            elif evt.RightIsDown():
-                dy = y - self.lasty
-                self.lasty = y
+            dx, dy = x - self.lastx, y - self.lasty
+            self.lastx, self.lasty = x, y
+            if evt.LeftIsDown() and evt.RightIsDown():
+                # zoom
                 self.distance *= 1 + 2 * float(dy) / self.size.height
+            else:
+                coef = self.distance / self.length * \
+                    sin(radians(self.fov/2.0))
+                if evt.RightIsDown():
+                    # rotate
+                    self.hor_angle += dx * (coef / self.size.width)
+                    self.ver_angle += dy * (coef / self.size.height)
+                    self.ver_angle = max(min(pi/2, self.ver_angle), -pi/2)
+                elif evt.LeftIsDown():
+                    # translate
+                    self.cen_x -= dx * (coef / self.size.width)
+                    self.cen_x = max(min(pi/2, self.cen_x), -pi/2)
+                    self.cen_z += dy * (coef / self.size.height)
+                    self.cen_z = max(min(pi/2, self.cen_z), -pi/2)
             self.CameraTransformation()
             self.Refresh(False)
 
@@ -217,8 +229,9 @@ class myGLCanvas(GLCanvas):
     def generate_loop_fcn(self):
         symo = symbolmgr.SymbolManager(sydi=self.pars_num)
         loop_solve(self.robo, symo)
-        self.l_solver = symo.gen_func('IGM_gen', self.q_pas_sym,
-                                      self.q_act_sym)
+        self.l_solver = symo.gen_func(
+            'IGM_gen', self.q_pas_sym, self.q_act_sym
+        )
 
     def centralize_to_frame(self, index):
         q_vec = [self.jnt_dict[sym].q for sym in self.q_sym]
@@ -242,7 +255,8 @@ class myGLCanvas(GLCanvas):
             self.cen_y-self.distance*cos(self.ver_angle)*cos(self.hor_angle),
             self.cen_z+self.distance*sin(self.ver_angle),
             self.cen_x, self.cen_y, self.cen_z,
-            0.0, 0.0, 1.0)
+            0.0, 0.0, 1.0
+        )
 
     # def SetCameraForLabels(self):
     #     gl.glLoadIdentity()
@@ -346,7 +360,6 @@ class myGLCanvas(GLCanvas):
         light_position1 = (-0.3, 0.3, 0.5, 0.0)
         diffuseMaterial = (1., 1., 1., 1.0)
         ambientMaterial = (0.5, .5, .5, 1.0)
-
         gl.glClearColor(1.0, 1.0, 1.0, 1.0)
         gl.glShadeModel(gl.GL_SMOOTH)
         gl.glEnable(gl.GL_DEPTH_TEST)
@@ -359,40 +372,38 @@ class myGLCanvas(GLCanvas):
         gl.glEnable(gl.GL_LIGHTING)
         gl.glEnable(gl.GL_LIGHT0)
         gl.glEnable(gl.GL_LIGHT1)
-
         gl.glColorMaterial(gl.GL_FRONT, gl.GL_DIFFUSE)
         gl.glEnable(gl.GL_COLOR_MATERIAL)
-
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
         glu.gluPerspective(40.0, 1., 0.2, 200.0)
-
         gl.glMatrixMode(gl.GL_MODELVIEW)
         self.CameraTransformation()
 
 
 class MainWindow(wx.Frame):
-    def __init__(self, prefix, robo, params=None, parent=None, identifier=-1):
+    def __init__(
+        self, prefix, robo, params=None, parent=None, identifier=-1
+    ):
         super(MainWindow, self).__init__(
             parent, identifier, prefix + ': Robot representation',
             style=wx.DEFAULT_FRAME_STYLE | wx.FULL_REPAINT_ON_RESIZE
         )
         self.robo = robo
         self.params_dict = params if params is not None else {}
-
         self.solve_loops = False
-        self.canvas = myGLCanvas(self, robo, self.params_dict, size=(600, 600))
+        self.canvas = VizGlCanvas(
+            self, robo, self.params_dict, size=(600, 600)
+        )
         self.p = wx.lib.scrolledpanel.ScrolledPanel(self, -1)
         self.p.SetMinSize((350,600))
         self.init_ui()
         self.p.SetupScrolling()
         self.update_spin_controls()
-
         self.sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.sizer.Add(self.canvas, 1, wx.EXPAND)
         self.sizer.Add(self.p, 0, wx.EXPAND)
         self.SetSizerAndFit(self.sizer)
-
         self.Show()
 
     def init_ui(self):
@@ -402,90 +413,78 @@ class MainWindow(wx.Frame):
         cb.SetValue(True)
         gridControl.Add(cb, pos=(0, 0), flag=wx.ALIGN_CENTER_VERTICAL)
         cb.Bind(wx.EVT_CHECKBOX, self.OnChangeRepresentation)
-
         self.tButton = wx.ToggleButton(self.p, label="All Frames")
         self.tButton.SetValue(True)
         self.tButton.Bind(wx.EVT_TOGGLEBUTTON, self.OnShowAllFrames)
         gridControl.Add(self.tButton, pos=(3, 0), flag=wx.ALIGN_CENTER)
-
         btnReset = wx.Button(self.p, label="Reset All")
         btnReset.Bind(wx.EVT_BUTTON, self.OnResetJoints)
         gridControl.Add(btnReset, pos=(5, 0), flag=wx.ALIGN_CENTER)
-
         btnRandom = wx.Button(self.p, label="Random")
         btnRandom.Bind(wx.EVT_BUTTON, self.OnFindRandom)
         gridControl.Add(btnRandom, pos=(6, 0), flag=wx.ALIGN_CENTER)
-
         self.spin_ctrls = {}
         gridJnts = wx.GridBagSizer(hgap=10, vgap=10)
         p_index = 0
         for sym in self.canvas.q_sym:
-            if sym == 0:
-                continue
+            if sym == 0: continue
             jnt = self.canvas.jnt_dict[sym]
             if isinstance(jnt, RevoluteJoint):
                 label = 'th'
             else:
                 label = 'r'
-            gridJnts.Add(wx.StaticText(self.p, label=label+str(jnt.index)),
-                         pos=(p_index, 0), flag=wx.ALIGN_CENTER_VERTICAL)
-            s = FS.FloatSpin(self.p, size=(70, -1), id=jnt.index,
-                             increment=0.05, min_val=-10., max_val=10.)
+            gridJnts.Add(
+                wx.StaticText(self.p, label=label+str(jnt.index)),
+                pos=(p_index, 0), flag=wx.ALIGN_CENTER_VERTICAL
+            )
+            s = FS.FloatSpin(
+                self.p, size=(70, -1), id=jnt.index, increment=0.05,
+                min_val=-10., max_val=10.0
+            )
             s.Bind(FS.EVT_FLOATSPIN, self.OnSetJointVar)
             s.SetDigits(2)
             # if sym in self.canvas.q_pas_sym:
             #     s.Enable(False)
             self.spin_ctrls[sym] = s
-            gridJnts.Add(s, pos=(p_index, 1), flag=wx.ALIGN_CENTER_VERTICAL)
-            p_index += 1
-
+            gridJnts.Add(
+                s, pos=(p_index, 1), flag=wx.ALIGN_CENTER_VERTICAL
+            )
+            p_index = p_index + 1
         if self.robo.structure == tools.CLOSED_LOOP:
             choise_list = ['Break Loops', 'Make Loops']
-            self.radioBox = wx.RadioBox(self.p, choices=choise_list,
-                                        style=wx.RA_SPECIFY_ROWS)
+            self.radioBox = wx.RadioBox(
+                self.p, choices=choise_list, style=wx.RA_SPECIFY_ROWS
+            )
             self.radioBox.Bind(wx.EVT_RADIOBOX, self.OnSelectLoops)
-            gridControl.Add(self.radioBox, pos=(7, 0), flag=wx.ALIGN_CENTER)
-
+            gridControl.Add(
+                self.radioBox, pos=(7, 0), flag=wx.ALIGN_CENTER
+            )
         choices = []
         for jnt in self.canvas.jnt_objs:
             choices.append("Frame " + str(jnt.index))
-
         self.drag_pos = None
         self.check_list = wx.CheckListBox(self.p, choices=choices)
         self.check_list.SetChecked(range(len(choices)))
         self.check_list.Bind(wx.EVT_CHECKLISTBOX, self.CheckFrames)
         self.check_list.Bind(wx.EVT_LISTBOX, self.SelectFrames)
-        gridControl.Add(self.check_list, pos=(4, 0), flag=wx.ALIGN_CENTER)
-
+        gridControl.Add(
+            self.check_list, pos=(4, 0), flag=wx.ALIGN_CENTER
+        )
         lbl_length = wx.StaticText(self.p, label='Joint size')
         self.jnt_slider = wx.Slider(self.p, minValue=1, maxValue=100)
         self.jnt_slider.SetValue(100*self.canvas.length)
         self.jnt_slider.Bind(wx.EVT_SCROLL, self.OnSliderChanged)
         gridControl.Add(lbl_length, pos=(1, 0), flag=wx.ALIGN_CENTER)
         gridControl.Add(self.jnt_slider, pos=(2, 0), flag=wx.ALIGN_CENTER)
-
-        q_box = wx.StaticBoxSizer(wx.StaticBox(self.p, label='Joint variables'))
+        q_box = wx.StaticBoxSizer(
+            wx.StaticBox(self.p, label='Joint variables')
+        )
         q_box.Add(gridJnts, 0, wx.ALL, 10)
         ver_sizer = wx.BoxSizer(wx.VERTICAL)
         ver_sizer.Add(q_box)
-
         top_sizer.Add(gridControl, 0, wx.ALL, 10)
         top_sizer.AddSpacer(10)
         top_sizer.Add(ver_sizer, 0, wx.ALL, 10)
-
-        # button1 = wx.Button(self.panel, label="TEXT 1")
-        # button2 = wx.Button(self.panel, label="TEXT 2")
-        # check1 = wx.CheckBox(self.panel, label="Show Axes")
-        # self.panel.Bind(wx.EVT_CHECKBOX, None)
-        #
-        # sizer = wx.BoxSizer(wx.VERTICAL)
-        # sizer.Add(button1, flag=wx.BOTTOM, border=5)
-        # sizer.Add(button2, flag=wx.BOTTOM, border=5)
-        # sizer.Add(check1)
-        #
-        # border = wx.BoxSizer()
-        # border.Add(sizer, flag=wx.ALL | wx.EXPAND, border=5)
-
         self.p.SetSizer(top_sizer)
 
     def OnChangeRepresentation(self, evt):
@@ -561,14 +560,3 @@ class MainWindow(wx.Frame):
         self.canvas.change_lengths(self.jnt_slider.Value/100.)
 
 
-if __name__ == '__main__':
-    app = wx.PySimpleApp()
-    from pysymoro import robot
-    robo = samplerobots.rx90()
-    robo.d[3] = 1.
-    robo.r[4] = 1.
-    frame = MainWindow(prefix='', robo=robo)
-    import profile
-    profile.run('frame.canvas.OnPaintAll(wx.CommandEvent())', sort='cumtime')
-    app.MainLoop()
-    app.Destroy()
