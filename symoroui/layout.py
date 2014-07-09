@@ -786,7 +786,7 @@ class MainFrame(wx.Frame):
         self.model_success('inm')
 
     def OnCentrCoriolGravTorq(self, event):
-        dynamics.pseudo_force_NE(self.robo)
+        self.robo.compute_pseudotorques()
         self.model_success('ccg')
 
     def OnDirectDynamicModel(self, event):

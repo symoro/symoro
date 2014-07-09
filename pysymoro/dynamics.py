@@ -278,7 +278,9 @@ def inverse_dynamic_NE(robo):
 
 
 def pseudo_force_NE(robo):
-    """Computes Coriolis, Centrifugal, Gravity, Friction and external
+    """
+    OLD FUNCTION. NOT TO BE USED.
+    Computes Coriolis, Centrifugal, Gravity, Friction and external
     torques using Newton-Euler formulation
 
     Parameters

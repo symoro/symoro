@@ -13,7 +13,7 @@ of the robot parametrizaion container and symbol replacer class.
 
 import re
 import os
-from copy import copy
+import copy
 from itertools import combinations
 
 from sympy import sin, cos, sign, pi
@@ -214,7 +214,7 @@ class Robot(object):
         """
         symo = symbolmgr.SymbolManager()
         symo.file_open(self, 'idm')
-        title = 'Inverse dynamic model using Newton - Euler Algorith'
+        title = 'Inverse dynamic model using Newton - Euler Algorithm'
         symo.write_params_table(self, title, inert=True, dynam=True)
         if 1 in self.eta:
             # with flexible joints
@@ -231,10 +231,32 @@ class Robot(object):
     def compute_ddym(self):
         """
         Compute the Direct Dynamic Model of the robot using the
-        recursive Newton-Euler algorithm. Also choose the Newton-Euler
-        algorithm based on the robot type.
+        recursive Newton-Euler algorithm.
         """
         pass
+
+    def compute_pseudotorques(self):
+        """
+        Compute Coriolis, Centrifugal, Gravity, Friction and external
+        torques using Newton-Euler algortihm.
+        """
+        pseudorobo = copy.deepcopy(self)
+        pseudorobo.qddot = zeros(pseudorobo.NL, 1)
+        symo = symbolmgr.SymbolManager()
+        symo.file_open(self, 'ccg')
+        title = 'Pseudo forces using Newton - Euler Algorithm'
+        symo.write_params_table(self, title, inert=True, dynam=True)
+        if 1 in self.eta:
+            # with flexible joints
+            pass
+        elif self.is_floating:
+            # with rigid joints and floating base
+            fldyn.composite_newton_euler(pseudorobo, symo)
+        else:
+            # with rigid joints and fixed base
+            dynamics.default_newton_euler(pseudorobo, symo)
+        symo.file_close()
+        return symo
 
     @property
     def q_vec(self):
