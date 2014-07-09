@@ -224,7 +224,7 @@ class Robot(object):
             fldyn.composite_newton_euler(self, symo)
         else:
             # with rigid joints and fixed base
-            dynamics.Newton_Euler(self, symo)
+            dynamics.default_newton_euler(self, symo)
         symo.file_close()
         return symo
 

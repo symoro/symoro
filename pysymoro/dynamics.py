@@ -37,7 +37,7 @@ inert_names = ('XXR', 'XYR', 'XZR', 'YYR', 'YZR',
                'ZZR', 'MXR', 'MYR', 'MZR', 'MR')
 
 
-def Newton_Euler(robo, symo):
+def default_newton_euler(robo, symo):
     """Internal function. Computes Inverse Dynamic Model using
     Newton-Euler formulation
 
@@ -253,7 +253,9 @@ def inertia_matrix(robo):
 
 
 def inverse_dynamic_NE(robo):
-    """Computes Inverse Dynamic Model using
+    """
+    OLD FUNCTION. NOT TO BE USED.
+    Computes Inverse Dynamic Model using
     Newton-Euler formulation
 
     Parameters
@@ -270,7 +272,7 @@ def inverse_dynamic_NE(robo):
     symo.file_open(robo, 'idm')
     title = 'Inverse dynamic model using Newton - Euler Algorith'
     symo.write_params_table(robo, title, inert=True, dynam=True)
-    Newton_Euler(robo, symo)
+    default_newton_euler(robo, symo)
     symo.file_close()
     return symo
 
@@ -295,7 +297,7 @@ def pseudo_force_NE(robo):
     symo.file_open(robo, 'ccg')
     title = 'Pseudo forces using Newton - Euler Algorith'
     symo.write_params_table(robo, title, inert=True, dynam=True)
-    Newton_Euler(robo_pseudo, symo)
+    default_newton_euler(robo_pseudo, symo)
     symo.file_close()
     return symo
 
