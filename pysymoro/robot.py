@@ -20,15 +20,15 @@ from sympy import sin, cos, sign, pi
 from sympy import Symbol, Matrix, Expr, Integer
 from sympy import Mul, Add, factor, zeros, var, sympify, eye
 
+from pysymoro import dynamics
+from pysymoro import fldyn
 from symoroutils import filemgr
+from symoroutils import symbolmgr
 from symoroutils import tools
 from symoroutils.tools import ZERO, ONE, FAIL, OK
 from symoroutils.tools import CLOSED_LOOP, SIMPLE, TREE, TYPES, INT_KEYS
 
 
-#TODO: write consistency check
-#TODO: Ask about QP QDP file writing. Number of joints is different
-#from number of links
 class Robot(object):
     """Container of the robot parametric description.
     Responsible for low-level geometric transformation
@@ -205,6 +205,36 @@ class Robot(object):
             return self.r[i]
         else:
             return 0
+
+    def compute_idym(self):
+        """
+        Compute the Inverse Dynamic Model of the robot using the
+        recursive Newton-Euler algorithm. Also choose the Newton-Euler
+        algorithm based on the robot type.
+        """
+        symo = symbolmgr.SymbolManager()
+        symo.file_open(self, 'idm')
+        title = 'Inverse dynamic model using Newton - Euler Algorith'
+        symo.write_params_table(self, title, inert=True, dynam=True)
+        if 1 in self.eta:
+            # with flexible joints
+            pass
+        elif self.is_floating:
+            # with rigid joints and floating base
+            fldyn.composite_newton_euler(self, symo)
+        else:
+            # with rigid joints and fixed base
+            dynamics.Newton_Euler(self, symo)
+        symo.file_close()
+        return symo
+
+    def compute_ddym(self):
+        """
+        Compute the Direct Dynamic Model of the robot using the
+        recursive Newton-Euler algorithm. Also choose the Newton-Euler
+        algorithm based on the robot type.
+        """
+        pass
 
     @property
     def q_vec(self):

@@ -778,8 +778,7 @@ class MainFrame(wx.Frame):
         self.model_success('jpqp')
 
     def OnInverseDynamic(self, event):
-        dynamics.inverse_dynamic_NE(self.robo)
-        fldyn.fl_inverse_dynamic_model(self.robo)
+        self.robo.compute_idym()
         self.model_success('idm')
 
     def OnInertiaMatrix(self, event):

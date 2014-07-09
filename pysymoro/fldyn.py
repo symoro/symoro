@@ -221,11 +221,7 @@ def compute_torque(robo, symo, j, jaj, react_wrench, torque):
     torque[j] = symo.replace(tau_total, symbl_name, forced=True)
 
 
-def fl_inverse_dynamic_model(robo):
-    symo = symbolmgr.SymbolManager()
-    symo.file_open(robo, 'flidm')
-    title = 'Inverse Dynamic Model - NE'
-    symo.write_params_table(robo, title, inert=True, dynam=True)
+def composite_newton_euler(robo, symo):
     # antecedent angular velocity, projected into jth frame
     # j^omega_i
     wi = ParamsInit.init_vec(robo)
@@ -317,7 +313,5 @@ def fl_inverse_dynamic_model(robo):
         )
         # compute torque
         compute_torque(robo, symo, j, jaj, react_wrench, torque)
-    symo.file_close()
-    return symo
 
 
