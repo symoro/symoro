@@ -211,7 +211,7 @@ def compute_star_terms(
     inertia_jaj = star_inertia[j] * jaj[j]
     inertia_jaj = symo.mat_replace(inertia_jaj, 'JA', j)
     h_inv[j] = 1 / (jaj[j].dot(inertia_jaj) + robo.IA[j])
-    h_inv[j] = symo.mat_replace(h_inv[j], 'JD', j)
+    h_inv[j] = symo.replace(h_inv[j], 'JD', j)
     jah[j] = inertia_jaj * h_inv[j]
     jah[j] = symo.mat_replace(jah[j], 'JU', j)
     k_inertia = star_inertia[j] - (jah[j] * inertia_jaj.transpose())
