@@ -66,14 +66,16 @@ def compute_gamma(robo, symo, j, antRj, antPj, w, wi, gamma):
     gamma[j] = symo.mat_replace(gamma[j], 'GYACC', j)
 
 
-def compute_zeta(robo, symo, j, gamma, jaj, zeta):
+def compute_zeta(robo, symo, j, gamma, jaj, zeta, qddot=None):
     """
     Compute relative acceleration (internal function).
 
     Note:
         zeta is the output parameter
     """
-    expr = gamma[j] + (robo.qddot[j] * jaj[j])
+    if qddot == None:
+        qddot = robo.qddot
+    expr = gamma[j] + (qddot[j] * jaj[j])
     zeta[j] = symo.mat_replace(expr, 'ZETA', j)
 
 
@@ -184,7 +186,7 @@ def compute_hinv(robo, symo, j, jaj, star_inertia, inertia_jaj, h_inv):
     h_inv[j] = symo.mat_replace(h_inv[j], 'JD', j)
 
 
-def compute_tau(robo, symo, j, tau):
+def compute_tau(robo, symo, j, jaj, star_beta, tau):
     """
     Note:
         tau is the output parameter
@@ -193,34 +195,34 @@ def compute_tau(robo, symo, j, tau):
         tau[j] = 0
     else:
         joint_friction = robo.fric_s(j) + robo.fric_v(j)
-        tau[j] = robo.GAM[j] - joint_friction
+        tau[j] = jaj[j].dot(star_beta[j]) + robo.GAM[j] - joint_friction
     tau[j] = symo.replace(tau[j], 'GW', j)
 
 
 def compute_star_terms(
     robo, symo, j, jaj, jTant, gamma, tau,
-    h_inv, star_inertia, star_beta
+    h_inv, jah, star_inertia, star_beta
 ):
     """
     Note:
-        star_inertia and star_beta are the output parameters
+        h_inv, jah, star_inertia, star_beta are the output parameters
     """
     i = robo.ant[j]
     inertia_jaj = star_inertia[j] * jaj[j]
     inertia_jaj = symo.mat_replace(inertia_jaj, 'JA', j)
     h_inv[j] = 1 / (jaj[j].dot(inertia_jaj) + robo.IA[j])
     h_inv[j] = symo.mat_replace(h_inv[j], 'JD', j)
-    jah = ineria_jaj * h_inv[j]
-    jah = symo.mat_replace(jah, 'JU', j)
-    grandK = star_inertia[j] - (jah * inertia_jaj.transpose())
-    grandK = symo.mat_replace(grandK, 'GK', j)
-    expr1 = grandK * gamma[j]
+    jah[j] = inertia_jaj * h_inv[j]
+    jah[j] = symo.mat_replace(jah[j], 'JU', j)
+    k_inertia = star_inertia[j] - (jah[j] * inertia_jaj.transpose())
+    k_inertia = symo.mat_replace(k_inertia, 'GK', j)
+    expr1 = k_inertia * gamma[j]
     expr1 = symo.mat_replace(expr1, 'NG', j)
-    expr2 = expr1 + (jah * (tau[j] + jaj[j].dot(star_beta[j])))
+    expr2 = expr1 + (jah[j] * tau[j])
     expr2 = symo.mat_replace(expr2, 'VS', j)
     alpha = expr2 - star_beta[j]
     alpha = symo.mat_replace(alpha, 'AP', j)
-    expr3 = jTant[j].transpose() * grandK
+    expr3 = jTant[j].transpose() * k_inertia
     expr3 = symo.mat_replace(expr3, 'GX', j)
     expr4 = expr3 * jTant[j]
     expr4 = symo.mat_replace(expr4, 'TKT', j, symmet=True)
@@ -229,14 +231,25 @@ def compute_star_terms(
 
 
 def compute_joint_accel(
-    robo, symo, j, jaj, jTant, h_inv, gamma, tau, grandVp,
-    star_beta, star_inertia, qddot
+    robo, symo, j, jaj, jTant, h_inv, jah, gamma,
+    tau, grandVp, star_beta, star_inertia, qddot
 ):
     """
+    Compute joint acceleration (internal function)
+
     Note:
         qddot is the output parameter
     """
-    pass
+    i = robo.ant[j]
+    expr1 = (jTant[j] * grandVp[i]) + gamma[j]
+    expr1 = symo.mat_replace(expr1, 'VR', j)
+    expr2 = jah[j].dot(expr1)
+    expr2 = symo.replace(expr2, 'GU', j)
+    if robo.sigma[j] == 2:
+        qddot[j] = 0
+    else:
+        qddot[j] = (h_inv[j] * tau[j]) - expr2
+    qddot[j] = symo.replace(qddot[j], str(robo.qddot[j]), forced=True)
 
 
 def compute_link_accel(robo, symo, j, jTant, zeta, grandVp):
@@ -252,11 +265,27 @@ def compute_link_accel(robo, symo, j, jTant, zeta, grandVp):
     grandVp[j][3:, 0] = symo.mat_replace(grandVp[j][3:, 0], 'WP', j)
 
 
+def compute_base_accel(robo, symo, star_inertia, star_beta, grandVp):
+    """
+    Compute base acceleration (internal function).
+
+    Note:
+        grandVp is the output parameter
+    """
+    if robo.is_floating:
+        grandVp[0] = star_inertia[0].inv() * star_beta[0]
+    else:
+        grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
+    grandVp[0][:3, 0] = symo.mat_replace(grandVp[0][:3, 0], 'VP', 0)
+    grandVp[0][3:, 0] = symo.mat_replace(grandVp[0][3:, 0], 'WP', 0)
+
+
 def compute_base_accel_composite(
     robo, symo, composite_inertia, composite_beta, grandVp
 ):
     """
-    Compute base acceleration (internal function).
+    Compute base acceleration when using composite inertia matrix
+    (internal function).
 
     Note:
         grandVp is the output parameter
@@ -270,8 +299,7 @@ def compute_base_accel_composite(
 
 
 def compute_reaction_wrench(
-    robo, symo, j, grandVp,
-    composite_inertia, composite_beta, react_wrench
+    robo, symo, j, grandVp, inertia, beta_wrench, react_wrench
 ):
     """
     Compute reaction wrench (internal function).
@@ -279,9 +307,9 @@ def compute_reaction_wrench(
     Note:
         react_wrench is the output parameter
     """
-    expr = composite_inertia[j] * grandVp[j]
+    expr = inertia[j] * grandVp[j]
     expr = symo.mat_replace(expr, 'DY', j)
-    wrench = expr - composite_beta[j]
+    wrench = expr - beta_wrench[j]
     react_wrench[j][:3, 0] = symo.mat_replace(wrench[:3, 0], 'E', j)
     react_wrench[j][3:, 0] = symo.mat_replace(wrench[3:, 0], 'N', j)
 
@@ -359,6 +387,7 @@ def composite_newton_euler(robo, symo):
     # second backward recursion - compute composite term
     for j in reversed(xrange(0, robo.NL)):
         if j == 0:
+            # compute 0^\dot{V}_0 : base acceleration
             compute_base_accel_composite(
                 robo, symo, composite_inertia, composite_beta, grandVp
             )
@@ -392,7 +421,7 @@ def composite_newton_euler(robo, symo):
         compute_torque(robo, symo, j, jaj, react_wrench, torque)
 
 
-def fl_direct_dynamic_model(robo):
+def direct_dynamic_model(robo):
     symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'flddm')
     title = 'Direct Dynamic Model - NE'
@@ -410,12 +439,12 @@ def fl_direct_dynamic_model(robo):
     gamma = ParamsInit.init_vec(robo, 6)
     beta = ParamsInit.init_vec(robo, 6)
     zeta = ParamsInit.init_vec(robo, 6)
-    alpha = ParamsInit.init_vec(robo, 6)
-    k_inertia = ParamsInit.init_vec(robo, 6)
     h_inv = ParamsInit.init_scalar(robo)
+    jah = ParamsInit.init_vec(robo, 6)   # Jj*aj*Hinv_j
     tau = ParamsInit.init_scalar(robo)
     star_inertia = ParamsInit.init_mat(robo, 6)
     star_beta = ParamsInit.init_vec(robo, 6)
+    qddot = ParamsInit.init_scalar(robo)
     grandVp = ParamsInit.init_vec(robo, 6)
     react_wrench = ParamsInit.init_vec(robo, 6)
     torque = ParamsInit.init_scalar(robo)
@@ -453,10 +482,10 @@ def fl_direct_dynamic_model(robo):
     # second backward recursion - compute star terms
     for j in reversed(xrange(0, robo.NL)):
         if j == 0: continue
-        compute_tau(robo, symo, j, tau)
+        compute_tau(robo, symo, j, jaj, star_beta, tau)
         compute_star_terms(
             robo, symo, j, jaj, jTant, gamma, tau,
-            h_inv, star_inertia, star_beta
+            h_inv, jah, star_inertia, star_beta
         )
         replace_star_terms(
             symo, star_inertia, star_beta, robo.ant[j],
@@ -466,24 +495,24 @@ def fl_direct_dynamic_model(robo):
     for j in xrange(0, robo.NL):
         if j == 0:
             # compute 0^\dot{V}_0 : base acceleration
-            # for fixed base robots, the value returned is just the
-            # effect of gravity
-            compute_base_accel(robo, symo)
+            compute_base_accel(
+                robo, symo, star_inertia, star_beta, grandVp
+            )
             continue
         # compute qddot_j : joint acceleration
         compute_joint_accel(
-            robo, symo, j, jaj, jTant, h_inv, gamma, tau, grandVp,
-            star_beta, star_inertia
-        )
-        # compute j^F_j : reaction wrench as a function of alpha
-        compute_reaction_wrench(
-            robo, symo, j, grandVp,
-            composite_inertia, composite_beta, react_wrench
+            robo, symo, j, jaj, jTant, h_inv, jah, gamma,
+            tau, grandVp, star_beta, star_inertia, qddot
         )
         # compute j^zeta_j : relative acceleration (6x1)
-        compute_zeta(robo, symo, j, gamma, jaj, zeta)
+        compute_zeta(robo, symo, j, gamma, jaj, zeta, qddot)
         # compute j^Vdot_j : link acceleration
         compute_link_accel(robo, symo, j, jTant, zeta, grandVp)
+        # compute j^F_j : reaction wrench
+        compute_reaction_wrench(
+            robo, symo, j, grandVp,
+            star_inertia, star_beta, react_wrench
+        )
     symo.file_close()
     return symo
 
