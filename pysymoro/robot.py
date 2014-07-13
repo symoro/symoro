@@ -214,7 +214,7 @@ class Robot(object):
         """
         symo = symbolmgr.SymbolManager()
         symo.file_open(self, 'idm')
-        title = 'Inverse dynamic model using Newton - Euler Algorithm'
+        title = "Inverse Dynamic Model using Newton-Euler Algorithm"
         symo.write_params_table(self, title, inert=True, dynam=True)
         if 1 in self.eta:
             # with flexible joints
@@ -233,7 +233,18 @@ class Robot(object):
         Compute the Direct Dynamic Model of the robot using the
         recursive Newton-Euler algorithm.
         """
-        pass
+        symo = symbolmgr.SymbolManager()
+        symo.file_open(self, 'ddm')
+        title = "Direct Dynamic Model using Newton-Euler Algorithm"
+        symo.write_params_table(self, title, inert=True, dynam=True)
+        if self.is_floating:
+            # with rigid joints and floating base
+            fldyn.direct_dynamic_model(self, symo)
+        else:
+            # with rigid joints and fixed base
+            dynamics.compute_direct_dynamic_NE(self, symo)
+        symo.file_close()
+        return symo
 
     def compute_pseudotorques(self):
         """

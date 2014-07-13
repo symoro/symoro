@@ -138,7 +138,7 @@ def dynamic_identification_NE(robo):
     return symo
 
 
-def compute_direct_dynamic_NE(symo, robo):
+def compute_direct_dynamic_NE(robo, symo):
     # antecedent angular velocity, projected into jth frame
     wi = ParamsInit.init_vec(robo)
     w = ParamsInit.init_w(robo)
@@ -181,7 +181,9 @@ def compute_direct_dynamic_NE(symo, robo):
 
 
 def direct_dynamic_NE(robo):
-    """Computes Direct Dynamic Model using
+    """
+    OLD FUNCTION. NOT TO BE USED.
+    Computes Direct Dynamic Model using
     Newton-Euler formulation
 
     Parameters
@@ -198,7 +200,7 @@ def direct_dynamic_NE(robo):
     symo.file_open(robo, 'ddm')
     title = 'Direct dynamic model using Newton - Euler Algorith'
     symo.write_params_table(robo, title, inert=True, dynam=True)
-    compute_direct_dynamic_NE(symo, robo)
+    compute_direct_dynamic_NE(robo, symo)
     symo.file_close()
     return symo
 

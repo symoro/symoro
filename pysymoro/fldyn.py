@@ -421,11 +421,7 @@ def composite_newton_euler(robo, symo):
         compute_torque(robo, symo, j, jaj, react_wrench, torque)
 
 
-def direct_dynamic_model(robo):
-    symo = symbolmgr.SymbolManager()
-    symo.file_open(robo, 'flddm')
-    title = 'Direct Dynamic Model - NE'
-    symo.write_params_table(robo, title, inert=True, dynam=True)
+def direct_dynamic_model(robo, symo):
     # antecedent angular velocity, projected into jth frame
     # j^omega_i
     wi = ParamsInit.init_vec(robo)
@@ -513,7 +509,5 @@ def direct_dynamic_model(robo):
             robo, symo, j, grandVp,
             star_inertia, star_beta, react_wrench
         )
-    symo.file_close()
-    return symo
 
 

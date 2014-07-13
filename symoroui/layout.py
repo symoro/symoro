@@ -790,7 +790,7 @@ class MainFrame(wx.Frame):
         self.model_success('ccg')
 
     def OnDirectDynamicModel(self, event):
-        dynamics.direct_dynamic_NE(self.robo)
+        self.robo.compute_ddym()
         self.model_success('ddm')
 
     def OnBaseInertialParams(self, event):
