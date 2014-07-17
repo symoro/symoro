@@ -421,7 +421,7 @@ def composite_newton_euler(robo, symo):
         compute_torque(robo, symo, j, jaj, react_wrench, torque)
 
 
-def direct_dynamic_model(robo, symo):
+def direct_dynamic_newton_euler(robo, symo):
     # antecedent angular velocity, projected into jth frame
     # j^omega_i
     wi = ParamsInit.init_vec(robo)

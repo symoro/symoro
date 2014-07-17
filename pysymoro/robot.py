@@ -239,7 +239,7 @@ class Robot(object):
         symo.write_params_table(self, title, inert=True, dynam=True)
         if self.is_floating:
             # with rigid joints and floating base
-            fldyn.direct_dynamic_model(self, symo)
+            fldyn.direct_dynamic_newton_euler(self, symo)
         else:
             # with rigid joints and fixed base
             dynamics.compute_direct_dynamic_NE(self, symo)
