@@ -359,10 +359,10 @@ class MainFrame(wx.Frame):
     def update_joint_params(self):
         pars = self._extract_param_names(ui_labels.JOINT_PARAMS)
         index = int(self.widgets['joint'].Value)
-        self.widgets[pars[-1]].SetValue(
-            str(self.robo.get_val(index, pars[-1]))
+        self.widgets[pars[0]].SetValue(
+            str(self.robo.get_val(index, pars[0]))
         )
-        self.update_params(index, pars[:-1])
+        self.update_params(index, pars[1:])
 
     def update_base_twist_params(self):
         pars = dict(
