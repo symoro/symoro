@@ -57,16 +57,16 @@ def cart_pole():
 
 def planar2r():
     """Generate Robot instance of 2R Planar robot"""
-    robo = Robot('Planar2R', 2, 2, 3, False)
+    robo = Robot('Planar2R', 2, 2, 2, False)
     robo.structure = tools.SIMPLE
-    robo.sigma = [2, 0, 0, 2]
-    robo.mu = [0, 1, 1, 0]
-    robo.gamma = [0, 0, 0, 0]
-    robo.b = [0, 0, 0, 0]
-    robo.alpha = [0, 0, 0, 0]
-    robo.d = [0, 0, var('L2'), var('L3')]
-    robo.theta = [0, var('q1'), var('q2'), 0]
-    robo.r = [0, 0, 0, 0]
+    robo.sigma = [2, 0, 0]
+    robo.mu = [0, 1, 1]
+    robo.gamma = [0, 0, 0]
+    robo.b = [0, 0, 0]
+    robo.alpha = [0, 0, 0]
+    robo.d = [0, 0, var('L1')]
+    robo.theta = [0, var('q1'), var('q2')]
+    robo.r = [0, 0, 0]
     robo.num = range(0, 3)
     robo.Nex = [zeros(3, 1) for i in robo.num]
     robo.Fex = [zeros(3, 1) for i in robo.num]
@@ -76,9 +76,13 @@ def planar2r():
     robo.MS = [Matrix(var('MX{0}, MY{0}, MZ{0}'.format(i))) for i in robo.num]
     robo.M = [var('M{0}'.format(i)) for i in robo.num]
     robo.GAM = [var('GAM{0}'.format(i)) for i in robo.num]
-    robo.J = [Matrix(3, 3, var(('XX{0}, XY{0}, XZ{0}, '
-                        'XY{0}, YY{0}, YZ{0}, '
-                        'XZ{0}, YZ{0}, ZZ{0}').format(i))) for i in robo.num]
+    inertia_matrix_terms = ("XX{0}, XY{0}, XZ{0}, ") + \
+        ("XY{0}, YY{0}, YZ{0}, ") + \
+        ("XZ{0}, YZ{0}, ZZ{0}")
+    robo.J = [
+        Matrix(3, 3, var(inertia_matrix_terms.format(i))) \
+        for i in robo.num
+    ]
     robo.G = Matrix([0, 0, -var('G3')])
     robo.w0 = zeros(3, 1)
     robo.wdot0 = zeros(3, 1)
@@ -113,7 +117,7 @@ def rx90():
     """Generate Robot instance of RX90"""
     robo = Robot('RX90', 6, 6, 6, False)
     # table of geometric parameters RX90
-    robo.sigma = [2, 0, 0, 0, 0, 0, 0, 0]
+    robo.sigma = [2, 0, 0, 0, 0, 0, 0]
     robo.alpha = [0, 0, pi/2, 0, -pi/2, pi/2, -pi/2]
     robo.d = [0, 0, 0, var('D3'), 0, 0, 0]
     robo.theta = [0] + list(var('th1:7'))
@@ -139,11 +143,14 @@ def rx90():
     robo.MS = [Matrix(var('MX{0}, MY{0}, MZ{0}'.format(i))) for i in num]
     robo.M = [var('M{0}'.format(i)) for i in num]
     robo.GAM = [var('GAM{0}'.format(i)) for i in num]
-    robo.J = [Matrix(3, 3, var(('XX{0}, XY{0}, XZ{0}, '
-                        'XY{0}, YY{0}, YZ{0}, '
-                        'XZ{0}, YZ{0}, ZZ{0}').format(i))) for i in num]
+    inertia_matrix_terms = ("XX{0}, XY{0}, XZ{0}, ") + \
+        ("XY{0}, YY{0}, YZ{0}, ") + \
+        ("XZ{0}, YZ{0}, ZZ{0}")
+    robo.J = [
+        Matrix(3, 3, var(inertia_matrix_terms.format(i))) \
+        for i in robo.num
+    ]
     robo.G = Matrix([0, 0, var('G3')])
-#    robo.num.append(0)
     return robo
 
 
