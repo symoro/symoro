@@ -824,7 +824,7 @@ class MainFrame(wx.Frame):
                 'Do you want to save changes?', 'Please confirm',
                 wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL, self)
             if result == wx.YES:
-                if self.OnSave(_) == tools.FAIL:
+                if self.OnSave(event) == tools.FAIL:
                     return
             elif result == wx.CANCEL:
                 return
