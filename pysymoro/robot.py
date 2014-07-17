@@ -361,11 +361,11 @@ class Robot(object):
 
     @property
     def V0(self):
-        return self.w0
+        return self.v0
 
     @property
     def VP0(self):
-        return self.wdot0
+        return self.vdot0
 
     @property
     def QP(self):
