@@ -50,6 +50,8 @@ def _extract_vals(robo, key, line):
     line = line.replace('}', '')
     if key in _ZERO_BASED:
         k = 0
+    elif robo.is_mobile and key in _NL:
+        k = 0
     else:
         k = 1
     items = line.split(',')
