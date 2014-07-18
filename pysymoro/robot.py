@@ -218,10 +218,10 @@ class Robot(object):
         symo.write_params_table(self, title, inert=True, dynam=True)
         if 1 in self.eta:
             # with flexible joints
-            pass
+            fldyn.flexible_inverse_dynmodel(self, symo)
         elif self.is_floating:
             # with rigid joints and floating base
-            fldyn.composite_newton_euler(self, symo)
+            fldyn.composite_inverse_dynmodel(self, symo)
         else:
             # with rigid joints and fixed base
             dynamics.default_newton_euler(self, symo)
@@ -237,12 +237,7 @@ class Robot(object):
         symo.file_open(self, 'ddm')
         title = "Direct Dynamic Model using Newton-Euler Algorithm"
         symo.write_params_table(self, title, inert=True, dynam=True)
-        if self.is_floating:
-            # with rigid joints and floating base
-            fldyn.direct_dynamic_newton_euler(self, symo)
-        else:
-            # with rigid joints and fixed base
-            dynamics.compute_direct_dynamic_NE(self, symo)
+        fldyn.direct_dynmodel(self, symo)
         symo.file_close()
         return symo
 

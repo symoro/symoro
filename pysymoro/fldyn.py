@@ -182,19 +182,21 @@ def compute_composite_terms(
 
 
 def compute_hinv(
-    robo, symo, j, jaj, star_inertia, inertia_jaj, h_inv, flex=False
+    robo, symo, j, jaj, star_inertia, jah, h_inv, flex=False
 ):
     """
     Note:
-        h_inv and inertia_jaj are the output parameters
+        h_inv and jah are the output parameters
     """
-    inertia_jaj[j] = star_inertia[j] * jaj[j]
-    inertia_jaj[j] = symo.mat_replace(inertia_jaj, 'JA', j)
-    h = jaj[j].dot(inertia_jaj[j])
+    inertia_jaj = star_inertia[j] * jaj[j]
+    inertia_jaj = symo.mat_replace(inertia_jaj, 'JA', j)
+    h = jaj[j].dot(inertia_jaj)
     if not flex:
         h = h + robo.IA[j]
     h_inv[j] = 1 / h
-    h_inv[j] = symo.mat_replace(h_inv[j], 'JD', j)
+    h_inv[j] = symo.replace(h_inv[j], 'JD', j)
+    jah[j] = inertia_jaj * h_inv[j]
+    jah[j] = symo.mat_replace(jah[j], 'JU', j)
 
 
 def compute_tau(robo, symo, j, jaj, star_beta, tau, flex=False):
@@ -224,7 +226,7 @@ def compute_star_terms(
     i = robo.ant[j]
     inertia_jaj = star_inertia[j] * jaj[j]
     inertia_jaj = symo.mat_replace(inertia_jaj, 'JA', j)
-    h = jaj[j].dot(inertia_jaj[j])
+    h = jaj[j].dot(inertia_jaj)
     if not flex:
         h = h + robo.IA[j]
     if not flex or robo.eta[j]:
@@ -354,7 +356,7 @@ def compute_torque(robo, symo, j, jaj, react_wrench, torque):
     torque[j] = symo.replace(tau_total, symbl_name, forced=True)
 
 
-def composite_newton_euler(robo, symo):
+def composite_inverse_dynmodel(robo, symo):
     # antecedent angular velocity, projected into jth frame
     # j^omega_i
     wi = ParamsInit.init_vec(robo)
@@ -444,7 +446,7 @@ def composite_newton_euler(robo, symo):
         compute_torque(robo, symo, j, jaj, react_wrench, torque)
 
 
-def direct_dynamic_newton_euler(robo, symo):
+def direct_dynmodel(robo, symo):
     # antecedent angular velocity, projected into jth frame
     # j^omega_i
     wi = ParamsInit.init_vec(robo)
@@ -482,19 +484,20 @@ def direct_dynamic_newton_euler(robo, symo):
         compute_omega(robo, symo, j, antRj, w, wi)
         # compute j^S_i : screw transformation matrix
         compute_screw_transform(robo, symo, j, antRj, antPj, jTant)
-    # first forward recursion (still)
-    for j in xrange(1, robo.NL):
         # compute j^gamma_j : gyroscopic acceleration (6x1)
         compute_gamma(robo, symo, j, antRj, antPj, w, wi, gamma)
         # compute j^beta_j : external+coriolis+centrifugal wrench (6x1)
         compute_beta(robo, symo, j, w, beta)
     # first backward recursion - initialisation step
     for j in reversed(xrange(0, robo.NL)):
-        if j == 0:
+        # skip base terms for non-floating robots
+        if robo.is_floating and j == 0:
             # compute spatial inertia matrix for base
             grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
             # compute 0^beta_0
             compute_beta(robo, symo, j, w, beta)
+        elif j == 0:
+            continue
         replace_star_terms(
             symo, grandJ, beta, j, star_inertia, star_beta
         )
@@ -502,14 +505,18 @@ def direct_dynamic_newton_euler(robo, symo):
     for j in reversed(xrange(0, robo.NL)):
         if j == 0: continue
         compute_tau(robo, symo, j, jaj, star_beta, tau)
-        compute_star_terms(
-            robo, symo, j, jaj, jTant, gamma, tau,
-            h_inv, jah, star_inertia, star_beta
-        )
-        replace_star_terms(
-            symo, star_inertia, star_beta, robo.ant[j],
-            star_inertia, star_beta
-        )
+        # skip base terms for non-floating robots
+        if not robo.is_floating and robo.ant[j] == 0:
+            compute_hinv(robo, symo, j, jaj, star_inertia, jah, h_inv)
+        else:
+            compute_star_terms(
+                robo, symo, j, jaj, jTant, gamma, tau,
+                h_inv, jah, star_inertia, star_beta
+            )
+            replace_star_terms(
+                symo, star_inertia, star_beta, robo.ant[j],
+                star_inertia, star_beta
+            )
     # second forward recursion
     for j in xrange(0, robo.NL):
         if j == 0:
@@ -534,7 +541,7 @@ def direct_dynamic_newton_euler(robo, symo):
         )
 
 
-def flexible_newton_euler(robo, symo):
+def flexible_inverse_dynmodel(robo, symo):
     # antecedent angular velocity, projected into jth frame
     # j^omega_i
     wi = ParamsInit.init_vec(robo)
@@ -575,8 +582,6 @@ def flexible_newton_euler(robo, symo):
         compute_omega(robo, symo, j, antRj, w, wi)
         # compute j^S_i : screw transformation matrix
         compute_screw_transform(robo, symo, j, antRj, antPj, jTant)
-    # first forward recursion (still)
-    for j in xrange(1, robo.NL):
         # compute j^gamma_j : gyroscopic acceleration (6x1)
         compute_gamma(robo, symo, j, antRj, antPj, w, wi, gamma)
         # compute j^beta_j : external+coriolis+centrifugal wrench (6x1)
@@ -629,13 +634,11 @@ def flexible_newton_euler(robo, symo):
         )
     # second forward recursion
     for j in xrange(0, robo.NL):
-        if robo.is_floating and j == 0:
+        if j == 0:
             # compute 0^\dot{V}_0 : base acceleration
             compute_base_accel(
                 robo, symo, star_inertia, star_beta, grandVp
             )
-            continue
-        else:
             continue
         if robo.eta[j]:
             # when flexible
