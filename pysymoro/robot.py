@@ -21,7 +21,7 @@ from sympy import Symbol, Matrix, Expr, Integer
 from sympy import Mul, Add, factor, zeros, var, sympify, eye
 
 from pysymoro import dynamics
-from pysymoro import fldyn
+from pysymoro import nealgos
 from symoroutils import filemgr
 from symoroutils import symbolmgr
 from symoroutils import tools
@@ -218,10 +218,10 @@ class Robot(object):
         symo.write_params_table(self, title, inert=True, dynam=True)
         if 1 in self.eta:
             # with flexible joints
-            fldyn.flexible_inverse_dynmodel(self, symo)
+            nealgos.flexible_inverse_dynmodel(self, symo)
         elif self.is_floating:
             # with rigid joints and floating base
-            fldyn.composite_inverse_dynmodel(self, symo)
+            nealgos.composite_inverse_dynmodel(self, symo)
         else:
             # with rigid joints and fixed base
             dynamics.default_newton_euler(self, symo)
@@ -237,7 +237,7 @@ class Robot(object):
         symo.file_open(self, 'ddm')
         title = "Direct Dynamic Model using Newton-Euler Algorithm"
         symo.write_params_table(self, title, inert=True, dynam=True)
-        fldyn.direct_dynmodel(self, symo)
+        nealgos.direct_dynmodel(self, symo)
         symo.file_close()
         return symo
 
@@ -257,7 +257,7 @@ class Robot(object):
             pass
         elif self.is_floating:
             # with rigid joints and floating base
-            fldyn.composite_newton_euler(pseudorobo, symo)
+            nealgos.composite_inverse_dynmodel(pseudorobo, symo)
         else:
             # with rigid joints and fixed base
             dynamics.default_newton_euler(pseudorobo, symo)
