@@ -297,12 +297,17 @@ def compute_base_accel(robo, symo, star_inertia, star_beta, grandVp):
     Note:
         grandVp is the output parameter
     """
+    forced = False
+    grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
     if robo.is_floating:
         grandVp[0] = star_inertia[0].inv() * star_beta[0]
-    else:
-        grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
-    grandVp[0][:3, 0] = symo.mat_replace(grandVp[0][:3, 0], 'VP', 0)
-    grandVp[0][3:, 0] = symo.mat_replace(grandVp[0][3:, 0], 'WP', 0)
+        forced = True
+    grandVp[0][:3, 0] = symo.mat_replace(
+        grandVp[0][:3, 0], 'VP', 0, forced=forced
+    )
+    grandVp[0][3:, 0] = symo.mat_replace(
+        grandVp[0][3:, 0], 'WP', 0, forced=forced
+    )
 
 
 def compute_base_accel_composite(
@@ -315,12 +320,17 @@ def compute_base_accel_composite(
     Note:
         grandVp is the output parameter
     """
+    forced = False
+    grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
     if robo.is_floating:
         grandVp[0] = composite_inertia[0].inv() * composite_beta[0]
-    else:
-        grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
-    grandVp[0][:3, 0] = symo.mat_replace(grandVp[0][:3, 0], 'VP', 0)
-    grandVp[0][3:, 0] = symo.mat_replace(grandVp[0][3:, 0], 'WP', 0)
+        forced = True
+    grandVp[0][:3, 0] = symo.mat_replace(
+       grandVp[0][:3, 0], 'VP', 0, forced=forced
+    )
+    grandVp[0][3:, 0] = symo.mat_replace(
+        grandVp[0][3:, 0], 'WP', 0, forced=forced
+    )
 
 
 def compute_reaction_wrench(
@@ -411,17 +421,7 @@ def composite_inverse_dynmodel(robo, symo):
         )
     # second backward recursion - compute composite term
     for j in reversed(xrange(0, robo.NL)):
-        if j == 0:
-            # compute 0^\dot{V}_0 : base acceleration
-            compute_base_accel_composite(
-                robo, symo, composite_inertia, composite_beta, grandVp
-            )
-            continue
-        # compute i^I_i^c and i^beta_i^c
-        #compute_composite_terms(
-        #    robo, symo, j, jTant, zeta,
-        #    composite_inertia, composite_beta
-        #)
+        if j == 0: continue
         compute_composite_inertia(
             robo, symo, j, antRj, antPj,
             comp_inertia3, comp_ms, comp_mass, composite_inertia
@@ -433,6 +433,11 @@ def composite_inverse_dynmodel(robo, symo):
             symo, composite_inertia, composite_beta, robo.ant[j],
             composite_inertia, composite_beta
         )
+    # compute base acceleration : this returns the correct value for
+    # fixed base and floating base robots
+    compute_base_accel_composite(
+        robo, symo, composite_inertia, composite_beta, grandVp
+    )
     # second forward recursion
     for j in xrange(1, robo.NL):
         # compute j^Vdot_j : link acceleration
@@ -444,101 +449,6 @@ def composite_inverse_dynmodel(robo, symo):
         )
         # compute torque
         compute_torque(robo, symo, j, jaj, react_wrench, torque)
-
-
-def direct_dynmodel(robo, symo):
-    # antecedent angular velocity, projected into jth frame
-    # j^omega_i
-    wi = ParamsInit.init_vec(robo)
-    # j^omega_j
-    w = ParamsInit.init_w(robo)
-    # j^a_j -- joint axis in screw form
-    jaj = ParamsInit.init_vec(robo, 6)
-    # Twist transform list of Matrices 6x6
-    grandJ = ParamsInit.init_mat(robo, 6)
-    jTant = ParamsInit.init_mat(robo, 6)
-    gamma = ParamsInit.init_vec(robo, 6)
-    beta = ParamsInit.init_vec(robo, 6)
-    zeta = ParamsInit.init_vec(robo, 6)
-    h_inv = ParamsInit.init_scalar(robo)
-    jah = ParamsInit.init_vec(robo, 6)   # Jj*aj*Hinv_j
-    tau = ParamsInit.init_scalar(robo)
-    star_inertia = ParamsInit.init_mat(robo, 6)
-    star_beta = ParamsInit.init_vec(robo, 6)
-    qddot = ParamsInit.init_scalar(robo)
-    grandVp = ParamsInit.init_vec(robo, 6)
-    react_wrench = ParamsInit.init_vec(robo, 6)
-    torque = ParamsInit.init_scalar(robo)
-    # init transformation
-    antRj, antPj = compute_rot_trans(robo, symo)
-    # first forward recursion
-    for j in xrange(1, robo.NL):
-        # compute spatial inertia matrix for use in backward recursion
-        grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
-        # set jaj vector
-        if robo.sigma[j] == 0:
-            jaj[j] = Matrix([0, 0, 0, 0, 0, 1])
-        elif robo.sigma[j] == 1:
-            jaj[j] = Matrix([0, 0, 1, 0, 0, 0])
-        # compute j^omega_j and j^omega_i
-        compute_omega(robo, symo, j, antRj, w, wi)
-        # compute j^S_i : screw transformation matrix
-        compute_screw_transform(robo, symo, j, antRj, antPj, jTant)
-        # compute j^gamma_j : gyroscopic acceleration (6x1)
-        compute_gamma(robo, symo, j, antRj, antPj, w, wi, gamma)
-        # compute j^beta_j : external+coriolis+centrifugal wrench (6x1)
-        compute_beta(robo, symo, j, w, beta)
-    # first backward recursion - initialisation step
-    for j in reversed(xrange(0, robo.NL)):
-        # skip base terms for non-floating robots
-        if robo.is_floating and j == 0:
-            # compute spatial inertia matrix for base
-            grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
-            # compute 0^beta_0
-            compute_beta(robo, symo, j, w, beta)
-        elif j == 0:
-            continue
-        replace_star_terms(
-            symo, grandJ, beta, j, star_inertia, star_beta
-        )
-    # second backward recursion - compute star terms
-    for j in reversed(xrange(0, robo.NL)):
-        if j == 0: continue
-        compute_tau(robo, symo, j, jaj, star_beta, tau)
-        # skip base terms for non-floating robots
-        if not robo.is_floating and robo.ant[j] == 0:
-            compute_hinv(robo, symo, j, jaj, star_inertia, jah, h_inv)
-        else:
-            compute_star_terms(
-                robo, symo, j, jaj, jTant, gamma, tau,
-                h_inv, jah, star_inertia, star_beta
-            )
-            replace_star_terms(
-                symo, star_inertia, star_beta, robo.ant[j],
-                star_inertia, star_beta
-            )
-    # second forward recursion
-    for j in xrange(0, robo.NL):
-        if j == 0:
-            # compute 0^\dot{V}_0 : base acceleration
-            compute_base_accel(
-                robo, symo, star_inertia, star_beta, grandVp
-            )
-            continue
-        # compute qddot_j : joint acceleration
-        compute_joint_accel(
-            robo, symo, j, jaj, jTant, h_inv, jah, gamma,
-            tau, grandVp, star_beta, star_inertia, qddot
-        )
-        # compute j^zeta_j : relative acceleration (6x1)
-        compute_zeta(robo, symo, j, gamma, jaj, zeta, qddot)
-        # compute j^Vdot_j : link acceleration
-        compute_link_accel(robo, symo, j, jTant, zeta, grandVp)
-        # compute j^F_j : reaction wrench
-        compute_reaction_wrench(
-            robo, symo, j, grandVp,
-            star_inertia, star_beta, react_wrench
-        )
 
 
 def flexible_inverse_dynmodel(robo, symo):
@@ -632,14 +542,13 @@ def flexible_inverse_dynmodel(robo, symo):
             symo, star_inertia, star_beta, robo.ant[j],
             star_inertia, star_beta
         )
+    # compute base acceleration : this returns the correct value for
+    # fixed base and floating base robots
+    compute_base_accel(
+        robo, symo, star_inertia, star_beta, grandVp
+    )
     # second forward recursion
-    for j in xrange(0, robo.NL):
-        if j == 0:
-            # compute 0^\dot{V}_0 : base acceleration
-            compute_base_accel(
-                robo, symo, star_inertia, star_beta, grandVp
-            )
-            continue
+    for j in xrange(1, robo.NL):
         if robo.eta[j]:
             # when flexible
             # compute qddot_j : joint acceleration
@@ -659,5 +568,99 @@ def flexible_inverse_dynmodel(robo, symo):
         if not robo.eta[j]:
             # when rigid compute torque
             compute_torque(robo, symo, j, jaj, react_wrench, torque)
+
+
+def direct_dynmodel(robo, symo):
+    # antecedent angular velocity, projected into jth frame
+    # j^omega_i
+    wi = ParamsInit.init_vec(robo)
+    # j^omega_j
+    w = ParamsInit.init_w(robo)
+    # j^a_j -- joint axis in screw form
+    jaj = ParamsInit.init_vec(robo, 6)
+    # Twist transform list of Matrices 6x6
+    grandJ = ParamsInit.init_mat(robo, 6)
+    jTant = ParamsInit.init_mat(robo, 6)
+    gamma = ParamsInit.init_vec(robo, 6)
+    beta = ParamsInit.init_vec(robo, 6)
+    zeta = ParamsInit.init_vec(robo, 6)
+    h_inv = ParamsInit.init_scalar(robo)
+    jah = ParamsInit.init_vec(robo, 6)   # Jj*aj*Hinv_j
+    tau = ParamsInit.init_scalar(robo)
+    star_inertia = ParamsInit.init_mat(robo, 6)
+    star_beta = ParamsInit.init_vec(robo, 6)
+    qddot = ParamsInit.init_scalar(robo)
+    grandVp = ParamsInit.init_vec(robo, 6)
+    react_wrench = ParamsInit.init_vec(robo, 6)
+    torque = ParamsInit.init_scalar(robo)
+    # init transformation
+    antRj, antPj = compute_rot_trans(robo, symo)
+    # first forward recursion
+    for j in xrange(1, robo.NL):
+        # compute spatial inertia matrix for use in backward recursion
+        grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
+        # set jaj vector
+        if robo.sigma[j] == 0:
+            jaj[j] = Matrix([0, 0, 0, 0, 0, 1])
+        elif robo.sigma[j] == 1:
+            jaj[j] = Matrix([0, 0, 1, 0, 0, 0])
+        # compute j^omega_j and j^omega_i
+        compute_omega(robo, symo, j, antRj, w, wi)
+        # compute j^S_i : screw transformation matrix
+        compute_screw_transform(robo, symo, j, antRj, antPj, jTant)
+        # compute j^gamma_j : gyroscopic acceleration (6x1)
+        compute_gamma(robo, symo, j, antRj, antPj, w, wi, gamma)
+        # compute j^beta_j : external+coriolis+centrifugal wrench (6x1)
+        compute_beta(robo, symo, j, w, beta)
+    # first backward recursion - initialisation step
+    for j in reversed(xrange(0, robo.NL)):
+        # skip base terms for non-floating robots
+        if robo.is_floating and j == 0:
+            # compute spatial inertia matrix for base
+            grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
+            # compute 0^beta_0
+            compute_beta(robo, symo, j, w, beta)
+        elif j == 0:
+            continue
+        replace_star_terms(
+            symo, grandJ, beta, j, star_inertia, star_beta
+        )
+    # second backward recursion - compute star terms
+    for j in reversed(xrange(0, robo.NL)):
+        if j == 0: continue
+        compute_tau(robo, symo, j, jaj, star_beta, tau)
+        # skip base terms for non-floating robots
+        if not robo.is_floating and robo.ant[j] == 0:
+            compute_hinv(robo, symo, j, jaj, star_inertia, jah, h_inv)
+        else:
+            compute_star_terms(
+                robo, symo, j, jaj, jTant, gamma, tau,
+                h_inv, jah, star_inertia, star_beta
+            )
+            replace_star_terms(
+                symo, star_inertia, star_beta, robo.ant[j],
+                star_inertia, star_beta
+            )
+    # compute base acceleration : this returns the correct value for
+    # fixed base and floating base robots
+    compute_base_accel(
+        robo, symo, star_inertia, star_beta, grandVp
+    )
+    # second forward recursion
+    for j in xrange(1, robo.NL):
+        # compute qddot_j : joint acceleration
+        compute_joint_accel(
+            robo, symo, j, jaj, jTant, h_inv, jah, gamma,
+            tau, grandVp, star_beta, star_inertia, qddot
+        )
+        # compute j^zeta_j : relative acceleration (6x1)
+        compute_zeta(robo, symo, j, gamma, jaj, zeta, qddot)
+        # compute j^Vdot_j : link acceleration
+        compute_link_accel(robo, symo, j, jTant, zeta, grandVp)
+        # compute j^F_j : reaction wrench
+        compute_reaction_wrench(
+            robo, symo, j, grandVp,
+            star_inertia, star_beta, react_wrench
+        )
 
 
