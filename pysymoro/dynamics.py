@@ -305,8 +305,14 @@ def pseudo_force_NE(robo):
     symo.file_close()
     return symo
 
-#TODO naming stuff
-def compute_wrench(robo, symo, j, w, wdot, U, vdot, F, N, name='%s'):
+
+def get_symbol(symbol, name):
+    if name is None:
+        return symbol
+    else:
+        return symbol + name
+
+def compute_wrench(robo, symo, j, w, wdot, U, vdot, F, N, name=None):
     """Internal function. Computes total wrench (torques and forces)
     of the link j
 
@@ -315,14 +321,17 @@ def compute_wrench(robo, symo, j, w, wdot, U, vdot, F, N, name='%s'):
     F, N are the output parameters
     """
     F[j] = robo.M[j]*vdot[j] + U[j]*robo.MS[j]
-    symo.mat_replace(F[j], ('F' + name) % j)
-    Psi = symo.mat_replace(robo.J[j]*w[j], ('PSI' + name) % j)
-    N[j] = robo.J[j]*wdot[j] + tools.skew(w[j])*Psi
-    symo.mat_replace(N[j], ('No' + name) % j)
+    F[j] = symo.mat_replace(F[j], get_symbol('F', name), j)
+    Psi = robo.J[j] * w[j]
+    Psi = symo.mat_replace(Psi, get_symbol('PSI', name), j)
+    N[j] = (robo.J[j] * wdot[j]) + (tools.skew(w[j]) * Psi)
+    N[j] = symo.mat_replace(N[j], get_symbol('No', name), j)
 
-#TODO refabrish the naming system
-def compute_joint_wrench(robo, symo, j, antRj, antPj, vdot,
-                         Fjnt, Njnt, F, N, Fex, Nex, name='%s'):
+
+def compute_joint_wrench(
+    robo, symo, j, antRj, antPj, vdot,
+    Fjnt, Njnt, F, N, Fex, Nex, name=None
+):
     """Internal function. Computes wrench (torques and forces)
     of the joint j
 
@@ -330,10 +339,11 @@ def compute_joint_wrench(robo, symo, j, antRj, antPj, vdot,
     =====
     Fjnt, Njnt, Fex, Nex are the output parameters
     """
-    Fjnt[j] = symo.mat_replace(F[j] + Fex[j], ('E' + name) % j)
-    Njnt[j] = N[j] + Nex[j] + tools.skew(robo.MS[j])*vdot[j]
-    symo.mat_replace(Njnt[j], ('N' + name) % j)
-    f_ant = symo.mat_replace(antRj[j]*Fjnt[j], ('FDI' + name) % j)
+    Fjnt[j] = F[j] + Fex[j]
+    Fjnt[j] = symo.mat_replace(Fjnt[j], get_symbol('E', name), j)
+    Njnt[j] = N[j] + Nex[j] + (tools.skew(robo.MS[j]) * vdot[j])
+    Njnt[j] = symo.mat_replace(Njnt[j], get_symbol('N', name), j)
+    f_ant = symo.mat_replace(antRj[j]*Fjnt[j], get_symbol('FDI', name), j)
     if robo.ant[j] != - 1:
         Fex[robo.ant[j]] += f_ant
         Nex[robo.ant[j]] += antRj[j]*Njnt[j] + tools.skew(antPj[j])*f_ant
@@ -403,15 +413,16 @@ def compute_link_acc(robo, symo, j, antRj, antPj, link_acc, w, wi):
     =====
     link_acc is the output parameter
     """
-    E1 = symo.mat_replace(tools.skew(wi[j])*Matrix([0, 0, robo.qdot[j]]),
-                          'WQ', j)
-    E2 = (1 - robo.sigma[j])*E1
-    E3 = 2*robo.sigma[j]*E1
-    E4 = tools.skew(w[robo.ant[j]])*antPj[j]
-    E5 = tools.skew(w[robo.ant[j]])*E4
-    E6 = antRj[j].T*E5
-    E7 = symo.mat_replace(E6 + E3, 'LW', j)
-    link_acc[j] = Matrix([E7, E2])
+    expr1 = tools.skew(wi[j])*Matrix([0, 0, robo.qdot[j]])
+    expr1 = symo.mat_replace(expr1, 'WQ', j)
+    expr2 = (1 - robo.sigma[j]) * expr1
+    expr3 = 2 * robo.sigma[j] * expr1
+    expr4 = tools.skew(w[robo.ant[j]]) * antPj[j]
+    expr5 = tools.skew(w[robo.ant[j]]) * expr4
+    expr6 = antRj[j].transpose() * expr5
+    expr7 = expr6 + expr3
+    expr7 = symo.mat_replace(expr7, 'LW', j)
+    link_acc[j] = Matrix([expr7, expr2])
 
 
 def replace_beta_J_star(robo, symo, j, grandJ, beta_star):
@@ -477,7 +488,7 @@ def compute_acceleration(robo, symo, j, jTant, grandVp,
         qddot = 0
     else:
         qddot = H_inv[j]*Tau[j] - E1
-    qddot = symo.replace(qddot, str(robo.qddot[j]), forced=True)
+    qddot = symo.replace(qddot, 'QDP', j, forced=True)
     grandVp[j] = (grandR + qddot*jaj[j])
     grandVp[j][3:, 0] = symo.mat_replace(grandVp[j][3:, 0], 'WP', j)
     grandVp[j][:3, 0] = symo.mat_replace(grandVp[j][:3, 0], 'VP', j)

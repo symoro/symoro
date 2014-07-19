@@ -274,7 +274,7 @@ def compute_joint_accel(
         qddot[j] = 0
     else:
         qddot[j] = (h_inv[j] * tau[j]) - expr2
-    qddot[j] = symo.replace(qddot[j], str(robo.qddot[j]), forced=True)
+    qddot[j] = symo.replace(qddot[j], 'QDP', j, forced=True)
 
 
 def compute_link_accel(robo, symo, j, jTant, zeta, grandVp):
@@ -356,14 +356,13 @@ def compute_torque(robo, symo, j, jaj, react_wrench, torque):
     Note:
         torque is the output parameter.
     """
-    symbl_name = 'GAM' + str(j)
     if robo.sigma[j] == 2:
         tau_total = 0
     else:
         tau = react_wrench[j].transpose() * jaj[j]
         fric_rotor = robo.fric_s(j) + robo.fric_v(j) + robo.tau_ia(j)
         tau_total = tau[0, 0] + fric_rotor
-    torque[j] = symo.replace(tau_total, symbl_name, forced=True)
+    torque[j] = symo.replace(tau_total, 'GAM', j, forced=True)
 
 
 def composite_inverse_dynmodel(robo, symo):
