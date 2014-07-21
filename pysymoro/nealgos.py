@@ -137,10 +137,14 @@ def replace_composite_terms(
     Note:
         composite_inertia are composite_beta are the output parameters
     """
+    forced = False
+    if j == 0: forced = True
     composite_inertia[j] = symo.mat_replace(
-        grandJ[j], 'MJE', j, symmet=True
+        grandJ[j], 'MJE', j, symmet=True, forced=forced
     )
-    composite_beta[j] = symo.mat_replace(beta[j], 'VBE', j)
+    composite_beta[j] = symo.mat_replace(
+        beta[j], 'VBE', j, forced=forced
+    )
 
 
 def replace_star_terms(
@@ -152,10 +156,12 @@ def replace_star_terms(
     Note:
         star_inertia are star_beta are the output parameters
     """
+    forced = False
+    if j == 0: forced = True
     star_inertia[j] = symo.mat_replace(
-        grandJ[j], 'MJE', j, symmet=True
+        grandJ[j], 'MJE', j, symmet=True, forced=forced
     )
-    star_beta[j] = symo.mat_replace(beta[j], 'VBE', j)
+    star_beta[j] = symo.mat_replace(beta[j], 'VBE', j, forced=forced)
 
 
 def compute_composite_terms(
