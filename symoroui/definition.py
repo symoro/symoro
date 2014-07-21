@@ -23,37 +23,52 @@ class DialogDefinition(wx.Dialog):
     """Creates the dialog box to define a new robot."""
     def __init__(self, prefix, name, nl, nj, structure, is_floating,
             is_wmr, parent=None):
-        super(DialogDefinition, self).__init__(parent, style=wx.SYSTEM_MENU |
-                                wx.CAPTION | wx.CLOSE_BOX | wx.CLIP_CHILDREN)
+        super(DialogDefinition, self).__init__(
+            parent,
+            style=wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX | wx.CLIP_CHILDREN
+        )
         self.init_ui(name, nl, nj, is_floating, is_wmr, structure)
         self.SetTitle(prefix + ": New robot definition")
 
     def init_ui(self, name, nl, nj, is_floating, is_wmr, structure):
         main_sizer = wx.BoxSizer(wx.VERTICAL)
-        #title
-        label_main = wx.StaticText(self, label="Robot definition")
-        main_sizer.Add(label_main, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 25)
-        #grid
+        # title
+        main_sizer.Add(
+            wx.StaticText(self, label="Robot definition"), 0,
+            wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 25
+        )
+        # grid
         grid = wx.GridBagSizer(15, 15)
-        grid.Add(wx.StaticText(self, label='Name of the robot:'), pos=(0, 0),
-                 flag=wx.BOTTOM | wx.ALIGN_LEFT, border=2)
-        grid.Add(wx.TextCtrl(self, size=(92, -1), name='name', value=name),
-                 pos=(0, 1))
-        label = wx.StaticText(self, label='Number of moving links:')
-        grid.Add(label, pos=(1, 0),
-                 flag=wx.BOTTOM | wx.TOP | wx.ALIGN_LEFT, border=2)
-        self.spin_links = wx.SpinCtrl(self, size=(92, -1),
-                                      value=str(nl), min=1)
+        grid.Add(
+            wx.StaticText(self, label='Name of the robot:'),
+            pos=(0, 0), flag=wx.BOTTOM | wx.ALIGN_LEFT, border=2
+        )
+        grid.Add(
+            wx.TextCtrl(self, size=(92, -1),
+            name='name', value=name), pos=(0, 1)
+        )
+        grid.Add(
+            wx.StaticText(self, label='Number of moving links:'),
+            pos=(1, 0), flag=wx.BOTTOM | wx.TOP | wx.ALIGN_LEFT,
+            border=2
+        )
+        self.spin_links = wx.SpinCtrl(
+            self, size=(92, -1), value=str(nl), min=1
+        )
         self.spin_links.Bind(wx.EVT_SPINCTRL, self.OnSpinNL)
         grid.Add(self.spin_links, pos=(1, 1))
-        label = wx.StaticText(self, label='Number of joints:')
-        grid.Add(label, pos=(2, 0),
-                 flag=wx.BOTTOM | wx.TOP | wx.ALIGN_LEFT, border=2)
-        self.spin_joints = wx.SpinCtrl(self, size=(92, -1),
-                                       value=str(nj), min=0)
+        grid.Add(
+            wx.StaticText(self, label='Number of joints:'), pos=(2, 0),
+            flag=wx.BOTTOM | wx.TOP | wx.ALIGN_LEFT, border=2
+        )
+        self.spin_joints = wx.SpinCtrl(
+            self, size=(92, -1), value=str(nj), min=0
+        )
         grid.Add(self.spin_joints, pos=(2, 1))
-        grid.Add(wx.StaticText(self, label='Type of structure'), pos=(3, 0),
-                 flag=wx.BOTTOM | wx.TOP | wx.ALIGN_LEFT, border=2)
+        grid.Add(
+            wx.StaticText(self, label='Type of structure'), pos=(3, 0),
+            flag=wx.BOTTOM | wx.TOP | wx.ALIGN_LEFT, border=2
+        )
         self.cmb_structure = wx.ComboBox(
             self, size=(92, -1), name='structure', style=wx.CB_READONLY,
             choices=[tools.SIMPLE, tools.TREE, tools.CLOSED_LOOP],
@@ -63,28 +78,47 @@ class DialogDefinition(wx.Dialog):
         self.cmb_structure.Bind(wx.EVT_COMBOBOX, self.OnTypeChanged)
         self.OnTypeChanged(None)
         main_sizer.Add(grid, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 15)
-        self.ch_is_floating = wx.CheckBox(self, label=' Is Floating Base')
-        self.ch_is_floating.Value = is_floating
-        self.ch_is_wmr = wx.CheckBox(
+        self.chk_is_floating = wx.CheckBox(
+            self, label=' Is Floating Base'
+        )
+        self.chk_is_floating.Value = is_floating
+        self.chk_is_floating.Bind(wx.EVT_CHECKBOX, self.OnFloating)
+        self.chk_is_wmr = wx.CheckBox(
             self, label=' Is Wheeled Mobile Robot'
         )
-        self.ch_is_wmr.Value = is_wmr
-        self.ch_keep_geo = wx.CheckBox(self, label=' Keep geometric parameters')
-        self.ch_keep_geo.Value = True
-        self.ch_keep_dyn = wx.CheckBox(self, label=' Keep dynamic parameters')
-        self.ch_keep_dyn.Value = True
-        self.ch_keep_base = wx.CheckBox(self, label=' Keep base parameters')
-        self.ch_keep_base.Value = True
-        main_sizer.Add(self.ch_is_floating, 0,
-                       wx.LEFT | wx.RIGHT | wx.ALIGN_LEFT, 15)
-        main_sizer.Add(self.ch_is_wmr, 0,
-                       wx.LEFT | wx.RIGHT | wx.ALIGN_LEFT, 15)
-        main_sizer.Add(self.ch_keep_geo, 0,
-                       wx.TOP | wx.LEFT | wx.ALIGN_LEFT, 15)
-        main_sizer.Add(self.ch_keep_dyn, 0,
-                       wx.TOP | wx.LEFT | wx.ALIGN_LEFT, 15)
-        main_sizer.Add(self.ch_keep_base, 0,
-                       wx.TOP | wx.LEFT | wx.ALIGN_LEFT, 15)
+        self.chk_is_wmr.Value = is_wmr
+        self.chk_keep_geo = wx.CheckBox(
+            self, label=' Keep geometric parameters'
+        )
+        self.chk_keep_geo.Value = True
+        self.chk_keep_dyn = wx.CheckBox(
+            self, label=' Keep dynamic parameters'
+        )
+        self.chk_keep_dyn.Value = True
+        self.chk_keep_base = wx.CheckBox(
+            self, label=' Keep base parameters'
+        )
+        self.chk_keep_base.Value = True
+        main_sizer.Add(
+            self.chk_is_floating, 0,
+            wx.LEFT | wx.RIGHT | wx.ALIGN_LEFT, 15
+        )
+        main_sizer.Add(
+            self.chk_is_wmr, 0,
+            wx.LEFT | wx.RIGHT | wx.ALIGN_LEFT, 15
+        )
+        main_sizer.Add(
+            self.chk_keep_geo, 0,
+            wx.TOP | wx.LEFT | wx.ALIGN_LEFT, 15
+        )
+        main_sizer.Add(
+            self.chk_keep_dyn, 0,
+            wx.TOP | wx.LEFT | wx.ALIGN_LEFT, 15
+        )
+        main_sizer.Add(
+            self.chk_keep_base, 0,
+            wx.TOP | wx.LEFT | wx.ALIGN_LEFT, 15
+        )
         hor_sizer = wx.BoxSizer(wx.HORIZONTAL)
         ok_btn = wx.Button(self, wx.ID_OK, "OK")
         ok_btn.Bind(wx.EVT_BUTTON, self.OnOK)
@@ -108,6 +142,9 @@ class DialogDefinition(wx.Dialog):
             self.spin_joints.Enable(False)
             self.OnSpinNL(None)
 
+    def OnFloating(self, _):
+        self.chk_keep_base.Value = not self.chk_is_floating.Value
+
     def OnSpinNL(self, _):
         self.spin_joints.SetRange(int(self.spin_links.Value), 100)
         if self.cmb_structure.GetSelection() != 2:
@@ -120,17 +157,17 @@ class DialogDefinition(wx.Dialog):
         params = {
             'init_pars': (
                 name, nl, nj, 2*nj - nl,
-                self.ch_is_floating.Value, self.cmb_structure.Value
+                self.chk_is_floating.Value, self.cmb_structure.Value
             ),
             'name': name,
             'num_links': nl,
             'num_joints': nj,
             'structure': self.cmb_structure.Value,
-            'is_floating': self.ch_is_floating.Value,
-            'is_wmr': self.ch_is_wmr.Value,
-            'keep_geo': self.ch_keep_geo.Value,
-            'keep_dyn': self.ch_keep_dyn.Value,
-            'keep_base': self.ch_keep_base.Value
+            'is_floating': self.chk_is_floating.Value,
+            'is_wmr': self.chk_is_wmr.Value,
+            'keep_geo': self.chk_keep_geo.Value,
+            'keep_dyn': self.chk_keep_dyn.Value,
+            'keep_base': self.chk_keep_base.Value
         }
         return params
 
