@@ -587,6 +587,7 @@ class MainFrame(wx.Frame):
         if dialog.ShowModal() == wx.ID_OK:
             result = dialog.get_values()
             new_robo = Robot(*result['init_pars'])
+            new_robo.set_defaults(base=True)
             if result['keep_geo']:
                 nf = min(self.robo.NF, new_robo.NF)
                 new_robo.ant[:nf] = self.robo.ant[:nf]
@@ -615,6 +616,7 @@ class MainFrame(wx.Frame):
                 new_robo.v0 = self.robo.v0
                 new_robo.vdot0 = self.robo.vdot0
                 new_robo.G = self.robo.G
+            new_robo.set_defaults(joint=True)
             new_robo.is_wmr = result['is_wmr']
             self.robo = new_robo
             self.robo.directory = filemgr.get_folder_path(self.robo.name)

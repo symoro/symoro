@@ -111,16 +111,70 @@ class Robot(object):
         J_str = 'XX{0},XY{0},XZ{0},XY{0},YY{0},YZ{0},XZ{0},YZ{0},ZZ{0}'
         self.J = [Matrix(3, 3, var(J_str.format(i))) for i in num]
         """  gravity vector: 3x1 matrix"""
-        self.G = Matrix([0, 0, var('G3')])
+        self.G = Matrix([0, 0, var('GZ')])
         """  eta - rigid or flexible"""
         self.eta = [0 for j in numj]
         """  k - joint stiffness"""
         self.k = [0 for j in numj]
 
-    # member methods:
+    def set_defaults(self, joint=False, geom=False, base=False):
+        # joint params
+        if joint:
+            self._set_joint_defaults()
+        # geometric params
+        if geom:
+            self._set_geom_defaults()
+        # base params
+        if base:
+            self._set_base_defaults()
+
+    def _set_joint_defaults(self):
+        """
+        Set default values for joint parameters for those exceptional
+        from the ones set in the ctor.
+        """
+        for j in xrange(1, self.NJ):
+            try:
+                if self.sigma[j] == 2:
+                    self.qdot[j] = 0
+                    self.qddot[j] = 0
+                    self.GAM[j] = 0
+            except IndexError:
+                # just ignore exception
+                pass
+
+    def _set_geom_defaults(self):
+        """
+        Set default values for geometric parameters for those
+        exceptional from the ones set in the ctor.
+        """
+        for j in xrange(1, self.NF):
+            if self.sigma[j] == 0:
+                self.theta = var('th{0}'.format(j))
+            elif self.sigma[j] == 1:
+                self.r = var('r{0}'.format(j))
+            elif self.sigma[j] == 2:
+                self.theta = 0
+
+    def _set_base_defaults(self):
+        """
+        Set default values for base parameters for those exceptional
+        from the ones set in the ctor.
+        """
+        if self.is_floating:
+            self.G = Matrix([var('GX'), var('GY'), var('GZ')])
+            self.v0 = Matrix([var('VX0'), var('VY0'), var('VZ0')])
+            self.w0 = Matrix([var('WX0'), var('WY0'), var('WZ0')])
+            self.vdot0 = Matrix([var('VPX0'), var('VPY0'), var('VPZ0')])
+            self.wdot0 = Matrix([var('WPX0'), var('WPY0'), var('WPZ0')])
+            # Z matrix
+            for i in range(0, 3):
+                for j in range(0, 3):
+                    self.Z[i, j] = var('Zr{0}{1}'.format(i+1, j+1))
+            for j in range(0, 3):
+                self.Z[j, 3] = var('Zt{0}'.format(j+1))
+
     def put_val(self, j, name, val):
-        #TODO: write proper parser
-        #accepts tuple
         try:
             if isinstance(val, str) or isinstance(val, unicode):
                 val = sympify(val)
