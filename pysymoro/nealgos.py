@@ -129,7 +129,8 @@ def compute_composite_beta(
 
 
 def replace_composite_terms(
-    symo, grandJ, beta, j, composite_inertia, composite_beta
+    symo, grandJ, beta, j, composite_inertia,
+    composite_beta, replace=False
 ):
     """
     Replace composite inertia and beta (internal function).
@@ -138,17 +139,20 @@ def replace_composite_terms(
         composite_inertia are composite_beta are the output parameters
     """
     forced = False
-    if j == 0: forced = True
+    if replace and j == 0: forced = False
     composite_inertia[j] = symo.mat_replace(
         grandJ[j], 'MJE', j, symmet=True, forced=forced
     )
+    if replace and j == 0:
+        symo.write_equation('MJE220', 'MJE110')
+        symo.write_equation('MJE330', 'MJE110')
     composite_beta[j] = symo.mat_replace(
         beta[j], 'VBE', j, forced=forced
     )
 
 
 def replace_star_terms(
-    symo, grandJ, beta, j, star_inertia, star_beta
+    symo, grandJ, beta, j, star_inertia, star_beta, replace=False
 ):
     """
     Replace star inertia and beta (internal function).
@@ -157,7 +161,7 @@ def replace_star_terms(
         star_inertia are star_beta are the output parameters
     """
     forced = False
-    if j == 0: forced = True
+    if replace and j == 0: forced = False
     star_inertia[j] = symo.mat_replace(
         grandJ[j], 'MJE', j, symmet=True, forced=forced
     )
@@ -306,8 +310,13 @@ def compute_base_accel(robo, symo, star_inertia, star_beta, grandVp):
     forced = False
     grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
     if robo.is_floating:
-        grandVp[0] = star_inertia[0].inv() * star_beta[0]
         forced = True
+        inv_base_star_inertia = star_inertia[0].inv()
+        inv_base_star_inertia = symo.mat_replace(
+            inv_base_star_inertia, 'InvMJE', 0,
+            symmet=True, forced=forced
+        )
+        grandVp[0] = inv_base_star_inertia * star_beta[0]
     grandVp[0][:3, 0] = symo.mat_replace(
         grandVp[0][:3, 0], 'VP', 0, forced=forced
     )
@@ -329,8 +338,14 @@ def compute_base_accel_composite(
     forced = False
     grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
     if robo.is_floating:
-        grandVp[0] = composite_inertia[0].inv() * composite_beta[0]
         forced = True
+        symo.flushout()
+        inv_base_comp_inertia = composite_inertia[0].inv()
+        inv_base_comp_inertia = symo.mat_replace(
+            inv_base_comp_inertia, 'InvMJE', 0,
+            symmet=True, forced=forced
+        )
+        grandVp[0] = inv_base_comp_inertia * composite_beta[0]
     grandVp[0][:3, 0] = symo.mat_replace(
        grandVp[0][:3, 0], 'VP', 0, forced=forced
     )
@@ -436,7 +451,7 @@ def composite_inverse_dynmodel(robo, symo):
         )
         replace_composite_terms(
             symo, composite_inertia, composite_beta, robo.ant[j],
-            composite_inertia, composite_beta
+            composite_inertia, composite_beta, replace=True
         )
     # compute base acceleration : this returns the correct value for
     # fixed base and floating base robots
@@ -619,14 +634,11 @@ def direct_dynmodel(robo, symo):
         compute_beta(robo, symo, j, w, beta)
     # first backward recursion - initialisation step
     for j in reversed(xrange(0, robo.NL)):
-        # skip base terms for non-floating robots
-        if robo.is_floating and j == 0:
+        if j == 0:
             # compute spatial inertia matrix for base
             grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
             # compute 0^beta_0
             compute_beta(robo, symo, j, w, beta)
-        elif j == 0:
-            continue
         replace_star_terms(
             symo, grandJ, beta, j, star_inertia, star_beta
         )
@@ -634,18 +646,14 @@ def direct_dynmodel(robo, symo):
     for j in reversed(xrange(0, robo.NL)):
         if j == 0: continue
         compute_tau(robo, symo, j, jaj, star_beta, tau)
-        # skip base terms for non-floating robots
-        if not robo.is_floating and robo.ant[j] == 0:
-            compute_hinv(robo, symo, j, jaj, star_inertia, jah, h_inv)
-        else:
-            compute_star_terms(
-                robo, symo, j, jaj, jTant, gamma, tau,
-                h_inv, jah, star_inertia, star_beta
-            )
-            replace_star_terms(
-                symo, star_inertia, star_beta, robo.ant[j],
-                star_inertia, star_beta
-            )
+        compute_star_terms(
+            robo, symo, j, jaj, jTant, gamma, tau,
+            h_inv, jah, star_inertia, star_beta
+        )
+        replace_star_terms(
+            symo, star_inertia, star_beta, robo.ant[j],
+            star_inertia, star_beta, replace=True
+        )
     # compute base acceleration : this returns the correct value for
     # fixed base and floating base robots
     compute_base_accel(

@@ -8,6 +8,7 @@
 """This module contains the Symbol Manager tools."""
 
 import itertools
+import os
 
 from sympy import sin, cos
 from sympy import Symbol, Matrix, Expr
@@ -415,6 +416,14 @@ class SymbolManager(object):
             print(line)
         elif self.file_out is not None:
             self.file_out.write(str(line) + '\n')
+
+    def flushout(self):
+        """
+        Flush the buffer and make sure the data is written to the disk
+        """
+        self.file_out.flush()
+        if self.file_out != 'disp':
+            os.fsync(self.file_out.fileno())
 
     def file_open(self, robo, ext):
         """

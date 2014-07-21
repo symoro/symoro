@@ -237,7 +237,12 @@ class Robot(object):
         symo.file_open(self, 'ddm')
         title = "Direct Dynamic Model using Newton-Euler Algorithm"
         symo.write_params_table(self, title, inert=True, dynam=True)
-        nealgos.direct_dynmodel(self, symo)
+        if self.is_floating:
+            # with floating base
+            nealgos.direct_dynmodel(self, symo)
+        else:
+            # with fixed base
+            dynamics.compute_direct_dynamic_NE(self, symo)
         symo.file_close()
         return symo
 
