@@ -396,17 +396,19 @@ class MainFrame(wx.Frame):
             ('NL', self.robo.nl), ('NJ', self.robo.nj),
             ('type', self.robo.structure),
             ('floating', self.robo.is_floating),
-            ('wmr', self.robo.is_wmr),
+            ('mobile', self.robo.is_mobile),
             ('loops', self.robo.nj-self.robo.nl)
         ]
         for name, info in names:
             label = self.widgets[name]
             label.SetLabel(str(info))
+        idx_start = 1
+        if self.robo.is_floating or self.robo.is_mobile:
+            idx_start = 0
         lsts = [
             ('frame', [str(i) for i in range(1, self.robo.NF)]),
             ('link',  [
-                str(i) for i in range(int(not self.robo.is_mobile),
-                self.robo.NL)
+                str(i) for i in range(idx_start, self.robo.NL)
             ]),
             ('joint', [str(i) for i in range(1, self.robo.NJ)]),
             ('ant', ['0']), ('sigma', ['0', '1', '2']),
@@ -583,7 +585,7 @@ class MainFrame(wx.Frame):
             ui_labels.MAIN_WIN['prog_name'],
             self.robo.name, self.robo.nl,
             self.robo.nj, self.robo.structure,
-            self.robo.is_floating, self.robo.is_wmr
+            self.robo.is_floating, self.robo.is_mobile
         )
         if dialog.ShowModal() == wx.ID_OK:
             result = dialog.get_values()
@@ -618,7 +620,7 @@ class MainFrame(wx.Frame):
                 new_robo.vdot0 = self.robo.vdot0
                 new_robo.G = self.robo.G
             new_robo.set_defaults(joint=True)
-            new_robo.is_wmr = result['is_wmr']
+            new_robo.is_mobile = result['is_mobile']
             self.robo = new_robo
             self.robo.directory = filemgr.get_folder_path(self.robo.name)
             self.feed_data()

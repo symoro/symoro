@@ -26,7 +26,7 @@ class FloatingRobot(object):
     """
     def __init__(
         self, name, links=0, joints=0, frames=0,
-        is_floating=True, structure=tools.TREE, is_wmr=False,
+        is_floating=True, structure=tools.TREE, is_mobile=False,
         is_symbolic=True
     ):
         """
@@ -49,7 +49,7 @@ class FloatingRobot(object):
         """Type of the robot structure - simple, tree, closed-loop"""
         self.structure = structure
         """To indicate if the robot is a wheeled mobile robot"""
-        self.is_wmr = is_wmr
+        self.is_mobile = is_mobile
         """To indicate if computation should be symbolic or numeric"""
         self.is_symbolic = is_symbolic
         # properties dependent on number of links
@@ -108,7 +108,7 @@ class FloatingRobot(object):
         str_format = str_format + ("\tJoints: %s\n" % str(self.num_joints))
         str_format = str_format + ("\tFrames: %s\n" % str(self.num_frames))
         str_format = str_format + ("\tFloating: %s\n" % str(self.is_floating))
-        str_format = str_format + ("\tWMR: %s\n" % str(self.is_wmr))
+        str_format = str_format + ("\tWMR: %s\n" % str(self.is_mobile))
         str_format = str_format + ("\tStructure: %s\n" % str(self.structure))
         str_format = str_format + '\n'
         # add geometric params

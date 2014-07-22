@@ -21,16 +21,18 @@ from symoroutils import tools
 
 class DialogDefinition(wx.Dialog):
     """Creates the dialog box to define a new robot."""
-    def __init__(self, prefix, name, nl, nj, structure, is_floating,
-            is_wmr, parent=None):
+    def __init__(
+        self, prefix, name, nl, nj, structure, is_floating,
+        is_mobile, parent=None
+    ):
         super(DialogDefinition, self).__init__(
             parent,
             style=wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX | wx.CLIP_CHILDREN
         )
-        self.init_ui(name, nl, nj, is_floating, is_wmr, structure)
+        self.init_ui(name, nl, nj, is_floating, is_mobile, structure)
         self.SetTitle(prefix + ": New robot definition")
 
-    def init_ui(self, name, nl, nj, is_floating, is_wmr, structure):
+    def init_ui(self, name, nl, nj, is_floating, is_mobile, structure):
         szr_topmost = wx.BoxSizer(wx.VERTICAL)
         # title
         szr_topmost.Add(
@@ -85,10 +87,10 @@ class DialogDefinition(wx.Dialog):
         )
         self.chk_is_floating.Value = is_floating
         self.chk_is_floating.Bind(wx.EVT_CHECKBOX, self.OnFloating)
-        self.chk_is_wmr = wx.CheckBox(
-            self, label=' Is Wheeled Mobile Robot'
+        self.chk_is_mobile = wx.CheckBox(
+            self, label=' Is Mobile Robot'
         )
-        self.chk_is_wmr.Value = is_wmr
+        self.chk_is_mobile.Value = is_mobile
         self.chk_keep_geo = wx.CheckBox(
             self, label=' Keep geometric parameters'
         )
@@ -106,7 +108,7 @@ class DialogDefinition(wx.Dialog):
             wx.LEFT | wx.RIGHT | wx.ALIGN_LEFT, 15
         )
         szr_topmost.Add(
-            self.chk_is_wmr, 0,
+            self.chk_is_mobile, 0,
             wx.LEFT | wx.RIGHT | wx.ALIGN_LEFT, 15
         )
         szr_topmost.Add(
@@ -166,7 +168,7 @@ class DialogDefinition(wx.Dialog):
             'num_joints': nj,
             'structure': self.cmb_structure.Value,
             'is_floating': self.chk_is_floating.Value,
-            'is_wmr': self.chk_is_wmr.Value,
+            'is_mobile': self.chk_is_mobile.Value,
             'keep_geo': self.chk_keep_geo.Value,
             'keep_dyn': self.chk_keep_dyn.Value,
             'keep_base': self.chk_keep_base.Value

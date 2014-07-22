@@ -355,7 +355,7 @@ class SymbolManager(object):
             self.write_param('Geometric parameters', robo.get_geom_head(),
                              robo, range(1, robo.NF))
         if inert:
-            if robo.is_mobile:
+            if robo.is_floating or robo.is_mobile:
                 start_frame = 0
             else:
                 start_frame = 1

@@ -50,7 +50,7 @@ def _extract_vals(robo, key, line):
     line = line.replace('}', '')
     if key in _ZERO_BASED:
         k = 0
-    elif robo.is_mobile and key in _NL:
+    elif (robo.is_floating or robo.is_mobile) and key in _NL:
         k = 0
     else:
         k = 1
@@ -71,23 +71,24 @@ def _extract_vals(robo, key, line):
 
 
 def _write_par_list(robo, f, key, N0, N):
-    f.write('%s = {%s' % (key, robo.get_val(N0, key)))
+    f.write('{0} = {{{1}'.format(key, robo.get_val(N0, key)))
     for i in xrange(N0 + 1, N):
-        f.write(',%s' % robo.get_val(i, key))
+        f.write(',{0}'.format(robo.get_val(i, key)))
     f.write('}\n')
 
 
 def writepar(robo):
     fname = filemgr.make_file_path(robo)
     with open(fname, 'w') as f:
-        f.write('(* Robotname = \'%s\' *)\n' % robo.name)
-        f.write('NL = %s\n' % robo.nl)
-        f.write('NJ = %s\n' % robo.nj)
-        f.write('NF = %s\n' % robo.nf)
-        f.write('Type = %s\n' % tools.TYPES.index(robo.structure))
-        f.write('is_mobile = %s\n' % int(robo.is_mobile))
+        f.write('(* Robotname = \'{0}\' *)\n'.format(robo.name))
+        f.write('NL = {0}\n'.format(robo.nl))
+        f.write('NJ = {0}\n'.format(robo.nj))
+        f.write('NF = {0}\n'.format(robo.nf))
+        f.write('Type = {0}\n'.format(tools.TYPES.index(robo.structure)))
+        f.write('is_floating = {0}\n'.format(robo.is_floating))
+        f.write('is_mobile = {0}\n'.format(robo.is_mobile))
         f.write('\n(* Geometric parameters *)\n')
-        if robo.is_mobile:
+        if robo.is_floating or robo.is_mobile:
             N0 = 0
         else:
             N0 = 1
@@ -118,6 +119,7 @@ def readpar(robo_name, file_path):
         #initialize the Robot instance
         f.seek(0)
         d = {}
+        is_floating = False
         is_mobile = False
         for line in f.readlines():
             for s in ('NJ', 'NL', 'Type'):
@@ -125,16 +127,26 @@ def readpar(robo_name, file_path):
                 if match:
                     d[s] = int(match.group(1))
                     continue
-            match = re.match(r'^is_mobile.*=([\d\s]*)(\(\*.*)?', line)
+            # check for is_floating
+            match = re.match(r'^is_floating.*=([\w\s]*)(\(\*.*)?', line)
+            if match:
+                is_floating = _bool_dict[(match.group(1).strip())]
+            # check for is_mobile
+            match = re.match(r'^is_mobile.*=([\w\s]*)(\(\*.*)?', line)
             if match:
                 is_mobile = _bool_dict[(match.group(1).strip())]
         if len(d) < 2:
             return None, tools.FAIL
         NF = d['NJ']*2 - d['NL']
-        robo = robot.Robot(robo_name, d['NL'], d['NJ'], NF,
-                            is_mobile, tools.TYPES[d['Type']])
+        robo = robot.Robot(
+            name=robo_name,
+            NL=d['NL'], NJ=d['NJ'], NF=NF,
+            is_floating=is_floating,
+            structure=tools.TYPES[d['Type']],
+            is_mobile=is_mobile
+        )
         robo.directory = os.path.dirname(file_path)
-        #fitting the data
+        # fitting the data
         acc_line = ''
         key = ''
         f.seek(0)
