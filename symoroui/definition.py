@@ -31,23 +31,23 @@ class DialogDefinition(wx.Dialog):
         self.SetTitle(prefix + ": New robot definition")
 
     def init_ui(self, name, nl, nj, is_floating, is_wmr, structure):
-        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        szr_topmost = wx.BoxSizer(wx.VERTICAL)
         # title
-        main_sizer.Add(
+        szr_topmost.Add(
             wx.StaticText(self, label="Robot definition"), 0,
             wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 25
         )
         # grid
-        grid = wx.GridBagSizer(15, 15)
-        grid.Add(
+        szr_grd = wx.GridBagSizer(15, 15)
+        szr_grd.Add(
             wx.StaticText(self, label='Name of the robot:'),
             pos=(0, 0), flag=wx.BOTTOM | wx.ALIGN_LEFT, border=2
         )
-        grid.Add(
+        szr_grd.Add(
             wx.TextCtrl(self, size=(92, -1),
             name='name', value=name), pos=(0, 1)
         )
-        grid.Add(
+        szr_grd.Add(
             wx.StaticText(self, label='Number of moving links:'),
             pos=(1, 0), flag=wx.BOTTOM | wx.TOP | wx.ALIGN_LEFT,
             border=2
@@ -56,16 +56,16 @@ class DialogDefinition(wx.Dialog):
             self, size=(92, -1), value=str(nl), min=1
         )
         self.spin_links.Bind(wx.EVT_SPINCTRL, self.OnSpinNL)
-        grid.Add(self.spin_links, pos=(1, 1))
-        grid.Add(
+        szr_grd.Add(self.spin_links, pos=(1, 1))
+        szr_grd.Add(
             wx.StaticText(self, label='Number of joints:'), pos=(2, 0),
             flag=wx.BOTTOM | wx.TOP | wx.ALIGN_LEFT, border=2
         )
         self.spin_joints = wx.SpinCtrl(
             self, size=(92, -1), value=str(nj), min=0
         )
-        grid.Add(self.spin_joints, pos=(2, 1))
-        grid.Add(
+        szr_grd.Add(self.spin_joints, pos=(2, 1))
+        szr_grd.Add(
             wx.StaticText(self, label='Type of structure'), pos=(3, 0),
             flag=wx.BOTTOM | wx.TOP | wx.ALIGN_LEFT, border=2
         )
@@ -74,10 +74,12 @@ class DialogDefinition(wx.Dialog):
             choices=[tools.SIMPLE, tools.TREE, tools.CLOSED_LOOP],
             value=structure
         )
-        grid.Add(self.cmb_structure, pos=(3, 1))
+        szr_grd.Add(self.cmb_structure, pos=(3, 1))
         self.cmb_structure.Bind(wx.EVT_COMBOBOX, self.OnTypeChanged)
         self.OnTypeChanged(None)
-        main_sizer.Add(grid, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 15)
+        szr_topmost.Add(
+            szr_grd, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 15
+        )
         self.chk_is_floating = wx.CheckBox(
             self, label=' Is Floating Base'
         )
@@ -99,35 +101,35 @@ class DialogDefinition(wx.Dialog):
             self, label=' Keep base parameters'
         )
         self.chk_keep_base.Value = True
-        main_sizer.Add(
+        szr_topmost.Add(
             self.chk_is_floating, 0,
             wx.LEFT | wx.RIGHT | wx.ALIGN_LEFT, 15
         )
-        main_sizer.Add(
+        szr_topmost.Add(
             self.chk_is_wmr, 0,
             wx.LEFT | wx.RIGHT | wx.ALIGN_LEFT, 15
         )
-        main_sizer.Add(
+        szr_topmost.Add(
             self.chk_keep_geo, 0,
             wx.TOP | wx.LEFT | wx.ALIGN_LEFT, 15
         )
-        main_sizer.Add(
+        szr_topmost.Add(
             self.chk_keep_dyn, 0,
             wx.TOP | wx.LEFT | wx.ALIGN_LEFT, 15
         )
-        main_sizer.Add(
+        szr_topmost.Add(
             self.chk_keep_base, 0,
             wx.TOP | wx.LEFT | wx.ALIGN_LEFT, 15
         )
-        hor_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        ok_btn = wx.Button(self, wx.ID_OK, "OK")
-        ok_btn.Bind(wx.EVT_BUTTON, self.OnOK)
-        cancel_btn = wx.Button(self, wx.ID_CANCEL, "Cancel")
-        cancel_btn.Bind(wx.EVT_BUTTON, self.OnCancel)
-        hor_sizer.Add(ok_btn, 0, wx.ALL, 25)
-        hor_sizer.Add(cancel_btn, 0, wx.ALL, 25)
-        main_sizer.Add(hor_sizer)
-        self.SetSizerAndFit(main_sizer)
+        szr_horizontal = wx.BoxSizer(wx.HORIZONTAL)
+        btn_ok = wx.Button(self, wx.ID_OK, "OK")
+        btn_ok.Bind(wx.EVT_BUTTON, self.OnOK)
+        btn_cancel = wx.Button(self, wx.ID_CANCEL, "Cancel")
+        btn_cancel.Bind(wx.EVT_BUTTON, self.OnCancel)
+        szr_horizontal.Add(btn_ok, 0, wx.ALL, 25)
+        szr_horizontal.Add(btn_cancel, 0, wx.ALL, 25)
+        szr_topmost.Add(szr_horizontal)
+        self.SetSizerAndFit(szr_topmost)
 
     def OnOK(self, _):
         self.EndModal(wx.ID_OK)
@@ -199,37 +201,42 @@ class DialogVisualisation(wx.Dialog):
                         self.syms.add(at)
 
     def init_ui(self):
-        p = scrolled.ScrolledPanel(self, -1)
-        vbox = wx.BoxSizer(wx.VERTICAL)
+        panel = scrolled.ScrolledPanel(self, -1)
+        szr_vertical = wx.BoxSizer(wx.VERTICAL)
         self.widgets = {}
         for par in self.syms:
             if par in self.par_dict:
                 val = str(self.par_dict[par])
             else:
                 val = 1.
-            hor_sizer = wx.BoxSizer(wx.HORIZONTAL)
-            label = wx.StaticText(p, label=str(par), size=(60, -1),
-                                  style=wx.ALIGN_RIGHT)
-            hor_sizer.Add(label, 0, wx.ALIGN_CENTER_VERTICAL)
-            hor_sizer.AddSpacer(5)
-            txt_box = wx.TextCtrl(p, size=(120, -1), value=str(val))
-            hor_sizer.Add(txt_box)
-            vbox.Add(hor_sizer, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 5)
+            szr_horizontal = wx.BoxSizer(wx.HORIZONTAL)
+            label = wx.StaticText(
+                panel, label=str(par),
+                size=(60, -1), style=wx.ALIGN_RIGHT
+            )
+            szr_horizontal.Add(label, 0, wx.ALIGN_CENTER_VERTICAL)
+            szr_horizontal.AddSpacer(5)
+            txt_box = wx.TextCtrl(panel, size=(120, -1), value=str(val))
+            szr_horizontal.Add(txt_box)
+            szr_vertical.Add(
+                szr_horizontal, 0,
+                wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 5
+            )
             self.widgets[str(par)] = txt_box
-        p.SetSizer(vbox)
-        p.SetAutoLayout(1)
-        p.SetupScrolling()
-        main_sizer = wx.BoxSizer(wx.VERTICAL)
-        main_sizer.Add(p, 1, wx.ALL | wx.EXPAND, 2)
-        hor_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        ok_btn = wx.Button(self, wx.ID_OK, "OK")
-        ok_btn.Bind(wx.EVT_BUTTON, self.OnOK)
-        cancel_btn = wx.Button(self, wx.ID_CANCEL, "Cancel")
-        cancel_btn.Bind(wx.EVT_BUTTON, self.OnCancel)
-        hor_sizer.Add(ok_btn, 0, wx.ALL, 15)
-        hor_sizer.Add(cancel_btn, 0, wx.ALL, 15)
-        main_sizer.Add(hor_sizer, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
-        self.SetSizer(main_sizer)
+        panel.SetSizer(szr_vertical)
+        panel.SetAutoLayout(1)
+        panel.SetupScrolling()
+        szr_topmost = wx.BoxSizer(wx.VERTICAL)
+        szr_topmost.Add(panel, 1, wx.ALL | wx.EXPAND, 2)
+        szr_horizontal = wx.BoxSizer(wx.HORIZONTAL)
+        btn_ok = wx.Button(self, wx.ID_OK, "OK")
+        btn_ok.Bind(wx.EVT_BUTTON, self.OnOK)
+        btn_cancel = wx.Button(self, wx.ID_CANCEL, "Cancel")
+        btn_cancel.Bind(wx.EVT_BUTTON, self.OnCancel)
+        szr_horizontal.Add(btn_ok, 0, wx.ALL, 15)
+        szr_horizontal.Add(btn_cancel, 0, wx.ALL, 15)
+        szr_topmost.Add(szr_horizontal, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
+        self.SetSizer(szr_topmost)
 
     def OnOK(self, _):
         self.EndModal(wx.ID_OK)
