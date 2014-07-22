@@ -349,6 +349,7 @@ class MainFrame(wx.Frame):
         for par in pars[0:3]:
             self.widgets[par].SetValue(str(self.robo.get_val(index, par)))
         self.update_params(index, pars[3:])
+        self.robo.set_defaults(joint=True)
 
     def update_dyn_params(self):
         pars = self._extract_param_names(ui_labels.DYN_PARAMS)
