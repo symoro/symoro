@@ -7,6 +7,9 @@ This software package is developed as part of the OpenSYMORO project by
 the robotics team at [IRCCyN][lk:irccyn] under the supervision of Wisama
 Khalil.
 
+For details on the algorithms used, please see [the paper][lk:hal]
+published in the AIM 2014 conference.
+
 
 Requirements
 ------------
@@ -34,6 +37,7 @@ See [Contributors][lk:contributors].
 
 
 [lk:irccyn]: http://www.irccyn.ec-nantes.fr/
+[lk:hal]: http://hal.archives-ouvertes.fr/hal-01025919
 [lk:setup]: https://github.com/symoro/symoro/wiki/Setup
 [el:aravind]: mailto:Aravindkumar.Vijayalingam@eleves.ec-nantes.fr
 [lk:licence]: https://github.com/symoro/symoro/blob/master/LICENCE
