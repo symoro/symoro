@@ -136,7 +136,7 @@ def compute_inertia_matrix(symo, robo, forced=False):
                                antRj, antPj, f, n, A, AJE1)
     symo.mat_replace(A, 'A', forced=forced, symmet=True)
     J_base = inertia_spatial(Jplus[0], MSplus[0], Mplus[0])
-    symo.mat_replace(J_base, 'JP', 0, forced=forced, symmet=True)
+    symo.mat_replace(J_base, 'Jcomp', 0, forced=forced, symmet=True)
     return A
 
 
@@ -395,8 +395,8 @@ def compute_A_triangle(robo, symo, j, k, ka, antRj, antPj, f, n, A, AJE1):
     else:
         n[ka] = antRj[k]*n[k] + tools.skew(antPj[k])*antRj[k]*f[k]
     if ka == 0:
-        symo.mat_replace(f[ka], 'AV0')
-        symo.mat_replace(n[ka], 'AW0')
+        symo.mat_replace(f[ka], 'AV0', j, forced=True)
+        symo.mat_replace(n[ka], 'AW0', j, forced=True)
     else:
         symo.mat_replace(f[ka], 'E' + chars[j], ka)
         symo.mat_replace(n[ka], 'N' + chars[j], ka)
