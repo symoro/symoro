@@ -636,7 +636,7 @@ class Robot(object):
         Set default values for base parameters for those exceptional
         from the ones set in the ctor.
         """
-        if self.is_floating:
+        if self.is_floating or self.is_mobile:
             self.G = Matrix([var('GX'), var('GY'), var('GZ')])
             self.v0 = Matrix([var('VX0'), var('VY0'), var('VZ0')])
             self.w0 = Matrix([var('WX0'), var('WY0'), var('WZ0')])

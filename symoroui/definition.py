@@ -86,11 +86,12 @@ class DialogDefinition(wx.Dialog):
             self, label=' Is Floating Base'
         )
         self.chk_is_floating.Value = is_floating
-        self.chk_is_floating.Bind(wx.EVT_CHECKBOX, self.OnFloating)
+        self.chk_is_floating.Bind(wx.EVT_CHECKBOX, self.OnBaseParamsNo)
         self.chk_is_mobile = wx.CheckBox(
             self, label=' Is Mobile Robot'
         )
         self.chk_is_mobile.Value = is_mobile
+        self.chk_is_mobile.Bind(wx.EVT_CHECKBOX, self.OnBaseParamsNo)
         self.chk_keep_geo = wx.CheckBox(
             self, label=' Keep geometric parameters'
         )
@@ -146,8 +147,11 @@ class DialogDefinition(wx.Dialog):
             self.spin_joints.Enable(False)
             self.OnSpinNL(None)
 
-    def OnFloating(self, _):
-        self.chk_keep_base.Value = not self.chk_is_floating.Value
+    def OnBaseParamsNo(self, _):
+        value = True
+        if self.chk_is_floating.Value or self.chk_is_mobile.Value:
+            value = False
+        self.chk_keep_base.Value = value
 
     def OnSpinNL(self, _):
         self.spin_joints.SetRange(int(self.spin_links.Value), 100)
