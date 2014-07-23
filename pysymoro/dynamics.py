@@ -202,7 +202,7 @@ def compute_joint_wrench(
     Njnt[j] = N[j] + Nex[j] + (tools.skew(robo.MS[j]) * vdot[j])
     Njnt[j] = symo.mat_replace(Njnt[j], get_symbol('N', name), j)
     f_ant = symo.mat_replace(antRj[j]*Fjnt[j], get_symbol('FDI', name), j)
-    if robo.ant[j] != - 1:
+    if robo.ant[j] != -1:
         Fex[robo.ant[j]] += f_ant
         Nex[robo.ant[j]] += antRj[j]*Njnt[j] + tools.skew(antPj[j])*f_ant
 
