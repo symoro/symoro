@@ -163,13 +163,10 @@ class DialogDefinition(wx.Dialog):
         nl = int(self.spin_links.Value)
         nj = int(self.spin_joints.Value)
         params = {
-            'init_pars': (
-                name, nl, nj, 2*nj - nl,
-                self.chk_is_floating.Value, self.cmb_structure.Value
-            ),
             'name': name,
             'num_links': nl,
             'num_joints': nj,
+            'num_frames': (2 * nj) -nl,
             'structure': self.cmb_structure.Value,
             'is_floating': self.chk_is_floating.Value,
             'is_mobile': self.chk_is_mobile.Value,

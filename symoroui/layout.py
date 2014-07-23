@@ -589,7 +589,15 @@ class MainFrame(wx.Frame):
         )
         if dialog.ShowModal() == wx.ID_OK:
             result = dialog.get_values()
-            new_robo = Robot(*result['init_pars'])
+            new_robo = Robot(
+                name=result['name'],
+                NL=result['num_links'],
+                NJ=result['num_joints'],
+                NF=result['num_frames'],
+                structure=result['structure'],
+                is_floating=result['is_floating'],
+                is_mobile=result['is_mobile']
+            )
             new_robo.set_defaults(base=True)
             if result['keep_geo']:
                 nf = min(self.robo.NF, new_robo.NF)
@@ -620,7 +628,6 @@ class MainFrame(wx.Frame):
                 new_robo.vdot0 = self.robo.vdot0
                 new_robo.G = self.robo.G
             new_robo.set_defaults(joint=True)
-            new_robo.is_mobile = result['is_mobile']
             self.robo = new_robo
             self.robo.directory = filemgr.get_folder_path(self.robo.name)
             self.feed_data()
