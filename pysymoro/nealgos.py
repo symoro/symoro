@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
 
+from copy import copy
+
 import sympy
 from sympy import Matrix
 
 from pysymoro.geometry import compute_screw_transform
-from pysymoro.geometry import compute_rot_trans, Transform
+from pysymoro.geometry import compute_rot_trans
 from pysymoro.kinematics import compute_vel_acc
 from pysymoro.kinematics import compute_omega
 from symoroutils import symbolmgr
@@ -23,14 +25,85 @@ def inertia_spatial(inertia, ms_tensor, mass):
     ])
 
 
+def compute_torque(robo, symo, j, jaj, react_wrench, torque):
+    """
+    Compute torque (internal function).
+
+    Note:
+        torque is the output parameter.
+    """
+    if robo.sigma[j] == 2:
+        tau_total = 0
+    else:
+        tau = react_wrench[j].transpose() * jaj[j]
+        fric_rotor = robo.fric_s(j) + robo.fric_v(j) + robo.tau_ia(j)
+        tau_total = tau[0, 0] + fric_rotor
+    torque[j] = symo.replace(tau_total, 'GAM', j, forced=True)
+
+
+def compute_joint_torque(robo, symo, j, Fjnt, Njnt, torque):
+    """
+    Compute actuator torques - projection of joint wrench on the joint
+    axis (internal function).
+
+    Note:
+        torque is the output parameter.
+    """
+    if robo.sigma[j] == 2:
+        tau_total = 0
+    else:
+        tau = (robo.sigma[j] * Fjnt[j]) + ((1 - robo.sigma[j]) * Njnt[j])
+        fric_rotor = robo.fric_s(j) + robo.fric_v(j) + robo.tau_ia(j)
+        tau_total = tau[2] + fric_rotor
+    torque[j] = symo.replace(tau_total, 'GAM', j, forced=True)
+
+
+def compute_dynamic_wrench(robo, symo, j, w, wdot, U, vdot, F, N):
+    """
+    Compute total wrench of link j (internal function).
+
+    Note:
+        F, N are the output parameters
+    """
+    F[j] = (robo.M[j] * vdot[j]) + (U[j] * robo.MS[j])
+    F[j] = symo.mat_replace(F[j], 'F', j)
+    Psi = robo.J[j] * w[j]
+    Psi = symo.mat_replace(Psi, 'PSI', j)
+    N[j] = (robo.J[j] * wdot[j]) + (tools.skew(w[j]) * Psi)
+    N[j] = symo.mat_replace(N[j], 'No', j)
+
+
+def compute_joint_wrench(
+    robo, symo, j, antRj, antPj, vdot, Fjnt, Njnt, F, N, Fex, Nex
+):
+    """
+    Compute reaction wrench (for default Newton-Euler) of joint j
+    (internal function).
+
+    Note:
+        Fjnt, Njnt, Fex, Nex are the output parameters
+    """
+    forced = True if j == 0 else False
+    i = robo.ant[j]
+    Fjnt[j] = F[j] + Fex[j]
+    Fjnt[j] = symo.mat_replace(Fjnt[j], 'E', j, forced=forced)
+    Njnt[j] = N[j] + Nex[j] + (tools.skew(robo.MS[j]) * vdot[j])
+    Njnt[j] = symo.mat_replace(Njnt[j], 'N', j, forced=forced)
+    f_ant = antRj[j] * Fjnt[j]
+    f_ant = symo.mat_replace(f_ant, 'FDI', j)
+    if i != -1:
+        Fex[i] = Fex[i] + f_ant
+        Nex[i] = Nex[i] + \
+            (antRj[j] * Njnt[j]) + (tools.skew(antPj[j]) * f_ant)
+
+
 def compute_beta(robo, symo, j, w, beta):
     """
     Compute beta wrench which is a combination of coriolis forces,
     centrifugal forces and external forces (internal function).
 
-    Notes
-    =====
-    beta is the output parameter
+    Note:
+        beta is the output parameter
     """
     expr1 = robo.J[j] * w[j]
     expr1 = symo.mat_replace(expr1, 'JW', j)
@@ -49,9 +122,8 @@ def compute_gamma(robo, symo, j, antRj, antPj, w, wi, gamma):
     """
     Compute gyroscopic acceleration (internal function).
 
-    Notes
-    =====
-    gamma is the output parameter
+    Note:
+        gamma is the output parameter
     """
     expr1 = tools.skew(wi[j]) * Matrix([0, 0, robo.qdot[j]])
     expr1 = symo.mat_replace(expr1, 'WQ', j)
@@ -370,23 +442,83 @@ def compute_reaction_wrench(
     react_wrench[j][3:, 0] = symo.mat_replace(wrench[3:, 0], 'N', j)
 
 
-def compute_torque(robo, symo, j, jaj, react_wrench, torque):
+def fixed_inverse_dynmodel(robo, symo):
     """
-    Compute torque (internal function).
+    Compute the Inverse Dynamic Model using Newton-Euler algorithm for
+    tree structure robots with fixed base.
 
-    Note:
-        torque is the output parameter.
+    Parameters:
+        robo: Robot - instance of robot description container
+        symo: symbolmgr.SymbolManager - instance of symbolic manager
     """
-    if robo.sigma[j] == 2:
-        tau_total = 0
-    else:
-        tau = react_wrench[j].transpose() * jaj[j]
-        fric_rotor = robo.fric_s(j) + robo.fric_v(j) + robo.tau_ia(j)
-        tau_total = tau[0, 0] + fric_rotor
-    torque[j] = symo.replace(tau_total, 'GAM', j, forced=True)
+    # init external forces
+    Fex = copy(robo.Fex)
+    Nex = copy(robo.Nex)
+    # init transformation
+    antRj, antPj = compute_rot_trans(robo, symo)
+    # init velocities and accelerations
+    w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
+    # init forces vectors
+    F = ParamsInit.init_vec(robo)
+    N = ParamsInit.init_vec(robo)
+    Fjnt = ParamsInit.init_vec(robo)
+    Njnt = ParamsInit.init_vec(robo)
+    # init torque list
+    torque = ParamsInit.init_scalar(robo)
+    for j in xrange(1, robo.NL):
+        compute_dynamic_wrench(robo, symo, j, w, wdot, U, vdot, F, N)
+    for j in reversed(xrange(1, robo.NL)):
+        compute_joint_wrench(
+            robo, symo, j, antRj, antPj, vdot,
+            Fjnt, Njnt, F, N, Fex, Nex
+        )
+    for j in xrange(1, robo.NL):
+        compute_joint_torque(robo, symo, j, Fjnt, Njnt, torque)
+
+
+def mobile_inverse_dynmodel(robo, symo):
+    """
+    Compute the Inverse Dynamic Model using Newton-Euler algorithm for
+    mobile robots.
+
+    Parameters:
+        robo: Robot - instance of robot description container
+        symo: symbolmgr.SymbolManager - instance of symbol manager
+    """
+    # init external forces
+    Fex = copy(robo.Fex)
+    Nex = copy(robo.Nex)
+    # init transformation
+    antRj, antPj = compute_rot_trans(robo, symo)
+    # init velocities and accelerations
+    w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
+    # init forces vectors
+    F = ParamsInit.init_vec(robo)
+    N = ParamsInit.init_vec(robo)
+    Fjnt = ParamsInit.init_vec(robo)
+    Njnt = ParamsInit.init_vec(robo)
+    # init torque list
+    torque = ParamsInit.init_scalar(robo)
+    for j in xrange(0, robo.NL):
+        compute_dynamic_wrench(robo, symo, j, w, wdot, U, vdot, F, N)
+    for j in reversed(xrange(0, robo.NL)):
+        compute_joint_wrench(
+            robo, symo, j, antRj, antPj, vdot,
+            Fjnt, Njnt, F, N, Fex, Nex
+        )
+    for j in xrange(1, robo.NL):
+        compute_joint_torque(robo, symo, j, Fjnt, Njnt, torque)
 
 
 def composite_inverse_dynmodel(robo, symo):
+    """
+    Compute the Inverse Dynamic Model using Composite link Newton-Euler
+    algorithm for tree structure robots with fixed and floating base.
+
+    Parameters:
+        robo: Robot - instance of robot description container
+        symo: symbolmgr.SymbolManager - instance of symbol manager
+    """
     # antecedent angular velocity, projected into jth frame
     # j^omega_i
     wi = ParamsInit.init_vec(robo)
@@ -472,6 +604,14 @@ def composite_inverse_dynmodel(robo, symo):
 
 
 def flexible_inverse_dynmodel(robo, symo):
+    """
+    Compute the Inverse Dynamic Model using Newton-Euler algorithm for
+    robots with flexible joints (fixed and floating base).
+
+    Parameters:
+        robo: Robot - instance of robot description container
+        symo: symbolmgr.SymbolManager - instance of symbol manager
+    """
     # antecedent angular velocity, projected into jth frame
     # j^omega_i
     wi = ParamsInit.init_vec(robo)
@@ -590,7 +730,15 @@ def flexible_inverse_dynmodel(robo, symo):
             compute_torque(robo, symo, j, jaj, react_wrench, torque)
 
 
-def direct_dynmodel(robo, symo):
+def floating_direct_dynmodel(robo, symo):
+    """
+    Compute the Direct Dynamic Model using Newton-Euler algorithm for
+    robots with floating base.
+
+    Parameters:
+        robo: Robot - instance of robot description container
+        symo: symbolmgr.SymbolManager - instance of symbol manager
+    """
     # antecedent angular velocity, projected into jth frame
     # j^omega_i
     wi = ParamsInit.init_vec(robo)

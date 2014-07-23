@@ -162,7 +162,6 @@ def inertia_matrix(robo):
     return symo
 
 
-
 def get_symbol(symbol, name):
     if name is None:
         return symbol
