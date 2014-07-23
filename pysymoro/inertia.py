@@ -32,7 +32,7 @@ CHARSYMS = (
 
 def inertia_spatial(inertia, ms_tensor, mass):
     """
-    Compute spatial inertia matrix (internal function).
+    Setup spatial inertia matrix (internal function).
     """
     return Matrix([
         (mass * sympy.eye(3)).row_join(tools.skew(ms_tensor).transpose()),
@@ -90,7 +90,7 @@ def compute_diagonal_elements(
     Compute diagonal elements of the inertia matrix (internal function).
 
     Note:
-    forces, moments, inertia_a22 are the output parameters
+        forces, moments, inertia_a22 are the output parameters
     """
     if robo.sigma[j] == 0:
         forces[j] = Matrix([-comp_ms[j][1], comp_ms[j][0], 0])
@@ -100,20 +100,21 @@ def compute_diagonal_elements(
         forces[j] = Matrix([0, 0, comp_mass[j]])
         moments[j] = Matrix([comp_ms[j][1], -comp_ms[j][0], 0])
         inertia_a22[j-1, j-1] = comp_mass[j] + robo.IA[j]
-    symo.mat_replace(forces[j], 'E' + CHARSYMS[j], j)
-    symo.mat_replace(moments[j], 'N' + CHARSYMS[j], j)
+    forces[j] = symo.mat_replace(forces[j], 'E' + CHARSYMS[j], j)
+    moments[j] = symo.mat_replace(moments[j], 'N' + CHARSYMS[j], j)
 
 
 def compute_triangle_elements(
-    robo, symo, j, k, ka, antRj, antPj,
-    aje1, forces, moments, inertia_a22
+    robo, symo, j, k, ka, antRj, antPj, aje1,
+    forces, moments, inertia_a12, inertia_a22
 ):
     """
     Compute elements below and above diagonal of the inertia matrix
     (internal function).
 
     Note:
-    forces, moments, inertia_a22 are the output parameters
+        forces, moments, inertia_a12, inertia_a22 are the output
+        parameters
     """
     forces[ka] = antRj[k] * forces[k]
     if k == j and robo.sigma[j] == 0:
@@ -123,8 +124,12 @@ def compute_triangle_elements(
         moments[ka] = (antRj[k] * moments[k]) + \
             (tools.skew(antPj[k]) * antRj[k] * forces[k])
     if ka == 0:
-        symo.mat_replace(forces[ka], 'AV0', j, forced=True)
-        symo.mat_replace(moments[ka], 'AW0', j, forced=True)
+        inertia_a12[j][:3, 0] = symo.mat_replace(
+            forces[ka], 'AV0', j, forced=True
+        )
+        inertia_a12[j][3:, 0] = symo.mat_replace(
+            moments[ka], 'AW0', j, forced=True
+        )
     else:
         symo.mat_replace(forces[ka], 'E' + CHARSYMS[j], ka)
         symo.mat_replace(moments[ka], 'N' + CHARSYMS[j], ka)
@@ -154,6 +159,7 @@ def floating_inertia_matrix(robo, symo):
     aje1 = ParamsInit.init_vec(robo)
     forces = ParamsInit.init_vec(robo, ext=1)
     moments = ParamsInit.init_vec(robo, ext=1)
+    inertia_a12 = ParamsInit.init_vec(robo, num=6)
     inertia_a22 = sympy.zeros(robo.nl, robo.nl)
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
@@ -176,14 +182,26 @@ def floating_inertia_matrix(robo, symo):
             k = ka
             ka = robo.ant[ka]
             compute_triangle_elements(
-                robo, symo, j, k, ka, antRj, antPj,
-                aje1, forces, moments, inertia_a22
+                robo, symo, j, k, ka, antRj, antPj, aje1,
+                forces, moments, inertia_a12, inertia_a22
             )
     symo.mat_replace(inertia_a22, 'A', forced=True, symmet=True)
     inertia_a11 = inertia_spatial(
         comp_inertia3[0], comp_ms[0], comp_mass[0]
     )
-    symo.mat_replace(inertia_a11, 'Jcomp', 0, forced=True, symmet=True)
-    return inertia_a22
+    inertia_a11 = symo.mat_replace(
+        inertia_a11, 'Jcomp', 0, forced=True, symmet=True
+    )
+    # setup inertia_a12 in Matrix form
+    a12mat = sympy.zeros(6, robo.NL)
+    for j in xrange(1, robo.NL):
+        a12mat[:, j] = inertia_a12[j]
+    a12mat = a12mat[:, 1:]
+    # setup the completer inertia matrix
+    inertia = Matrix([
+        inertia_a11.row_join(a12mat),
+        a12mat.transpose().row_join(inertia_a22)
+    ])
+    return inertia
 
 
