@@ -10,7 +10,6 @@ from pysymoro.geometry import compute_screw_transform
 from pysymoro.geometry import compute_rot_trans
 from pysymoro.kinematics import compute_vel_acc
 from pysymoro.kinematics import compute_omega
-from symoroutils import symbolmgr
 from symoroutils import tools
 from symoroutils.paramsinit import ParamsInit
 

@@ -11,27 +11,20 @@ modeling of robot dynamics.
 """
 
 
+from copy import copy, deepcopy
+
 import sympy
 from sympy import Matrix
-from copy import copy, deepcopy
 
 from pysymoro.geometry import compute_screw_transform
 from pysymoro.geometry import compute_rot_trans, Transform
 from pysymoro.kinematics import compute_vel_acc
 from pysymoro.kinematics import compute_omega
+from pysymoro import inertia
 from symoroutils import symbolmgr
 from symoroutils import tools
 from symoroutils.paramsinit import ParamsInit
 
-
-chars = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M',
-         'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-         'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH',
-         'AJ', 'AK', 'AL', 'AM', 'AN', 'AP', 'AQ', 'AR',
-         'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ',
-         'BA', 'BB', 'BC', 'BD', 'BE', 'BF', 'BG', 'BH',
-         'BJ', 'BK', 'BL', 'BM', 'BN', 'BP', 'BQ', 'BR',
-         'BS', 'BT', 'BU', 'BV', 'BW', 'BX', 'BY', 'BZ')
 
 inert_names = ('XXR', 'XYR', 'XZR', 'YYR', 'YZR',
                'ZZR', 'MXR', 'MYR', 'MZR', 'MR')
@@ -111,55 +104,6 @@ def compute_direct_dynamic_NE(robo, symo):
     for j in xrange(1, robo.NL):
         compute_coupled_forces(robo, symo, j, grandVp, grandJ, beta_star)
     return robo.qddot
-
-
-def compute_inertia_matrix(symo, robo, forced=False):
-    Jplus, MSplus, Mplus = ParamsInit.init_jplus(robo)
-    AJE1 = ParamsInit.init_vec(robo)
-    f = ParamsInit.init_vec(robo, ext=1)
-    n = ParamsInit.init_vec(robo, ext=1)
-    A = sympy.zeros(robo.nl, robo.nl)
-    # init transformation
-    antRj, antPj = compute_rot_trans(robo, symo)
-    for j in reversed(xrange(robo.NL)):
-        replace_Jplus(robo, symo, j, Jplus, MSplus, Mplus)
-        if j != 0:
-            compute_Jplus(robo, symo, j, antRj, antPj,
-                          Jplus, MSplus, Mplus, AJE1)
-    for j in xrange(1, robo.NL):
-        compute_A_diagonal(robo, symo, j, Jplus, MSplus, Mplus, f, n, A)
-        ka = j
-        while ka != 0:
-            k = ka
-            ka = robo.ant[ka]
-            compute_A_triangle(robo, symo, j, k, ka,
-                               antRj, antPj, f, n, A, AJE1)
-    symo.mat_replace(A, 'A', forced=forced, symmet=True)
-    J_base = inertia_spatial(Jplus[0], MSplus[0], Mplus[0])
-    symo.mat_replace(J_base, 'Jcomp', 0, forced=forced, symmet=True)
-    return A
-
-
-def inertia_matrix(robo):
-    """Computes Inertia Matrix using composed link
-
-    Parameters
-    ==========
-    robo : Robot
-        Instance of robot description container
-
-    Returns
-    =======
-    symo.sydi : dictionary
-        Dictionary with the information of all the sybstitution
-    """
-    symo = symbolmgr.SymbolManager()
-    symo.file_open(robo, 'inm')
-    title = 'Inertia Matrix using composite links'
-    symo.write_params_table(robo, title, inert=True, dynam=True)
-    compute_inertia_matrix(symo, robo, forced=True)
-    symo.file_close()
-    return symo
 
 
 def get_symbol(symbol, name):
@@ -335,78 +279,6 @@ def compute_coupled_forces(robo, symo, j, grandVp, grandJ, beta_star):
     symo.mat_replace(couplforce[:3, 0], 'E', j)
 
 
-def replace_Jplus(robo, symo, j, Jplus, MSplus, Mplus):
-    """Internal function. Makes symbol substitutions inertia parameters
-    """
-    symo.mat_replace(Jplus[j], 'JP', j)
-    symo.mat_replace(MSplus[j], 'MSP', j)
-    Mplus[j] = symo.replace(Mplus[j], 'MP', j)
-
-
-def compute_Jplus(robo, symo, j, antRj, antPj, Jplus, MSplus, Mplus, AJE1):
-    """Internal function. Computes inertia parameters of composed link
-
-    Notes
-    =====
-    Jplus, MSplus, Mplus are the output parameters
-    """
-    hat_antPj = tools.skew(antPj[j])
-    antMSj = symo.mat_replace(antRj[j]*MSplus[j], 'AS', j)
-    E1 = symo.mat_replace(antRj[j]*Jplus[j], 'AJ', j)
-    AJE1[j] = E1[:, 2]
-    E2 = symo.mat_replace(E1*antRj[j].T, 'AJA', j)
-    E3 = symo.mat_replace(hat_antPj*tools.skew(antMSj), 'PAS', j)
-    Jplus[robo.ant[j]] += E2 - (E3 + E3.T) + hat_antPj*hat_antPj.T*Mplus[j]
-    MSplus[robo.ant[j]] += antMSj + antPj[j]*Mplus[j]
-    Mplus[robo.ant[j]] += Mplus[j]
-
-
-def compute_A_diagonal(robo, symo, j, Jplus, MSplus, Mplus, f, n, A):
-    """Internal function. Computes diagonal elements
-    of the inertia matrix
-
-    Notes
-    =====
-    f, n, A are the output parameters
-    """
-    if robo.sigma[j] == 0:
-        f[j] = Matrix([-MSplus[j][1], MSplus[j][0], 0])
-        n[j] = Jplus[j][:, 2]
-        A[j-1, j-1] = Jplus[j][2, 2] + robo.IA[j]
-    elif robo.sigma[j] == 1:
-        f[j] = Matrix([0, 0, Mplus[j]])
-        n[j] = Matrix([MSplus[j][1], - MSplus[j][0], 0])
-        A[j-1, j-1] = Mplus[j] + robo.IA[j]
-    symo.mat_replace(f[j], 'E' + chars[j], j)
-    symo.mat_replace(n[j], 'N' + chars[j], j)
-
-
-def compute_A_triangle(robo, symo, j, k, ka, antRj, antPj, f, n, A, AJE1):
-    """Internal function. Computes elements below and above diagonal
-    of the inertia matrix
-
-    Notes
-    =====
-    f, n, A are the output parameters
-    """
-    f[ka] = antRj[k]*f[k]
-    if k == j and robo.sigma[j] == 0:
-        n[ka] = AJE1[k] + tools.skew(antPj[k])*antRj[k]*f[k]
-    else:
-        n[ka] = antRj[k]*n[k] + tools.skew(antPj[k])*antRj[k]*f[k]
-    if ka == 0:
-        symo.mat_replace(f[ka], 'AV0', j, forced=True)
-        symo.mat_replace(n[ka], 'AW0', j, forced=True)
-    else:
-        symo.mat_replace(f[ka], 'E' + chars[j], ka)
-        symo.mat_replace(n[ka], 'N' + chars[j], ka)
-        if robo.sigma[ka] == 0:
-            A[j-1, ka-1] = n[ka][2]
-        elif robo.sigma[ka] == 1:
-            A[j-1, ka-1] = f[ka][2]
-        A[ka-1, j-1] = A[j-1, ka-1]
-
-
 def inertia_spatial(J, MS, M):
     return Matrix([
         (M*sympy.eye(3)).row_join(tools.skew(MS).T),
@@ -435,6 +307,30 @@ def inverse_dynamic_NE(robo):
     title = 'Inverse dynamic model using Newton - Euler Algorith'
     symo.write_params_table(robo, title, inert=True, dynam=True)
     default_newton_euler(robo, symo)
+    symo.file_close()
+    return symo
+
+
+def inertia_matrix(robo):
+    """
+    OLD FUNCTION. NOT TO BE USED.
+    Computes Inertia Matrix using composed link
+
+    Parameters
+    ==========
+    robo : Robot
+        Instance of robot description container
+
+    Returns
+    =======
+    symo.sydi : dictionary
+        Dictionary with the information of all the sybstitution
+    """
+    symo = symbolmgr.SymbolManager()
+    symo.file_open(robo, 'inm')
+    title = 'Inertia Matrix using composite links'
+    symo.write_params_table(robo, title, inert=True, dynam=True)
+    inertia.compute_inertia_matrix(robo, symo)
     symo.file_close()
     return symo
 
