@@ -63,79 +63,12 @@ def default_newton_euler(robo, symo):
     for j in xrange(1, robo.NL):
         compute_wrench(robo, symo, j, w, wdot, U, vdot, F, N)
     for j in reversed(xrange(1, robo.NL)):
-        compute_joint_wrench(robo, symo, j, antRj, antPj, vdot,
-                             Fjnt, Njnt, F, N, Fex, Nex)
+        compute_joint_wrench(
+            robo, symo, j, antRj, antPj, vdot,
+            Fjnt, Njnt, F, N, Fex, Nex
+        )
     for j in xrange(1, robo.NL):
         compute_torque(robo, symo, j, Fjnt, Njnt)
-
-
-def dynamic_identification_NE(robo):
-    """Computes Dynamic Identification Model using
-    Newton-Euler formulation
-
-    Parameters
-    ==========
-    robo : Robot
-        Instance of robot description container
-
-    Returns
-    =======
-    symo.sydi : dictionary
-        Dictionary with the information of all the sybstitution
-    """
-
-    # init forces vectors
-    Fjnt = ParamsInit.init_vec(robo)
-    Njnt = ParamsInit.init_vec(robo)
-    # init file output, writing the robot description
-    symo = symbolmgr.SymbolManager()
-    symo.file_open(robo, 'dim')
-    title = "Dynamic identification model using Newton - Euler Algorith"
-    symo.write_params_table(robo, title, inert=True, dynam=True)
-    # init transformation
-    antRj, antPj = compute_rot_trans(robo, symo)
-    # init velocities and accelerations
-    w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
-    # virtual robot with only one non-zero parameter at once
-    robo_tmp = deepcopy(robo)
-    robo_tmp.IA = sympy.zeros(robo.NL, 1)
-    robo_tmp.FV = sympy.zeros(robo.NL, 1)
-    robo_tmp.FS = sympy.zeros(robo.NL, 1)
-    for k in xrange(1, robo.NL):
-        param_vec = robo.get_inert_param(k)
-        F = ParamsInit.init_vec(robo)
-        N = ParamsInit.init_vec(robo)
-        for i in xrange(10):
-            if param_vec[i] == tools.ZERO:
-                continue
-            # change link names according to current non-zero parameter
-            name = '%s' + str(param_vec[i])
-            # set the parameter to 1
-            mask = sympy.zeros(10, 1)
-            mask[i] = 1
-            robo_tmp.put_inert_param(mask, k)
-            # compute the total forcec of the link k
-            compute_wrench(robo_tmp, symo, k, w, wdot, U, vdot, F, N, name)
-            # init external forces
-            Fex = ParamsInit.init_vec(robo)
-            Nex = ParamsInit.init_vec(robo)
-            for j in reversed(xrange(1, k + 1)):
-                compute_joint_wrench(robo_tmp, symo, j, antRj, antPj,
-                                     vdot, Fjnt, Njnt, F, N, Fex, Nex, name)
-            for j in xrange(1, k + 1):
-                compute_torque(robo_tmp, symo, j, Fjnt, Njnt, 'DG' + name)
-        # reset all the parameters to zero
-        robo_tmp.put_inert_param(sympy.zeros(10, 1), k)
-        # compute model for the joint parameters
-        compute_joint_torque_deriv(symo, robo.IA[k],
-                                   robo.qddot[k], k)
-        compute_joint_torque_deriv(symo, robo.FS[k],
-                                   sympy.sign(robo.qdot[k]), k)
-        compute_joint_torque_deriv(symo, robo.FV[k],
-                                   robo.qdot[k], k)
-    # closing the output file
-    symo.file_close()
-    return symo
 
 
 def compute_direct_dynamic_NE(robo, symo):
@@ -178,31 +111,6 @@ def compute_direct_dynamic_NE(robo, symo):
     for j in xrange(1, robo.NL):
         compute_coupled_forces(robo, symo, j, grandVp, grandJ, beta_star)
     return robo.qddot
-
-
-def direct_dynamic_NE(robo):
-    """
-    OLD FUNCTION. NOT TO BE USED.
-    Computes Direct Dynamic Model using
-    Newton-Euler formulation
-
-    Parameters
-    ==========
-    robo : Robot
-        Instance of robot description container
-
-    Returns
-    =======
-    symo.sydi : dictionary
-        Dictionary with the information of all the sybstitution
-    """
-    symo = symbolmgr.SymbolManager()
-    symo.file_open(robo, 'ddm')
-    title = 'Direct dynamic model using Newton - Euler Algorith'
-    symo.write_params_table(robo, title, inert=True, dynam=True)
-    compute_direct_dynamic_NE(robo, symo)
-    symo.file_close()
-    return symo
 
 
 def compute_inertia_matrix(symo, robo, forced=False):
@@ -254,63 +162,13 @@ def inertia_matrix(robo):
     return symo
 
 
-def inverse_dynamic_NE(robo):
-    """
-    OLD FUNCTION. NOT TO BE USED.
-    Computes Inverse Dynamic Model using
-    Newton-Euler formulation
-
-    Parameters
-    ==========
-    robo : Robot
-        Instance of robot description container
-
-    Returns
-    =======
-    symo.sydi : dictionary
-        Dictionary with the information of all the sybstitution
-    """
-    symo = symbolmgr.SymbolManager()
-    symo.file_open(robo, 'idm')
-    title = 'Inverse dynamic model using Newton - Euler Algorith'
-    symo.write_params_table(robo, title, inert=True, dynam=True)
-    default_newton_euler(robo, symo)
-    symo.file_close()
-    return symo
-
-
-def pseudo_force_NE(robo):
-    """
-    OLD FUNCTION. NOT TO BE USED.
-    Computes Coriolis, Centrifugal, Gravity, Friction and external
-    torques using Newton-Euler formulation
-
-    Parameters
-    ==========
-    robo : Robot
-        Instance of robot description container
-
-    Returns
-    =======
-    symo.sydi : dictionary
-        Dictionary with the information of all the sybstitution
-    """
-    robo_pseudo = deepcopy(robo)
-    robo_pseudo.qddot = sympy.zeros(robo_pseudo.NL, 1)
-    symo = symbolmgr.SymbolManager()
-    symo.file_open(robo, 'ccg')
-    title = 'Pseudo forces using Newton - Euler Algorith'
-    symo.write_params_table(robo, title, inert=True, dynam=True)
-    default_newton_euler(robo_pseudo, symo)
-    symo.file_close()
-    return symo
-
 
 def get_symbol(symbol, name):
     if name is None:
         return symbol
     else:
         return symbol + name
+
 
 def compute_wrench(robo, symo, j, w, wdot, U, vdot, F, N, name=None):
     """Internal function. Computes total wrench (torques and forces)
@@ -361,31 +219,6 @@ def compute_torque(robo, symo, j, Fjnt, Njnt, name=None):
         else:
             name = name % j
         symo.replace(tau_total, name, forced=True)
-
-
-def inertia_spatial(J, MS, M):
-    return Matrix([(M*sympy.eye(3)).row_join(tools.skew(MS).T),
-                   tools.skew(MS).row_join(J)])
-
-
-def compute_joint_torque_deriv(symo, param, arg, index):
-    """Internal function. Computes joint reactive torques
-    in case if the parameter is 1
-
-    Parameters
-    ==========
-    symo : symbolmgr.SymbolManager
-        symbol manager
-    param : var
-        Dynamic parameter
-    arg : var
-        The real torque is equal to arg*param
-    index : strig
-        identifies the parameter in the sybstituted symbol's name
-    """
-    if param != tools.ZERO and arg != tools.ZERO:
-        index = str(index) + str(param)
-        symo.replace(arg, 'DG', index, forced=True)
 
 
 def compute_beta(robo, symo, j, w, beta_star):
@@ -573,6 +406,179 @@ def compute_A_triangle(robo, symo, j, k, ka, antRj, antPj, f, n, A, AJE1):
         elif robo.sigma[ka] == 1:
             A[j-1, ka-1] = f[ka][2]
         A[ka-1, j-1] = A[j-1, ka-1]
+
+
+def inertia_spatial(J, MS, M):
+    return Matrix([
+        (M*sympy.eye(3)).row_join(tools.skew(MS).T),
+        tools.skew(MS).row_join(J)
+    ])
+
+
+def inverse_dynamic_NE(robo):
+    """
+    OLD FUNCTION. NOT TO BE USED.
+    Computes Inverse Dynamic Model using
+    Newton-Euler formulation
+
+    Parameters
+    ==========
+    robo : Robot
+        Instance of robot description container
+
+    Returns
+    =======
+    symo.sydi : dictionary
+        Dictionary with the information of all the sybstitution
+    """
+    symo = symbolmgr.SymbolManager()
+    symo.file_open(robo, 'idm')
+    title = 'Inverse dynamic model using Newton - Euler Algorith'
+    symo.write_params_table(robo, title, inert=True, dynam=True)
+    default_newton_euler(robo, symo)
+    symo.file_close()
+    return symo
+
+
+def direct_dynamic_NE(robo):
+    """
+    OLD FUNCTION. NOT TO BE USED.
+    Computes Direct Dynamic Model using
+    Newton-Euler formulation
+
+    Parameters
+    ==========
+    robo : Robot
+        Instance of robot description container
+
+    Returns
+    =======
+    symo.sydi : dictionary
+        Dictionary with the information of all the sybstitution
+    """
+    symo = symbolmgr.SymbolManager()
+    symo.file_open(robo, 'ddm')
+    title = 'Direct dynamic model using Newton - Euler Algorith'
+    symo.write_params_table(robo, title, inert=True, dynam=True)
+    compute_direct_dynamic_NE(robo, symo)
+    symo.file_close()
+    return symo
+
+
+def pseudo_force_NE(robo):
+    """
+    OLD FUNCTION. NOT TO BE USED.
+    Computes Coriolis, Centrifugal, Gravity, Friction and external
+    torques using Newton-Euler formulation
+
+    Parameters
+    ==========
+    robo : Robot
+        Instance of robot description container
+
+    Returns
+    =======
+    symo.sydi : dictionary
+        Dictionary with the information of all the sybstitution
+    """
+    robo_pseudo = deepcopy(robo)
+    robo_pseudo.qddot = sympy.zeros(robo_pseudo.NL, 1)
+    symo = symbolmgr.SymbolManager()
+    symo.file_open(robo, 'ccg')
+    title = 'Pseudo forces using Newton - Euler Algorith'
+    symo.write_params_table(robo, title, inert=True, dynam=True)
+    default_newton_euler(robo_pseudo, symo)
+    symo.file_close()
+    return symo
+
+
+def dynamic_identification_NE(robo):
+    """Computes Dynamic Identification Model using
+    Newton-Euler formulation
+
+    Parameters
+    ==========
+    robo : Robot
+        Instance of robot description container
+
+    Returns
+    =======
+    symo.sydi : dictionary
+        Dictionary with the information of all the sybstitution
+    """
+
+    # init forces vectors
+    Fjnt = ParamsInit.init_vec(robo)
+    Njnt = ParamsInit.init_vec(robo)
+    # init file output, writing the robot description
+    symo = symbolmgr.SymbolManager()
+    symo.file_open(robo, 'dim')
+    title = "Dynamic identification model using Newton - Euler Algorith"
+    symo.write_params_table(robo, title, inert=True, dynam=True)
+    # init transformation
+    antRj, antPj = compute_rot_trans(robo, symo)
+    # init velocities and accelerations
+    w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
+    # virtual robot with only one non-zero parameter at once
+    robo_tmp = deepcopy(robo)
+    robo_tmp.IA = sympy.zeros(robo.NL, 1)
+    robo_tmp.FV = sympy.zeros(robo.NL, 1)
+    robo_tmp.FS = sympy.zeros(robo.NL, 1)
+    for k in xrange(1, robo.NL):
+        param_vec = robo.get_inert_param(k)
+        F = ParamsInit.init_vec(robo)
+        N = ParamsInit.init_vec(robo)
+        for i in xrange(10):
+            if param_vec[i] == tools.ZERO:
+                continue
+            # change link names according to current non-zero parameter
+            name = '%s' + str(param_vec[i])
+            # set the parameter to 1
+            mask = sympy.zeros(10, 1)
+            mask[i] = 1
+            robo_tmp.put_inert_param(mask, k)
+            # compute the total forcec of the link k
+            compute_wrench(robo_tmp, symo, k, w, wdot, U, vdot, F, N, name)
+            # init external forces
+            Fex = ParamsInit.init_vec(robo)
+            Nex = ParamsInit.init_vec(robo)
+            for j in reversed(xrange(1, k + 1)):
+                compute_joint_wrench(robo_tmp, symo, j, antRj, antPj,
+                                     vdot, Fjnt, Njnt, F, N, Fex, Nex, name)
+            for j in xrange(1, k + 1):
+                compute_torque(robo_tmp, symo, j, Fjnt, Njnt, 'DG' + name)
+        # reset all the parameters to zero
+        robo_tmp.put_inert_param(sympy.zeros(10, 1), k)
+        # compute model for the joint parameters
+        compute_joint_torque_deriv(symo, robo.IA[k],
+                                   robo.qddot[k], k)
+        compute_joint_torque_deriv(symo, robo.FS[k],
+                                   sympy.sign(robo.qdot[k]), k)
+        compute_joint_torque_deriv(symo, robo.FV[k],
+                                   robo.qdot[k], k)
+    # closing the output file
+    symo.file_close()
+    return symo
+
+
+def compute_joint_torque_deriv(symo, param, arg, index):
+    """Internal function. Computes joint reactive torques
+    in case if the parameter is 1
+
+    Parameters
+    ==========
+    symo : symbolmgr.SymbolManager
+        symbol manager
+    param : var
+        Dynamic parameter
+    arg : var
+        The real torque is equal to arg*param
+    index : strig
+        identifies the parameter in the sybstituted symbol's name
+    """
+    if param != tools.ZERO and arg != tools.ZERO:
+        index = str(index) + str(param)
+        symo.replace(arg, 'DG', index, forced=True)
 
 
 # TODO:Finish base parameters computation
