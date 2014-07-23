@@ -21,6 +21,7 @@ from sympy import Symbol, Matrix, Expr, Integer
 from sympy import Mul, Add, factor, zeros, var, sympify, eye
 
 from pysymoro import dynamics
+from pysymoro import inertia
 from pysymoro import nealgos
 from symoroutils import filemgr
 from symoroutils import symbolmgr
@@ -236,6 +237,19 @@ class Robot(object):
         else:
             # with rigid joints and fixed base
             nealgos.fixed_inverse_dynmodel(self, symo)
+        symo.file_close()
+        return symo
+
+    def compute_inertiamatrix(self):
+        """
+        Compute the Inertia Matrix of the robot using the Composite link
+        algorithm.
+        """
+        symo = symbolmgr.SymbolManager()
+        symo.file_open(self, 'inm')
+        title = "Direct Dynamic Model using Newton-Euler Algorithm"
+        symo.write_params_table(self, title, inert=True, dynam=True)
+        inertia.floating_inertia_matrix(self, symo)
         symo.file_close()
         return symo
 

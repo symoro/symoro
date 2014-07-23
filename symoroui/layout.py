@@ -793,7 +793,7 @@ class MainFrame(wx.Frame):
         self.model_success('idm')
 
     def OnInertiaMatrix(self, event):
-        dynamics.inertia_matrix(self.robo)
+        self.robo.compute_inertiamatrix()
         self.model_success('inm')
 
     def OnCentrCoriolGravTorq(self, event):
