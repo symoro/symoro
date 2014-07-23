@@ -230,9 +230,12 @@ class Robot(object):
         elif self.is_floating:
             # with rigid joints and floating base
             nealgos.composite_inverse_dynmodel(self, symo)
+        elif self.is_mobile:
+            # mobile robot with rigid joints - known base acceleration
+            nealgos.mobile_inverse_dynmodel(self, symo)
         else:
             # with rigid joints and fixed base
-            dynamics.default_newton_euler(self, symo)
+            nealgos.fixed_inverse_dynmodel(self, symo)
         symo.file_close()
         return symo
 
@@ -247,7 +250,7 @@ class Robot(object):
         symo.write_params_table(self, title, inert=True, dynam=True)
         if self.is_floating:
             # with floating base
-            nealgos.direct_dynmodel(self, symo)
+            nealgos.floating_direct_dynmodel(self, symo)
         else:
             # with fixed base
             dynamics.compute_direct_dynamic_NE(self, symo)
