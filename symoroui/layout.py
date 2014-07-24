@@ -424,11 +424,47 @@ class MainFrame(wx.Frame):
         self.update_joint_params()
         self.update_base_twist_params()
         self.update_z_params()
+        self.update_menu()
         self.changed = False
         self.par_dict = {}
 
+    def update_menu(self):
+        """Update menu items"""
+        # get menu bar
+        menu_bar = self.GetMenuBar()
+        # get list of menus and assign to individual objects
+        menu_lst = menu_bar.GetMenus()
+        geom_menu = menu_lst[1][0]
+        kin_menu = menu_lst[2][0]
+        dyn_menu = menu_lst[3][0]
+        # geom_menu - get menu items
+        idx = len(geom_menu.GetMenuItems()) - 1
+        m_geom_constraint = geom_menu.FindItemByPosition(idx)
+        # kin_menu - get menu items
+        idx = len(kin_menu.GetMenuItems()) - 1
+        m_kin_constraint = kin_menu.FindItemByPosition(idx)
+        # dyn_menu - get menu items
+        idx = len(dyn_menu.GetMenuItems()) - 1
+        m_ddym = dyn_menu.FindItemByPosition(idx)
+        # set direct dynamic model status
+        if self.robo.is_mobile or \
+            (self.robo.structure is tools.CLOSED_LOOP):
+            ddym_enable = False
+        else:
+            ddym_enable = True
+        # set constraint equations status
+        if self.robo.structure is not tools.CLOSED_LOOP:
+            constraint_enable = False
+        else:
+            constraint_enable = True
+        # enable/disable menu items
+        m_ddym.Enable(ddym_enable)
+        m_geom_constraint.Enable(constraint_enable)
+        m_kin_constraint.Enable(constraint_enable)
+        menu_bar.UpdateMenus()
+
     def create_menu(self):
-        """Method to create the menu bar"""
+        """Create the menu bar"""
         menu_bar = wx.MenuBar()
         # menu item - file
         file_menu = wx.Menu()
@@ -500,12 +536,6 @@ class MainFrame(wx.Frame):
         )
         self.Bind(wx.EVT_MENU, self.OnDeterminant, m_determinant)
         kin_menu.AppendItem(m_determinant)
-        #TODO: add the dialog, ask for projection frame
-        m_kin_constraint = wx.MenuItem(
-            kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_kin_constraint']
-        )
-        self.Bind(wx.EVT_MENU, self.OnCkel, m_kin_constraint)
-        kin_menu.AppendItem(m_kin_constraint)
         m_vel = wx.MenuItem(
             kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_vel']
         )
@@ -521,6 +551,12 @@ class MainFrame(wx.Frame):
         )
         self.Bind(wx.EVT_MENU, self.OnJpqp, m_jpqp)
         kin_menu.AppendItem(m_jpqp)
+        #TODO: add the dialog, ask for projection frame
+        m_kin_constraint = wx.MenuItem(
+            kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_kin_constraint']
+        )
+        self.Bind(wx.EVT_MENU, self.OnCkel, m_kin_constraint)
+        kin_menu.AppendItem(m_kin_constraint)
         menu_bar.Append(kin_menu, ui_labels.MAIN_MENU['kin_menu'])
         # menu item - dynamic
         dyn_menu = wx.Menu()

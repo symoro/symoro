@@ -136,7 +136,7 @@ ROBOT_TYPE = OrderedDict([
 
 # menu bar
 # TODO: add event handlers to dict entries as well
-MAIN_MENU = dict(
+MAIN_MENU = OrderedDict(
     file_menu="&File",
     geom_menu="&Geometric",
     kin_menu="&Kinematic",
@@ -145,19 +145,19 @@ MAIN_MENU = dict(
     optim_menu="&Optimiser",
     viz_menu="&Visualisation"
 )
-VIZ_MENU = dict(m_viz="Visualisation")
-IDEN_MENU = dict(
+VIZ_MENU = OrderedDict(m_viz="Visualisation")
+IDEN_MENU = OrderedDict(
     m_base_inertial_params="Base Inertial parameters",
     m_dyn_iden_model="Dynamic Identification Model",
     m_energy_iden_model="Energy Identification Model"
 )
-DYN_MENU = dict(
+DYN_MENU = OrderedDict(
     m_idym="Inverse Dynamic Model",
     m_inertia_matrix="Inertia matrix",
     m_h_term="Centrifugal, Coriolis & Gravity torques",
     m_ddym="Direct Dynamic Model"
 )
-KIN_MENU = dict(
+KIN_MENU = OrderedDict(
     m_jac_matrix="Jacobian matrix",
     m_determinant="Determinant of a Jacobian",
     m_kin_constraint="Kinematic constraint equation of loops",
@@ -165,13 +165,13 @@ KIN_MENU = dict(
     m_acc="Accelerations",
     m_jpqp="Jpqp"
 )
-GEOM_MENU = dict(
+GEOM_MENU = OrderedDict(
     m_trans_matrix="Transformation matrix",
     m_fast_dgm="Fast Geometric model",
     m_igm_paul="IGM - Paul method",
     m_geom_constraint="Geometric constraint equation of loops"
 )
-FILE_MENU = dict(
+FILE_MENU = OrderedDict(
     m_new="&New",
     m_open="&Open",
     m_save="&Save",
