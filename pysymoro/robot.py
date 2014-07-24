@@ -634,6 +634,10 @@ class Robot(object):
                     self.qdot[j] = 0
                     self.qddot[j] = 0
                     self.GAM[j] = 0
+                else:
+                    self.qdot[j] = var('QP{0}'.format(j))
+                    self.qddot[j] = var('QDP{0}'.format(j))
+                    self.GAM[j] = var('GAM{0}'.format(j))
             except IndexError:
                 # just ignore exception
                 pass
@@ -645,11 +649,17 @@ class Robot(object):
         """
         for j in xrange(1, self.NF):
             if self.sigma[j] == 0:
+                self.mu[j] = 1
                 self.theta[j] = var('th{0}'.format(j))
+                self.r[j] = 0
             elif self.sigma[j] == 1:
+                self.mu[j] = 1
+                self.theta[j] = 0
                 self.r[j] = var('r{0}'.format(j))
             elif self.sigma[j] == 2:
                 self.mu[j] = 0
+                self.theta[j] = 0
+                self.r[j] = 0
 
     def _set_base_defaults(self):
         """

@@ -26,8 +26,8 @@ def cart_pole():
     robo.sigma = (0, 1, 0)
     robo.alpha = (0, pi/2, pi/2)
     robo.d = (0, 0, 0)
-    robo.theta = (0, pi/2, var('Th2'))
-    robo.r = (0, var('R1'), 0)
+    robo.theta = (0, pi/2, var('th2'))
+    robo.r = (0, var('r1'), 0)
     robo.b = (0, 0, 0)
     robo.gamma = (0, 0, 0)
     robo.structure = tools.SIMPLE
@@ -41,17 +41,21 @@ def cart_pole():
     robo.MS[1][0] = var('MX2')
     robo.M = [var('M{0}'.format(i)) for i in robo.num]
     robo.GAM = [var('GAM{0}'.format(i)) for i in robo.num]
-    robo.J = [Matrix(3, 3, var(('XX{0}, XY{0}, XZ{0}, '
-                        'XY{0}, YY{0}, YZ{0}, '
-                        'XZ{0}, YZ{0}, ZZ{0}').format(i))) for i in robo.num]
+    inertia_matrix_terms = ("XX{0}, XY{0}, XZ{0}, ") + \
+        ("XY{0}, YY{0}, YZ{0}, ") + \
+        ("XZ{0}, YZ{0}, ZZ{0}")
+    robo.J = [
+        Matrix(3, 3, var(inertia_matrix_terms.format(i))) \
+        for i in robo.num
+    ]
     robo.G = Matrix([0, 0, -var('G3')])
     robo.w0 = zeros(3, 1)
     robo.wdot0 = zeros(3, 1)
     robo.v0 = zeros(3, 1)
     robo.vdot0 = zeros(3, 1)
-    robo.q = var('O, R1, Th2')
-    robo.qdot = var('O, R1d, Th2d')
-    robo.qddot = var('O, R1dd, Th2dd')
+    robo.q = [0, var('r1'), var('th2')]
+    robo.qdot = [0, var('r1d'), var('th2d')]
+    robo.qddot = [0, var('r1dd'), var('th2dd')]
     return robo
 
 
@@ -88,9 +92,9 @@ def planar2r():
     robo.wdot0 = zeros(3, 1)
     robo.v0 = zeros(3, 1)
     robo.vdot0 = zeros(3, 1)
-    robo.q = var('O, q1, q2')
-    robo.qdot = var('O, QP1, QP2')
-    robo.qddot = var('O, QDP1, QDP2')
+    robo.q = [0, var('q1'), var('q2')]
+    robo.qdot = [0, var('QP1'), var('QP2')]
+    robo.qddot = [0, var('QDP1'), var('QDP2')]
     return robo
 
 

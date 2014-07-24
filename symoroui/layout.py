@@ -344,12 +344,13 @@ class MainFrame(wx.Frame):
             widget.ChangeValue(str(self.robo.get_val(index, par)))
 
     def update_geo_params(self):
+        self.robo.set_defaults(joint=True, geom=True)
         pars = self._extract_param_names(ui_labels.GEOM_PARAMS)
         index = int(self.widgets['frame'].Value)
         for par in pars[0:3]:
             self.widgets[par].SetValue(str(self.robo.get_val(index, par)))
         self.update_params(index, pars[3:])
-        self.robo.set_defaults(joint=True)
+        self.update_joint_params()
 
     def update_dyn_params(self):
         pars = self._extract_param_names(ui_labels.DYN_PARAMS)
