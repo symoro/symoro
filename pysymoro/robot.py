@@ -247,9 +247,12 @@ class Robot(object):
         """
         symo = symbolmgr.SymbolManager()
         symo.file_open(self, 'inm')
-        title = "Direct Dynamic Model using Newton-Euler Algorithm"
+        title = "Inertia matrix using Composite links algorithm"
         symo.write_params_table(self, title, inert=True, dynam=True)
-        inertia.floating_inertia_matrix(self, symo)
+        if self.is_floating or self.is_mobile:
+            inertia.floating_inertia_matrix(self, symo)
+        else:
+            inertia.fixed_inertia_matrix(self, symo)
         symo.file_close()
         return symo
 
@@ -280,17 +283,20 @@ class Robot(object):
         pseudorobo.qddot = zeros(pseudorobo.NL, 1)
         symo = symbolmgr.SymbolManager()
         symo.file_open(self, 'ccg')
-        title = 'Pseudo forces using Newton - Euler Algorithm'
+        title = 'Pseudo forces using Newton-Euler Algorithm'
         symo.write_params_table(self, title, inert=True, dynam=True)
-        if 1 in self.eta:
+        if 1 in pseudorobo.eta:
             # with flexible joints
-            pass
-        elif self.is_floating:
+            nealgos.flexible_inverse_dynmodel(pseudorobo, symo)
+        elif pseudorobo.is_floating:
             # with rigid joints and floating base
             nealgos.composite_inverse_dynmodel(pseudorobo, symo)
+        elif pseudorobo.is_mobile:
+            # mobile robot with rigid joints - known base acceleration
+            nealgos.mobile_inverse_dynmodel(pseudorobo, symo)
         else:
             # with rigid joints and fixed base
-            dynamics.default_newton_euler(pseudorobo, symo)
+            nealgos.fixed_inverse_dynmodel(pseudorobo, symo)
         symo.file_close()
         return symo
 

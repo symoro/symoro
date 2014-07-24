@@ -144,9 +144,41 @@ def fixed_inertia_matrix(robo, symo):
     """
     Compute Inertia Matrix for robots with fixed base. This function
     computes just the A22 matrix when the inertia matrix
-    A = [A11, A12; A12.transpose(), A22] since A11 = A12 = 0.
+    A = [A11, A12; A12.transpose(), A22].
     """
-    pass
+    # init terms
+    comp_inertia3, comp_ms, comp_mass = ParamsInit.init_jplus(robo)
+    aje1 = ParamsInit.init_vec(robo)
+    forces = ParamsInit.init_vec(robo, ext=1)
+    moments = ParamsInit.init_vec(robo, ext=1)
+    inertia_a12 = ParamsInit.init_vec(robo, num=6)
+    inertia_a22 = sympy.zeros(robo.nl, robo.nl)
+    # init transformation
+    antRj, antPj = compute_rot_trans(robo, symo)
+    for j in reversed(xrange(0, robo.NL)):
+        replace_composite_terms(
+            symo, j, comp_inertia3, comp_ms, comp_mass
+        )
+        if j != 0:
+            compute_composite_inertia(
+                robo, symo, j, antRj, antPj,
+                aje1, comp_inertia3, comp_ms, comp_mass
+            )
+    for j in xrange(1, robo.NL):
+        compute_diagonal_elements(
+            robo, symo, j, comp_inertia3, comp_ms,
+            comp_mass, forces, moments, inertia_a22
+        )
+        ka = j
+        while ka != 1:
+            k = ka
+            ka = robo.ant[ka]
+            compute_triangle_elements(
+                robo, symo, j, k, ka, antRj, antPj, aje1,
+                forces, moments, inertia_a12, inertia_a22
+            )
+    symo.mat_replace(inertia_a22, 'A', forced=True, symmet=True)
+    return inertia_a22
 
 
 def floating_inertia_matrix(robo, symo):
@@ -155,6 +187,7 @@ def floating_inertia_matrix(robo, symo):
     function computes the A11, A12 and A22 matrices when the inertia
     matrix A = [A11, A12; A12.transpose(), A22]
     """
+    # init terms
     comp_inertia3, comp_ms, comp_mass = ParamsInit.init_jplus(robo)
     aje1 = ParamsInit.init_vec(robo)
     forces = ParamsInit.init_vec(robo, ext=1)
@@ -197,7 +230,7 @@ def floating_inertia_matrix(robo, symo):
     for j in xrange(1, robo.NL):
         a12mat[:, j] = inertia_a12[j]
     a12mat = a12mat[:, 1:]
-    # setup the completer inertia matrix
+    # setup the complete inertia matrix
     inertia = Matrix([
         inertia_a11.row_join(a12mat),
         a12mat.transpose().row_join(inertia_a22)
