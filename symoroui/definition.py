@@ -82,16 +82,13 @@ class DialogDefinition(wx.Dialog):
         szr_topmost.Add(
             szr_grd, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 15
         )
-        self.chk_is_floating = wx.CheckBox(
-            self, label=' Is Floating Base'
+        # radio box for base type
+        self.rbx_base_type = wx.RadioBox(
+            self, label='Base Type', style=wx.RA_SPECIFY_COLS,
+            majorDimension=3, name='rbx_base',
+            choices=['Fixed', 'Floating', 'Mobile']
         )
-        self.chk_is_floating.Value = is_floating
-        self.chk_is_floating.Bind(wx.EVT_CHECKBOX, self.OnBaseParamsNo)
-        self.chk_is_mobile = wx.CheckBox(
-            self, label=' Is Mobile Robot'
-        )
-        self.chk_is_mobile.Value = is_mobile
-        self.chk_is_mobile.Bind(wx.EVT_CHECKBOX, self.OnBaseParamsNo)
+        self.rbx_base_type.Bind(wx.EVT_RADIOBOX, self.OnBaseType)
         self.chk_keep_geo = wx.CheckBox(
             self, label=' Keep geometric parameters'
         )
@@ -105,12 +102,8 @@ class DialogDefinition(wx.Dialog):
         )
         self.chk_keep_base.Value = True
         szr_topmost.Add(
-            self.chk_is_floating, 0,
-            wx.LEFT | wx.RIGHT | wx.ALIGN_LEFT, 15
-        )
-        szr_topmost.Add(
-            self.chk_is_mobile, 0,
-            wx.LEFT | wx.RIGHT | wx.ALIGN_LEFT, 15
+            self.rbx_base_type, 0,
+            wx.LEFT | wx.RIGHT | wx.ALIGN_CENTER, 15
         )
         szr_topmost.Add(
             self.chk_keep_geo, 0,
@@ -147,10 +140,9 @@ class DialogDefinition(wx.Dialog):
             self.spin_joints.Enable(False)
             self.OnSpinNL(None)
 
-    def OnBaseParamsNo(self, _):
-        value = True
-        if self.chk_is_floating.Value or self.chk_is_mobile.Value:
-            value = False
+    def OnBaseType(self, _):
+        idx = self.rbx_base_type.GetSelection()
+        value = True if idx == 0 else False
         self.chk_keep_base.Value = value
 
     def OnSpinNL(self, _):
@@ -162,14 +154,17 @@ class DialogDefinition(wx.Dialog):
         name = self.FindWindowByName('name').Value
         nl = int(self.spin_links.Value)
         nj = int(self.spin_joints.Value)
+        base_type_idx = self.rbx_base_type.GetSelection()
+        is_floating = True if base_type_idx == 1 else False
+        is_mobile = True if base_type_idx == 2 else False
         params = {
             'name': name,
             'num_links': nl,
             'num_joints': nj,
             'num_frames': (2 * nj) -nl,
             'structure': self.cmb_structure.Value,
-            'is_floating': self.chk_is_floating.Value,
-            'is_mobile': self.chk_is_mobile.Value,
+            'is_floating': is_floating,
+            'is_mobile': is_mobile,
             'keep_geo': self.chk_keep_geo.Value,
             'keep_dyn': self.chk_keep_dyn.Value,
             'keep_base': self.chk_keep_base.Value
