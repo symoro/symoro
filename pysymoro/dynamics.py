@@ -70,23 +70,25 @@ def dynamic_identification_NE(robo):
             if param_vec[i] == tools.ZERO:
                 continue
             # change link names according to current non-zero parameter
-            name = '%s' + str(param_vec[i])
+            name = '{0}' + str(param_vec[i])
             # set the parameter to 1
             mask = sympy.zeros(10, 1)
             mask[i] = 1
             robo_tmp.put_inert_param(mask, k)
             # compute the total forcec of the link k
-            compute_wrench(robo_tmp, symo, k, w, wdot, U, vdot, F, N, name)
+            compute_wrench(
+                robo_tmp, symo, name, k, w, wdot, U, vdot, F, N
+            )
             # init external forces
             Fex = ParamsInit.init_vec(robo)
             Nex = ParamsInit.init_vec(robo)
             for j in reversed(xrange(1, k + 1)):
                 compute_joint_wrench(
-                    robo_tmp, symo, j, antRj, antPj, vdot,
-                    Fjnt, Njnt, F, N, Fex, Nex, name
+                    robo_tmp, symo, name, j, antRj, antPj,
+                    vdot, F, N, Fjnt, Njnt, Fex, Nex
                 )
             for j in xrange(1, k + 1):
-                compute_torque(robo_tmp, symo, j, Fjnt, Njnt, 'DG' + name)
+                compute_torque(robo_tmp, symo, name, j, Fjnt, Njnt)
         # reset all the parameters to zero
         robo_tmp.put_inert_param(sympy.zeros(10, 1), k)
         # compute model for the joint parameters
@@ -167,23 +169,17 @@ def compute_direct_dynamic_NE(robo, symo):
 
 
 def get_symbol(symbol, name, idx):
-    if name is None:
-        return symbol
-    else:
-        return symbol + name.format(idx)
+    return symbol + name.format(idx)
 
 
-def compute_wrench(robo, symo, j, w, wdot, U, vdot, F, N, name=None):
+def compute_wrench(robo, symo, name, j, w, wdot, U, vdot, F, N):
     """
-    AVAILABLE: nealgos - compute_dynamic_wrench()
-    Internal function. Computes total wrench (torques and forces)
-    of the link j
+    Compute total wrench of link j (internal function).
 
-    Notes
-    =====
-    F, N are the output parameters
+    Note:
+        F, N are the output parameters
     """
-    F[j] = robo.M[j]*vdot[j] + U[j]*robo.MS[j]
+    F[j] = (robo.M[j] * vdot[j]) + (U[j] * robo.MS[j])
     F[j] = symo.mat_replace(F[j], get_symbol('F', name, j))
     Psi = robo.J[j] * w[j]
     Psi = symo.mat_replace(Psi, get_symbol('PSI', name, j))
@@ -192,42 +188,40 @@ def compute_wrench(robo, symo, j, w, wdot, U, vdot, F, N, name=None):
 
 
 def compute_joint_wrench(
-    robo, symo, j, antRj, antPj, vdot,
-    Fjnt, Njnt, F, N, Fex, Nex, name=None
+    robo, symo, name, j, antRj, antPj, vdot, F, N, Fjnt, Njnt, Fex, Nex
 ):
     """
-    AVAILABLE: nealgos - compute_joint_wrench()
-    Internal function. Computes wrench (torques and forces)
-    of the joint j
+    Compute reaction wrench (for default Newton-Euler) of joint j
+    (internal function).
 
-    Notes
-    =====
-    Fjnt, Njnt, Fex, Nex are the output parameters
+    Note:
+        Fjnt, Njnt, Fex, Nex are the output parameters
     """
+    i = robo.ant[j]
     Fjnt[j] = F[j] + Fex[j]
     Fjnt[j] = symo.mat_replace(Fjnt[j], get_symbol('E', name, j))
     Njnt[j] = N[j] + Nex[j] + (tools.skew(robo.MS[j]) * vdot[j])
     Njnt[j] = symo.mat_replace(Njnt[j], get_symbol('N', name, j))
-    f_ant = symo.mat_replace(antRj[j]*Fjnt[j], get_symbol('FDI', name, j))
-    if robo.ant[j] != -1:
-        Fex[robo.ant[j]] += f_ant
-        Nex[robo.ant[j]] += antRj[j]*Njnt[j] + tools.skew(antPj[j])*f_ant
+    f_ant = antRj[j] * Fjnt[j]
+    f_ant = symo.mat_replace(f_ant, get_symbol('FDI', name, j))
+    if i != -1:
+        Fex[i] = Fex[i] + f_ant
+        Nex[i] = Nex[i] + \
+            (antRj[j] * Njnt[j]) + (tools.skew(antPj[j]) * f_ant)
 
 
-def compute_torque(robo, symo, j, Fjnt, Njnt, name=None):
+def compute_torque(robo, symo, name, j, Fjnt, Njnt):
     """
-    AVAILABLE: nealgos - compute_joint_torque()
-    Internal function. Computes actuation torques - projection of
-    joint wrench on the joint axis
+    Compute actuator torques - projection of joint wrench on the joint
+    axis (internal function).
     """
-    if robo.sigma[j] != 2:
-        tau = (robo.sigma[j]*Fjnt[j] + (1 - robo.sigma[j])*Njnt[j])
-        tau_total = tau[2] + robo.fric_s(j) + robo.fric_v(j) + robo.tau_ia(j)
-        if name is None:
-            name = str(robo.GAM[j])
-        else:
-            name = name % j
-        symo.replace(tau_total, name, forced=True)
+    if robo.sigma[j] == 2:
+        tau_total = 0
+    else:
+        tau = (robo.sigma[j] * Fjnt[j]) + ((1 - robo.sigma[j]) * Njnt[j])
+        fric_rotor = robo.fric_s(j) + robo.fric_v(j) + robo.tau_ia(j)
+        tau_total = tau[2] + fric_rotor
+    symo.replace(tau_total, get_symbol('DG', name, j), forced=True)
 
 
 def compute_beta(robo, symo, j, w, beta_star):
