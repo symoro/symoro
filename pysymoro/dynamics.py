@@ -11,7 +11,7 @@ modeling of robot dynamics.
 """
 
 
-from copy import copy, deepcopy
+from copy import copy
 
 import sympy
 from sympy import Matrix
@@ -20,7 +20,6 @@ from pysymoro.geometry import compute_screw_transform
 from pysymoro.geometry import compute_rot_trans, Transform
 from pysymoro.kinematics import compute_vel_acc
 from pysymoro.kinematics import compute_omega
-from pysymoro import inertia
 from symoroutils import symbolmgr
 from symoroutils import tools
 from symoroutils.paramsinit import ParamsInit
@@ -28,102 +27,6 @@ from symoroutils.paramsinit import ParamsInit
 
 inert_names = ('XXR', 'XYR', 'XZR', 'YYR', 'YZR',
                'ZZR', 'MXR', 'MYR', 'MZR', 'MR')
-
-
-def dynamic_identification_NE(robo):
-    """Computes Dynamic Identification Model using
-    Newton-Euler formulation
-
-    Parameters
-    ==========
-    robo : Robot
-        Instance of robot description container
-
-    Returns
-    =======
-    symo.sydi : dictionary
-        Dictionary with the information of all the sybstitution
-    """
-
-    # init forces vectors
-    Fjnt = ParamsInit.init_vec(robo)
-    Njnt = ParamsInit.init_vec(robo)
-    # init file output, writing the robot description
-    symo = symbolmgr.SymbolManager()
-    symo.file_open(robo, 'dim')
-    title = "Dynamic identification model using Newton - Euler Algorith"
-    symo.write_params_table(robo, title, inert=True, dynam=True)
-    # init transformation
-    antRj, antPj = compute_rot_trans(robo, symo)
-    # init velocities and accelerations
-    w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
-    # virtual robot with only one non-zero parameter at once
-    robo_tmp = deepcopy(robo)
-    robo_tmp.IA = sympy.zeros(robo.NL, 1)
-    robo_tmp.FV = sympy.zeros(robo.NL, 1)
-    robo_tmp.FS = sympy.zeros(robo.NL, 1)
-    for k in xrange(1, robo.NL):
-        param_vec = robo.get_inert_param(k)
-        F = ParamsInit.init_vec(robo)
-        N = ParamsInit.init_vec(robo)
-        for i in xrange(10):
-            if param_vec[i] == tools.ZERO:
-                continue
-            # change link names according to current non-zero parameter
-            name = '{0}' + str(param_vec[i])
-            # set the parameter to 1
-            mask = sympy.zeros(10, 1)
-            mask[i] = 1
-            robo_tmp.put_inert_param(mask, k)
-            # compute the total forcec of the link k
-            compute_wrench(
-                robo_tmp, symo, name, k, w, wdot, U, vdot, F, N
-            )
-            # init external forces
-            Fex = ParamsInit.init_vec(robo)
-            Nex = ParamsInit.init_vec(robo)
-            for j in reversed(xrange(1, k + 1)):
-                compute_joint_wrench(
-                    robo_tmp, symo, name, j, antRj, antPj,
-                    vdot, F, N, Fjnt, Njnt, Fex, Nex
-                )
-            for j in xrange(1, k + 1):
-                compute_torque(robo_tmp, symo, name, j, Fjnt, Njnt)
-        # reset all the parameters to zero
-        robo_tmp.put_inert_param(sympy.zeros(10, 1), k)
-        # compute model for the joint parameters
-        compute_joint_torque_deriv(
-            symo, robo.IA[k], robo.qddot[k], k
-        )
-        compute_joint_torque_deriv(
-            symo, robo.FS[k], sympy.sign(robo.qdot[k]), k
-        )
-        compute_joint_torque_deriv(
-            symo, robo.FV[k], robo.qdot[k], k
-        )
-    # closing the output file
-    symo.file_close()
-    return symo
-
-
-def compute_joint_torque_deriv(symo, param, arg, index):
-    """Internal function. Computes joint reactive torques
-    in case if the parameter is 1
-
-    Parameters
-    ==========
-    symo : symbolmgr.SymbolManager
-        symbol manager
-    param : var
-        Dynamic parameter
-    arg : var
-        The real torque is equal to arg*param
-    index : strig
-        identifies the parameter in the sybstituted symbol's name
-    """
-    if param != tools.ZERO and arg != tools.ZERO:
-        index = str(index) + str(param)
-        symo.replace(arg, 'DG', index, forced=True)
 
 
 def compute_direct_dynamic_NE(robo, symo):
@@ -166,62 +69,6 @@ def compute_direct_dynamic_NE(robo, symo):
     for j in xrange(1, robo.NL):
         compute_coupled_forces(robo, symo, j, grandVp, grandJ, beta_star)
     return robo.qddot
-
-
-def get_symbol(symbol, name, idx):
-    return symbol + name.format(idx)
-
-
-def compute_wrench(robo, symo, name, j, w, wdot, U, vdot, F, N):
-    """
-    Compute total wrench of link j (internal function).
-
-    Note:
-        F, N are the output parameters
-    """
-    F[j] = (robo.M[j] * vdot[j]) + (U[j] * robo.MS[j])
-    F[j] = symo.mat_replace(F[j], get_symbol('F', name, j))
-    Psi = robo.J[j] * w[j]
-    Psi = symo.mat_replace(Psi, get_symbol('PSI', name, j))
-    N[j] = (robo.J[j] * wdot[j]) + (tools.skew(w[j]) * Psi)
-    N[j] = symo.mat_replace(N[j], get_symbol('No', name, j))
-
-
-def compute_joint_wrench(
-    robo, symo, name, j, antRj, antPj, vdot, F, N, Fjnt, Njnt, Fex, Nex
-):
-    """
-    Compute reaction wrench (for default Newton-Euler) of joint j
-    (internal function).
-
-    Note:
-        Fjnt, Njnt, Fex, Nex are the output parameters
-    """
-    i = robo.ant[j]
-    Fjnt[j] = F[j] + Fex[j]
-    Fjnt[j] = symo.mat_replace(Fjnt[j], get_symbol('E', name, j))
-    Njnt[j] = N[j] + Nex[j] + (tools.skew(robo.MS[j]) * vdot[j])
-    Njnt[j] = symo.mat_replace(Njnt[j], get_symbol('N', name, j))
-    f_ant = antRj[j] * Fjnt[j]
-    f_ant = symo.mat_replace(f_ant, get_symbol('FDI', name, j))
-    if i != -1:
-        Fex[i] = Fex[i] + f_ant
-        Nex[i] = Nex[i] + \
-            (antRj[j] * Njnt[j]) + (tools.skew(antPj[j]) * f_ant)
-
-
-def compute_torque(robo, symo, name, j, Fjnt, Njnt):
-    """
-    Compute actuator torques - projection of joint wrench on the joint
-    axis (internal function).
-    """
-    if robo.sigma[j] == 2:
-        tau_total = 0
-    else:
-        tau = (robo.sigma[j] * Fjnt[j]) + ((1 - robo.sigma[j]) * Njnt[j])
-        fric_rotor = robo.fric_s(j) + robo.fric_v(j) + robo.tau_ia(j)
-        tau_total = tau[2] + fric_rotor
-    symo.replace(tau_total, get_symbol('DG', name, j), forced=True)
 
 
 def compute_beta(robo, symo, j, w, beta_star):
@@ -402,7 +249,7 @@ def base_paremeters(robo_orig):
             pass
         elif robo.sigma[j] == 2:
             # fixed joint, group everuthing
-            compute_lambda(robo, symo, j, antRj, antPj)
+            compute_lambda(robo, symo, j, antRj, antPj, lam)
             group_param_fix(robo, symo, j, lam)
         pass
     symo.write_line('*=*')
