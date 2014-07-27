@@ -306,9 +306,9 @@ class Robot(object):
         Compute the Dynamic Identification model of the robot.
         """
         symo = symbolmgr.SymbolManager()
-        symo.file_open(robo, 'dim')
+        symo.file_open(self, 'dim')
         title = "Dynamic Identification Model (Newton-Euler method)"
-        symo.write_params_table(robo, title, inert=True, dynam=True)
+        symo.write_params_table(self, title, inert=True, dynam=True)
         dyniden.dynamic_identification_model(self, symo)
         symo.file_close()
         return symo
