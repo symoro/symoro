@@ -73,7 +73,7 @@ def compute_dynamic_wrench(robo, symo, j, w, wdot, U, vdot, F, N):
 
 
 def compute_joint_wrench(
-    robo, symo, j, antRj, antPj, vdot, Fjnt, Njnt, F, N, Fex, Nex
+    robo, symo, j, antRj, antPj, vdot, F, N, Fjnt, Njnt, Fex, Nex
 ):
     """
     Compute reaction wrench (for default Newton-Euler) of joint j
@@ -124,12 +124,13 @@ def compute_gamma(robo, symo, j, antRj, antPj, w, wi, gamma):
     Note:
         gamma is the output parameter
     """
+    i = robo.ant[j]
     expr1 = tools.skew(wi[j]) * Matrix([0, 0, robo.qdot[j]])
     expr1 = symo.mat_replace(expr1, 'WQ', j)
     expr2 = (1 - robo.sigma[j]) * expr1
     expr3 = 2 * robo.sigma[j] * expr1
-    expr4 = tools.skew(w[robo.ant[j]]) * antPj[j]
-    expr5 = tools.skew(w[robo.ant[j]]) * expr4
+    expr4 = tools.skew(w[i]) * antPj[j]
+    expr5 = tools.skew(w[i]) * expr4
     expr6 = antRj[j].transpose() * expr5
     expr7 = expr6 + expr3
     expr7 = symo.mat_replace(expr7, 'LW', j)
@@ -469,7 +470,7 @@ def fixed_inverse_dynmodel(robo, symo):
     for j in reversed(xrange(1, robo.NL)):
         compute_joint_wrench(
             robo, symo, j, antRj, antPj, vdot,
-            Fjnt, Njnt, F, N, Fex, Nex
+            F, N, Fjnt, Njnt, Fex, Nex
         )
     for j in xrange(1, robo.NL):
         compute_joint_torque(robo, symo, j, Fjnt, Njnt, torque)
@@ -503,7 +504,7 @@ def mobile_inverse_dynmodel(robo, symo):
     for j in reversed(xrange(0, robo.NL)):
         compute_joint_wrench(
             robo, symo, j, antRj, antPj, vdot,
-            Fjnt, Njnt, F, N, Fex, Nex
+            F, N, Fjnt, Njnt, Fex, Nex
         )
     for j in xrange(1, robo.NL):
         compute_joint_torque(robo, symo, j, Fjnt, Njnt, torque)
