@@ -21,6 +21,7 @@ from sympy import Symbol, Matrix, Expr, Integer
 from sympy import Mul, Add, factor, zeros, var, sympify, eye
 
 from pysymoro import dynamics
+from pysymoro import dyniden
 from pysymoro import inertia
 from pysymoro import nealgos
 from symoroutils import filemgr
@@ -283,7 +284,7 @@ class Robot(object):
         pseudorobo.qddot = zeros(pseudorobo.NL, 1)
         symo = symbolmgr.SymbolManager()
         symo.file_open(self, 'ccg')
-        title = 'Pseudo forces using Newton-Euler Algorithm'
+        title = "Pseudo forces using Newton-Euler Algorithm"
         symo.write_params_table(self, title, inert=True, dynam=True)
         if 1 in pseudorobo.eta:
             # with flexible joints
@@ -297,6 +298,18 @@ class Robot(object):
         else:
             # with rigid joints and fixed base
             nealgos.fixed_inverse_dynmodel(pseudorobo, symo)
+        symo.file_close()
+        return symo
+
+    def compute_dynidenmodel(self):
+        """
+        Compute the Dynamic Identification model of the robot.
+        """
+        symo = symbolmgr.SymbolManager()
+        symo.file_open(robo, 'dim')
+        title = "Dynamic Identification Model (Newton-Euler method)"
+        symo.write_params_table(robo, title, inert=True, dynam=True)
+        dyniden.dynamic_identification_model(self, symo)
         symo.file_close()
         return symo
 
