@@ -846,7 +846,7 @@ class MainFrame(wx.Frame):
         self.model_success('regp')
 
     def OnDynIdentifModel(self, event):
-        dynamics.dynamic_identification_NE(self.robo)
+        self.robo.compute_dynidenmodel()
         self.model_success('dim')
 
     def OnVisualisation(self, event):

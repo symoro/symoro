@@ -21,26 +21,6 @@ from symoroutils.paramsinit import ParamsInit
 from symoroutils import tools
 
 
-
-
-def _compute_joint_torque_deriv(symo, param, arg, index):
-    """Compute joint reactive torque if the parameter is 1
-
-    Parameters:
-        symo : symbolmgr.SymbolManager
-            symbol manager
-        param : var
-            Dynamic parameter
-        arg : var
-            The real torque is equal to arg*param
-        index : strig
-            identifies the parameter in the sybstituted symbol's name
-    """
-    if param != tools.ZERO and arg != tools.ZERO:
-        index = str(index) + str(param)
-        symo.replace(arg, 'DG', index, forced=True)
-
-
 def get_symbol(symbol, name, idx):
     return symbol + name.format(idx)
 
@@ -95,6 +75,24 @@ def _compute_joint_torque(robo, symo, name, j, Fjnt, Njnt):
         fric_rotor = robo.fric_s(j) + robo.fric_v(j) + robo.tau_ia(j)
         tau_total = tau[2] + fric_rotor
     symo.replace(tau_total, get_symbol('DG', name, j))
+
+
+def _compute_joint_torque_deriv(symo, param, arg, index):
+    """Compute joint reactive torque if the parameter is 1
+
+    Parameters:
+        symo : symbolmgr.SymbolManager
+            symbol manager
+        param : var
+            Dynamic parameter
+        arg : var
+            The real torque is equal to arg*param
+        index : strig
+            identifies the parameter in the sybstituted symbol's name
+    """
+    if param != tools.ZERO and arg != tools.ZERO:
+        index = str(index) + str(param)
+        symo.replace(arg, 'DG', index, forced=True)
 
 
 def dynamic_identification_model(robo, symo):
