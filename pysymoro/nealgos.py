@@ -369,7 +369,7 @@ def compute_link_accel(robo, symo, j, jTant, zeta, grandVp):
     grandVp[j][3:, 0] = symo.mat_replace(grandVp[j][3:, 0], 'WP', j)
 
 
-def write_numerical_inverse(symo, inertia):
+def write_numerical_inverse(symo, inertia, symmet=False):
     """
     Write the inverse for the inertia matrix (6x6) to be computed
     numerically using numpy in the output file.
@@ -395,7 +395,7 @@ def write_numerical_inverse(symo, inertia):
     symo.write_line("# matrix to be compatible with future computation")
     for i in xrange(inertia.rows):
         for j in xrange(inertia.cols):
-            if i < j:
+            if symmet and i < j:
                 continue
             symo.write_equation(
                 'InvMJE{row}{col}0'.format(row=i+1, col=j+1),
@@ -405,14 +405,14 @@ def write_numerical_inverse(symo, inertia):
     symo.write_line("# NUMERICAL INVERSION OF INERTIA MATRIX - END")
 
 
-def get_numerical_inverse_out(inertia):
+def get_numerical_inverse_out(inertia, symmet=False):
     """
     Return the inverse of the matrix as formed by strings.
     """
     inv_inertia = sympy.zeros(inertia.rows, inertia.cols)
     for j in xrange(inertia.cols):
         for i in xrange(inertia.rows):
-            if i < j:
+            if symmet and i < j:
                 inv_inertia[i, j] = inv_inertia[j, i]
                 continue
             inv_inertia[i, j] = sympy.var(
@@ -432,10 +432,10 @@ def compute_base_accel(robo, symo, star_inertia, star_beta, grandVp):
     grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
     if robo.is_floating:
         forced = True
-        inv_base_star_inertia = star_inertia[0].inv()
-        inv_base_star_inertia = symo.mat_replace(
-            inv_base_star_inertia, 'InvMJE', 0,
-            symmet=True, forced=forced
+        symo.flushout()
+        write_numerical_inverse(symo, star_inertia[0], symmet=False)
+        inv_base_star_inertia = get_numerical_inverse_out(
+            star_inertia[0], symmet=False
         )
         grandVp[0] = inv_base_star_inertia * star_beta[0]
     grandVp[0][:3, 0] = symo.mat_replace(
@@ -461,15 +461,10 @@ def compute_base_accel_composite(
     if robo.is_floating:
         forced = True
         symo.flushout()
-        write_numerical_inverse(symo, composite_inertia[0])
+        write_numerical_inverse(symo, composite_inertia[0], symmet=True)
         inv_base_comp_inertia = get_numerical_inverse_out(
-            composite_inertia[0]
+            composite_inertia[0], symmet=True
         )
-        #inv_base_comp_inertia = composite_inertia[0].inv()
-        #inv_base_comp_inertia = symo.mat_replace(
-        #    inv_base_comp_inertia, 'InvMJE', 0,
-        #    symmet=True, forced=forced
-        #)
         grandVp[0] = inv_base_comp_inertia * composite_beta[0]
     grandVp[0][:3, 0] = symo.mat_replace(
        grandVp[0][:3, 0], 'VP', 0, forced=forced
