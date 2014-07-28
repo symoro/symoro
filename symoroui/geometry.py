@@ -236,3 +236,88 @@ class DialogPaul(wx.Dialog):
         return lst, int(self.cmb.Value)
 
 
+class DialogPieper(wx.Dialog):
+    """Creates the dialog box to specify Pieper method parameters."""
+    def __init__(self, prefix, endeffs, EMPTY, parent=None):
+        super(DialogPieper, self).__init__(parent, style=wx.SYSTEM_MENU |
+                          wx.CAPTION | wx.CLOSE_BOX | wx.CLIP_CHILDREN)
+        self.endeffs = endeffs
+        self.init_ui(EMPTY)
+        self.SetTitle(prefix + ": IGM Pieper Method (pie)")
+
+    def init_ui(self, EMPTY):
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+        #title
+        label_cmb = wx.StaticText(self, label="For frame :")
+        main_sizer.Add(label_cmb, 0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, 20)
+        self.cmb = wx.ComboBox(self, size=(80, -1),
+             choices=[str(i) for i in self.endeffs], style=wx.CB_READONLY)
+        self.cmb.SetSelection(0)
+        main_sizer.AddSpacer(5)
+        main_sizer.Add(self.cmb, 0, wx.BOTTOM | wx.ALIGN_CENTER_HORIZONTAL, 10)
+        lbl = wx.StaticText(self, label="Components taken into account :")
+        main_sizer.Add(lbl, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 20)
+        #input
+        grid = wx.GridBagSizer(hgap=15, vgap=15)
+        names = ['S', 'N', 'A', 'P']
+        for i, name in enumerate(names):
+            check_box = wx.CheckBox(self, wx.ID_ANY,
+                                    label='   ' + name, name=name)
+            check_box.SetValue(True)
+            check_box.Bind(wx.EVT_CHECKBOX, self.OnVectorChecked)
+            grid.Add(check_box, pos=(0, i), flag=wx.ALIGN_CENTER_HORIZONTAL)
+            for j in range(1, 4):
+                w_name = name + str(j)
+                cmb = wx.ComboBox(self,
+                                  choices=[EMPTY, '-1', '0', '1', w_name],
+                                  name=w_name, style=wx.CB_READONLY,
+                                  size=(90, -1), id=(j-1)*4 + i)
+                cmb.SetSelection(4)
+                cmb.Bind(wx.EVT_COMBOBOX, self.OnComboBox)
+                grid.Add(cmb, pos=(j, i))
+            label = wx.StaticText(self,
+                                  label=(' 1' if i == 3 else ' 0'), id=12 + i)
+            grid.Add(label, pos=(4, i))
+        main_sizer.Add(grid, 0, wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT, 35)
+        main_sizer.AddSpacer(20)
+        #buttons
+        hor_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        ok_btn = wx.Button(self, wx.ID_OK, "OK")
+        ok_btn.Bind(wx.EVT_BUTTON, self.OnOK)
+        cancel_btn = wx.Button(self, wx.ID_CANCEL, "Cancel")
+        cancel_btn.Bind(wx.EVT_BUTTON, self.OnCancel)
+        hor_sizer.Add(ok_btn, 0, wx.ALL, 15)
+        hor_sizer.Add(cancel_btn, 0, wx.ALL, 15)
+        main_sizer.Add(hor_sizer, 0, wx.ALIGN_CENTER_HORIZONTAL, 0)
+        self.SetSizerAndFit(main_sizer)
+
+    def OnOK(self, _):
+        self.EndModal(wx.ID_OK)
+
+    def OnCancel(self, _):
+        self.EndModal(wx.ID_CANCEL)
+
+    def OnVectorChecked(self, evt):
+        name = evt.EventObject.Name
+        index = 4 if evt.EventObject.Value else 0
+        for i in range(1, 4):
+            cmb = self.FindWindowByName(name + str(i))
+            cmb.SetSelection(index)
+
+    def OnComboBox(self, evt):
+        name = evt.EventObject.Name
+        if evt.EventObject.GetSelection() != 4:
+            check_box = self.FindWindowByName(name[0])
+            check_box.SetValue(False)
+
+    def get_values(self):
+        lst = []
+        for i in range(16):
+            widget = self.FindWindowById(i)
+            if isinstance(widget, wx.ComboBox):
+                lst.append(widget.Value)
+            else:
+                lst.append(widget.LabelText)
+        return lst, int(self.cmb.Value)
+
+
