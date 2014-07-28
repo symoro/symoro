@@ -211,7 +211,7 @@ def replace_composite_terms(
         composite_inertia are composite_beta are the output parameters
     """
     forced = False
-    if replace and j == 0: forced = False
+    if replace and j == 0: forced = True
     composite_inertia[j] = symo.mat_replace(
         grandJ[j], 'MJE', j, symmet=True, forced=forced
     )
@@ -492,6 +492,15 @@ def mobile_inverse_dynmodel(robo, symo):
     antRj, antPj = compute_rot_trans(robo, symo)
     # init velocities and accelerations
     w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
+    dv0 = ParamsInit.product_combinations(robo.w0)
+    symo.mat_replace(dv0, 'DV', 0)
+    hatw_hatw = sympy.Matrix([
+        [-dv0[3]-dv0[5], dv0[1], dv0[2]],
+        [dv0[1], -dv0[5]-dv0[0], dv0[4]],
+        [dv0[2], dv0[4], -dv0[3]-dv0[0]]
+    ])
+    U[0] = hatw_hatw + tools.skew(robo.wdot0)
+    symo.mat_replace(U[0], 'U', 0)
     # init forces vectors
     F = ParamsInit.init_vec(robo)
     N = ParamsInit.init_vec(robo)

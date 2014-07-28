@@ -128,13 +128,22 @@ def dynamic_identification_model(robo, symo):
     antRj, antPj = compute_rot_trans(robo, symo)
     # init velocities and accelerations
     w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
+    dv0 = ParamsInit.product_combinations(robo.w0)
+    symo.mat_replace(dv0, 'DV', 0)
+    hatw_hatw = sympy.Matrix([
+        [-dv0[3]-dv0[5], dv0[1], dv0[2]],
+        [dv0[1], -dv0[5]-dv0[0], dv0[4]],
+        [dv0[2], dv0[4], -dv0[3]-dv0[0]]
+    ])
+    U[0] = hatw_hatw + tools.skew(robo.wdot0)
+    symo.mat_replace(U[0], 'U', 0)
     # virtual robot with only one non-zero parameter at once
     robo_tmp = copy.deepcopy(robo)
     robo_tmp.IA = sympy.zeros(robo.NL, 1)
     robo_tmp.FV = sympy.zeros(robo.NL, 1)
     robo_tmp.FS = sympy.zeros(robo.NL, 1)
     # start link number
-    is_fixed = False if robo.is_floating or is_mobile else True
+    is_fixed = False if robo.is_floating or robo.is_mobile else True
     start_link = 1 if is_fixed else 0
     for k in xrange(start_link, robo.NL):
         param_vec = robo.get_inert_param(k)
