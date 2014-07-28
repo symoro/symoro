@@ -63,6 +63,27 @@ def _compute_reaction_wrench(
             (antRj[j] * Njnt[j]) + (tools.skew(antPj[j]) * f_ant)
 
 
+def _compute_base_reaction_wrench(
+    robo, symo, name, antRj, antPj, vdot, F, N, Fex, Nex, Fjnt, Njnt
+):
+    """
+    Compute reaction wrench (for default Newton-Euler) on the base
+    (internal function).
+
+    Note:
+        Fjnt, Njnt are the output parameters
+    """
+    j = 0
+    Fjnt[j] = F[j] + Fex[j]
+    Fjnt[j] = symo.mat_replace(
+        Fjnt[j], get_symbol('DE', name, j), forced=True
+    )
+    Njnt[j] = N[j] + Nex[j] + (tools.skew(robo.MS[j]) * vdot[j])
+    Njnt[j] = symo.mat_replace(
+        Njnt[j], get_symbol('DN', name, j), forced=True
+    )
+
+
 def _compute_joint_torque(robo, symo, name, j, Fjnt, Njnt):
     """
     Compute actuator torques - projection of joint wrench on the joint
@@ -74,7 +95,7 @@ def _compute_joint_torque(robo, symo, name, j, Fjnt, Njnt):
         tau = (robo.sigma[j] * Fjnt[j]) + ((1 - robo.sigma[j]) * Njnt[j])
         fric_rotor = robo.fric_s(j) + robo.fric_v(j) + robo.tau_ia(j)
         tau_total = tau[2] + fric_rotor
-    symo.replace(tau_total, get_symbol('DG', name, j))
+    symo.replace(tau_total, get_symbol('DG', name, j), forced=True)
 
 
 def _compute_joint_torque_deriv(symo, param, arg, index):
@@ -112,7 +133,9 @@ def dynamic_identification_model(robo, symo):
     robo_tmp.IA = sympy.zeros(robo.NL, 1)
     robo_tmp.FV = sympy.zeros(robo.NL, 1)
     robo_tmp.FS = sympy.zeros(robo.NL, 1)
-    for k in xrange(1, robo.NL):
+    # start link number
+    start_link = 0 if robo.is_floating or robo.is_mobile else 1
+    for k in xrange(start_link, robo.NL):
         param_vec = robo.get_inert_param(k)
         F = ParamsInit.init_vec(robo)
         N = ParamsInit.init_vec(robo)
@@ -137,6 +160,11 @@ def dynamic_identification_model(robo, symo):
                     robo_tmp, symo, name, j, antRj, antPj,
                     vdot, F, N, Fjnt, Njnt, Fex, Nex
                 )
+            # reaction wrench for base
+            _compute_base_reaction_wrench(
+                robo_tmp, symo, name, antRj,antPj,
+                vdot, F, N, Fex, Nex, Fjnt, Njnt
+            )
             for j in xrange(1, k + 1):
                 _compute_joint_torque(robo_tmp, symo, name, j, Fjnt, Njnt)
         # reset all the parameters to zero
