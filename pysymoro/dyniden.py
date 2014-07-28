@@ -21,8 +21,16 @@ from symoroutils.paramsinit import ParamsInit
 from symoroutils import tools
 
 
-def get_symbol(symbol, name, idx):
-    return symbol + name.format(idx)
+def get_symbol(symbol, name, index, element=''):
+    return symbol + name.format(index=index, element=element)
+
+
+def vec_replace_wrapper(symo, vec, symbol, name, index, forced=False):
+    new_vec = sympy.zeros(vec.rows, 1)
+    for idx in xrange(vec.rows):
+        sym = get_symbol(symbol, name, index, idx+1)
+        new_vec[idx] = symo.replace(vec[idx], sym, forced=forced)
+    return new_vec
 
 
 def _compute_dynamic_wrench(robo, symo, name, j, w, wdot, U, vdot, F, N):
@@ -33,11 +41,11 @@ def _compute_dynamic_wrench(robo, symo, name, j, w, wdot, U, vdot, F, N):
         F, N are the output parameters
     """
     F[j] = (robo.M[j] * vdot[j]) + (U[j] * robo.MS[j])
-    F[j] = symo.mat_replace(F[j], get_symbol('F', name, j))
+    F[j] = vec_replace_wrapper(symo, F[j], 'F', name, j)
     Psi = robo.J[j] * w[j]
-    Psi = symo.mat_replace(Psi, get_symbol('PSI', name, j))
+    Psi = vec_replace_wrapper(symo, Psi, 'PSI', name, j)
     N[j] = (robo.J[j] * wdot[j]) + (tools.skew(w[j]) * Psi)
-    N[j] = symo.mat_replace(N[j], get_symbol('No', name, j))
+    N[j] = vec_replace_wrapper(symo, N[j], 'No', name, j)
 
 
 def _compute_reaction_wrench(
@@ -52,11 +60,11 @@ def _compute_reaction_wrench(
     """
     i = robo.ant[j]
     Fjnt[j] = F[j] + Fex[j]
-    Fjnt[j] = symo.mat_replace(Fjnt[j], get_symbol('E', name, j))
+    Fjnt[j] = vec_replace_wrapper(symo, Fjnt[j], 'E', name, j)
     Njnt[j] = N[j] + Nex[j] + (tools.skew(robo.MS[j]) * vdot[j])
-    Njnt[j] = symo.mat_replace(Njnt[j], get_symbol('N', name, j))
+    Njnt[j] = vec_replace_wrapper(symo, Njnt[j], 'N', name, j)
     f_ant = antRj[j] * Fjnt[j]
-    f_ant = symo.mat_replace(f_ant, get_symbol('FDI', name, j))
+    f_ant = vec_replace_wrapper(symo, f_ant, 'FDI', name, j)
     if i != -1:
         Fex[i] = Fex[i] + f_ant
         Nex[i] = Nex[i] + \
@@ -75,12 +83,12 @@ def _compute_base_reaction_wrench(
     """
     j = 0
     Fjnt[j] = F[j] + Fex[j]
-    Fjnt[j] = symo.mat_replace(
-        Fjnt[j], get_symbol('DE', name, j), forced=True
+    Fjnt[j] = vec_replace_wrapper(
+        symo, Fjnt[j], 'DE', name, j, forced=True
     )
     Njnt[j] = N[j] + Nex[j] + (tools.skew(robo.MS[j]) * vdot[j])
-    Njnt[j] = symo.mat_replace(
-        Njnt[j], get_symbol('DN', name, j), forced=True
+    Njnt[j] = vec_replace_wrapper(
+        symo, Njnt[j], 'DN', name, j, forced=True
     )
 
 
@@ -144,7 +152,7 @@ def dynamic_identification_model(robo, symo):
     robo_tmp.FS = sympy.zeros(robo.NL, 1)
     # start link number
     is_fixed = False if robo.is_floating or robo.is_mobile else True
-    start_link = 1 if is_fixed else 0
+    start_link = 0
     for k in xrange(start_link, robo.NL):
         param_vec = robo.get_inert_param(k)
         F = ParamsInit.init_vec(robo)
@@ -153,7 +161,7 @@ def dynamic_identification_model(robo, symo):
             if param_vec[i] == tools.ZERO:
                 continue
             # change link names according to current non-zero parameter
-            name = '{0}' + str(param_vec[i])
+            name = '{index}{element}' + str(param_vec[i])
             # set the parameter to 1
             mask = sympy.zeros(10, 1)
             mask[i] = 1
