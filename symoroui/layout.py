@@ -21,6 +21,7 @@ from pysymoro import geometry
 from pysymoro import kinematics
 from pysymoro import dynamics
 from pysymoro import invgeom
+from pysymoro import pieper
 from symoroutils import parfile
 from symoroutils import filemgr
 from symoroutils import samplerobots
@@ -518,6 +519,11 @@ class MainFrame(wx.Frame):
         )
         self.Bind(wx.EVT_MENU, self.OnIgmPaul, m_igm_paul)
         geom_menu.AppendItem(m_igm_paul)
+        m_igm_pieper = wx.MenuItem(
+            geom_menu, wx.ID_ANY, ui_labels.GEOM_MENU['m_igm_pieper']
+        )
+        self.Bind(wx.EVT_MENU, self.OnIgmPieper, m_igm_pieper)
+        geom_menu.AppendItem(m_igm_pieper)
         m_geom_constraint = wx.MenuItem(
             geom_menu, wx.ID_ANY, ui_labels.GEOM_MENU['m_geom_constraint']
         )
@@ -782,8 +788,20 @@ class MainFrame(wx.Frame):
         if dialog.ShowModal() == wx.ID_OK:
             lst_T, n = dialog.get_values()
             invgeom.igm_Paul(self.robo, lst_T, n)
-            self.model_success('igm')
+            self.model_success('igm_paul')
         dialog.Destroy()
+
+    def OnIgmPieper(self, event):
+        dialog = ui_geometry.DialogPieper(
+            ui_labels.MAIN_WIN['prog_name'],
+            self.robo.endeffectors,
+            str(invgeom.EMPTY)
+        )
+        if dialog.ShowModal() == wx.ID_OK:
+            lst_T, n = dialog.get_values()
+            pieper.igm_pieper(self.robo, lst_T, n)
+            self.model_success('igm_pieper')
+            dialog.Destroy()
 
     def OnConstraintGeoEq(self, event):
         pass
