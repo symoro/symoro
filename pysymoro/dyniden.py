@@ -134,7 +134,8 @@ def dynamic_identification_model(robo, symo):
     robo_tmp.FV = sympy.zeros(robo.NL, 1)
     robo_tmp.FS = sympy.zeros(robo.NL, 1)
     # start link number
-    start_link = 0 if robo.is_floating or robo.is_mobile else 1
+    is_fixed = False if robo.is_floating or is_mobile else True
+    start_link = 1 if is_fixed else 0
     for k in xrange(start_link, robo.NL):
         param_vec = robo.get_inert_param(k)
         F = ParamsInit.init_vec(robo)
