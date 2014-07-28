@@ -1,14 +1,15 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+
+# This file is part of the OpenSYMORO project. Please see
+# https://github.com/symoro/symoro/blob/master/LICENCE for the licence.
+
 
 """
 This module of SYMORO package provides symbolic
 solutions for inverse geometric problem using Pieper Method.
--------------------------------------------------------------
-Master M1 EMARO-ARIA: Group project
-Students: PLATIS Angelos & LUGO Jesus
-Supervisor: KHALIL Wisama
 """
+
 
 from sympy import var, sin, cos, eye, atan2, atan, sqrt, pi
 from sympy import Matrix, Symbol, Expr, trigsimp, zeros
@@ -20,9 +21,9 @@ from symoroutils import tools
 
 EMPTY = var("EMPTY")
 
-T_GENERAL = Matrix([var('sx,nx,ax,px'), 
+T_GENERAL = Matrix([var('sx,nx,ax,px'),
                     var('sy,ny,ay,py'),
-                    var('sz,nz,az,pz'), 
+                    var('sz,nz,az,pz'),
                     [0, 0, 0, 1]])
 
 
@@ -92,8 +93,8 @@ def sin_alphaj_eq_0(robo, symo, X_joint, tc, ts, tr, t0, G, offset):
     el6 = -F[x]*sin(qj)*cos(robo.alpha[j]) - F[y]*cos(qj)*cos(robo.alpha[j])
     coef = [el1,el2,el3,el4,el5,el6]
     _equation_solve(symo,coef,eq_type,qi,offseti)
-    
-    return 
+
+    return
 
 def dj_eq_0(robo, symo, X_joint, tc, ts, tr, t0, G, offset):
     """
@@ -112,7 +113,7 @@ def dj_eq_0(robo, symo, X_joint, tc, ts, tr, t0, G, offset):
     [offseti, offsetj, offsetk] = offset
     symo.write_line("# X joints i and j are both revolute")
     symo.write_line("# Case: d{0} = 0".format(j) + "\r\n")
-    
+
     # Solve qk
     if robo.sigma[k] == 0:
         qk = robo.theta[k]
@@ -132,7 +133,7 @@ def dj_eq_0(robo, symo, X_joint, tc, ts, tr, t0, G, offset):
 
         a = 1
         b = 2*(tr[x]*t2[x] + tr[y]*t2[y] + tr[z]*t2[z])
-        c = t2[x]**2 + t2[y]**2 + t2[z]**2 - (G[x]**2 + G[y]**2 + G[z]**2)	
+        c = t2[x]**2 + t2[y]**2 + t2[z]**2 - (G[x]**2 + G[y]**2 + G[z]**2)
         coef = [a,b,c]
     _equation_solve(symo,coef,eq_type,qk,offsetk)
 
@@ -163,7 +164,7 @@ def dj_eq_0(robo, symo, X_joint, tc, ts, tr, t0, G, offset):
     coef = [el1,el2,el3,el4,el5,el6]
     _equation_solve(symo,coef,eq_type,qi,offseti)
 
-    return 
+    return
 
 def dj_and_sin_alpha_dif_0(robo, symo, X_joint, tc, ts, tr, t0, G, offset):
     """
@@ -245,7 +246,7 @@ def dj_and_sin_alpha_dif_0(robo, symo, X_joint, tc, ts, tr, t0, G, offset):
         a0 = (sin(robo.alpha[j])**2)*(N0**2) + 4*(robo.d[j]**2)*(N2**2) - 4*(robo.d[j]**2)*(sin(robo.alpha[j])**2)*N4
         coef = [a0,a1,a2,a3,a4]
     _equation_solve(symo,coef,eq_type,qk,offsetk)
-    
+
     if robo.sigma[k] == 0:
         F = tc*cos(qk) + ts*sin(qk) + t1
     else:
@@ -276,7 +277,7 @@ def dj_and_sin_alpha_dif_0(robo, symo, X_joint, tc, ts, tr, t0, G, offset):
     coef = [el1,el2,el3,el4,el5,el6]
     _equation_solve(symo,coef,eq_type,qi,offseti)
 
-    return 
+    return
 
 def cos_alpha_equal_0(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
     """
@@ -295,26 +296,26 @@ def cos_alpha_equal_0(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
     [offseti, offsetj, offsetk] = offset
     symo.write_line("# X joints i is revolute and j is prismatic")
     symo.write_line("# Case: cos(alpha{0}) = 0".format(j) + "\r\n")
-    
-    # Solve qk	
+
+    # Solve qk
     if robo.sigma[k] == 0:
-        # Type 3 in rk	
+        # Type 3 in rk
         qk = robo.theta[k]
         eq_type = 3
         t1 = tr*robo.r[k] + t0
         t1 = symo.replace(trigsimp(t1), 't1', qk)
-        
+
         el1 = tc[y]
         el2 = ts[y]
         el3 = t1[y] - sin(robo.alpha[j])*G[z]
-        coef = [el1,el2,el3]	
+        coef = [el1,el2,el3]
     else:
         # Type 1 in rk
         qk = robo.r[k]
         eq_type = 1
         t2 = tc*cos(robo.theta[k]) + ts*sin(robo.theta[k]) + t0
         t2 = symo.replace(trigsimp(t2), 't2', qk)
-        
+
         el1 = tr[y]
         el2 = t2[y] - sin(robo.alpha[j])*G[z]
         coef = [el1,el2]
@@ -343,7 +344,7 @@ def cos_alpha_equal_0(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
     coef = [el1,el2]
     _equation_solve(symo,coef,eq_type,qj,offsetj)
 
-    return 
+    return
 
 def cos_alpha_dif_0(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
     """
@@ -362,12 +363,12 @@ def cos_alpha_dif_0(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
     [offseti, offsetj, offsetk] = offset
     symo.write_line("# X joints i is revolute and j is prismatic")
     symo.write_line("# Case: cos(alpha{0}) != 0".format(j) + "\r\n")
-    
+
     # Solve qk
     if robo.sigma[k] == 0:
         qk = robo.theta[k]
         # eq 1.53
-        eq_type = 6   
+        eq_type = 6
         t1 = tr*robo.r[k] + t0
         t1 = symo.replace(trigsimp(t1), 't1', qk)
 
@@ -378,9 +379,9 @@ def cos_alpha_dif_0(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
         el5 = (cos(robo.alpha[j])**2)*(ts[x]**2 - tc[x]**2) + ts[y]**2 - tc[y]**2
         coef = [el1,el2,el3,el4,el5]
     else:
-        qk = robo.r[k]	
+        qk = robo.r[k]
         # eq 1.54
-        eq_type = 2   
+        eq_type = 2
         t2 = tc*cos(robo.theta[k]) + ts*sin(robo.theta[k]) + t0
         t2 = symo.replace(trigsimp(t2), 't2', qk)
 
@@ -416,7 +417,7 @@ def cos_alpha_dif_0(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
     coef = [el1,el2]
     _equation_solve(symo,coef,eq_type,qj,offsetj)
 
-    return 
+    return
 
 def cos_alpha_equal_zero(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
     """
@@ -435,8 +436,8 @@ def cos_alpha_equal_zero(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
     [offseti, offsetj, offsetk] = offset
     symo.write_line("# X joints i is prismatic and j is revolute")
     symo.write_line("# Case: cos(alpha{0}) = 0".format(j) + "\r\n")
-    
-    # Solve qk	
+
+    # Solve qk
     if robo.sigma[k] == 0:
         qk = robo.theta[k]
         eq_type = 3
@@ -464,7 +465,7 @@ def cos_alpha_equal_zero(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
         F = tr*qk + t2
     F = symo.replace(trigsimp(F), 'F', qk)
 
-    # Solve qj	
+    # Solve qj
     qj = robo.theta[j]
     eq_type = 3
     el1 = F[x]
@@ -481,7 +482,7 @@ def cos_alpha_equal_zero(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
     coef = [el1,el2]
     _equation_solve(symo,coef,eq_type,qi,offseti)
 
-    return 
+    return
 
 def cos_alpha_dif_zero(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
     """
@@ -503,7 +504,7 @@ def cos_alpha_dif_zero(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
 
     # Solve qk
     if robo.sigma[k] == 0:
-        eq_type = 6   
+        eq_type = 6
         qk = robo.theta[k]
         t1 = tr*robo.r[k] + t0
         t1 = symo.replace(trigsimp(t1), 't1', qk)
@@ -550,7 +551,7 @@ def cos_alpha_dif_zero(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
         el1 = tr[z]**2 - cos(robo.alpha[j])**2
         el2 = -2*(cos(robo.alpha[j])**2)*(tr[x]*t2[x] + tr[y]*t2[y]) + 2*sin(robo.alpha[j])*tr[z]*(sin(robo.alpha[j])*t2[z] + G[y])
         el3 = (cos(robo.alpha[j])**2)*((G[x] - robo.d[j])**2 - t2[x]**2 - t2[y]**2) + (sin(robo.alpha[j])*t2[z] + G[y])**2
-        coef = [el1,el2,el3]	
+        coef = [el1,el2,el3]
     _equation_solve(symo,coef,eq_type,qk,offsetk)
 
     if robo.sigma[k] == 0:
@@ -559,7 +560,7 @@ def cos_alpha_dif_zero(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
         F = tr*qk + t2
     F = symo.replace(trigsimp(F), 'F', qk)
 
-    # Solve qj	
+    # Solve qj
     qj = robo.theta[j]
     eq_type = 4
     el1 = F[x]
@@ -579,7 +580,7 @@ def cos_alpha_dif_zero(robo, symo, X_joints, tc, ts, tr, t0, G, offset):
     coef = [el1,el2]
     _equation_solve(symo,coef,eq_type,qi,offseti)
 
-    return 
+    return
 
 def ij_prismatic(robo, symo, X_joint, tc, ts, tr, t0, G, offset):
     """
@@ -610,7 +611,7 @@ def ij_prismatic(robo, symo, X_joint, tc, ts, tr, t0, G, offset):
         el3 = t1[x] - G[x] + robo.d[j]
         coef = [el1,el2,el3]
     else:
-        qk = robo.r[k]   
+        qk = robo.r[k]
         eq_type = 1
         t2 = tc*cos(robo.theta[k]) + ts*sin(robo.theta[k]) + t0
         t2 = symo.replace(trigsimp(t2), 't2', qk)
@@ -626,7 +627,7 @@ def ij_prismatic(robo, symo, X_joint, tc, ts, tr, t0, G, offset):
         F = tr*qk + t2
     F = symo.replace(trigsimp(F), 'F', qk)
 
-    # Solve qj	
+    # Solve qj
     qj = robo.r[j]
     eq_type = 1
     el1 = -sin(robo.alpha[j])
@@ -634,7 +635,7 @@ def ij_prismatic(robo, symo, X_joint, tc, ts, tr, t0, G, offset):
     coef = [el1,el2]
     _equation_solve(symo,coef,eq_type,qj,offsetj)
 
-    # Solve qi	
+    # Solve qi
     qi = robo.r[i]
     eq_type = 1
     el1 = 1
@@ -642,11 +643,11 @@ def ij_prismatic(robo, symo, X_joint, tc, ts, tr, t0, G, offset):
     coef = [el1,el2]
     _equation_solve(symo,coef,eq_type,qi,offseti)
 
-    return 
+    return
 
 def _equation_solve(symo, coef, eq_type, unknown, offset):
     """
-    Function that solves the possible type of equations that we need to solve. 
+    Function that solves the possible type of equations that we need to solve.
     (One extra type is the system of equations for the prismatic case -> type 0)
 
     Parameters:
@@ -654,7 +655,7 @@ def _equation_solve(symo, coef, eq_type, unknown, offset):
     1) Symo instance
     2) coef: Vector containing the coefficients of each equation
     3) eq_type: Type of equation for the unknown (System of equation is assigned as 0 type)
-    4) unknown: The unknown(s) of this equation system   
+    4) unknown: The unknown(s) of this equation system
     """
 
     symo.write_line("\r\n\r\n")
@@ -699,7 +700,7 @@ def _equation_solve(symo, coef, eq_type, unknown, offset):
         symo.write_line("# {0}".format(ri) + " = " + "{0}".format(r[1]))
         symo.write_line("# {0}".format(rj) + " = " + "{0}".format(r[2]))
         symo.write_line("\r\n")
-        
+
     elif eq_type == 1:
         """Solution for the system:
         a*r + b = 0
@@ -743,7 +744,7 @@ def _equation_solve(symo, coef, eq_type, unknown, offset):
         symo.write_line("#==============\r\n")
         symo.add_to_dict(r, (-b + EPS*sqrt(Delta))/2*a - offset)
         symo.write_line("\r\n")
-        
+
     elif eq_type == 3:
         """Solution for the system:
         a*C(th) + b*S(th) + c = 0
@@ -806,7 +807,7 @@ def _equation_solve(symo, coef, eq_type, unknown, offset):
         ap = symo.replace(coef[3], 'ap', th)
         bp = symo.replace(coef[4], 'bp', th)
         cp = symo.replace(coef[5], 'cp', th)
-        expr1 = a*cos(th) + b*sin(th) 
+        expr1 = a*cos(th) + b*sin(th)
         expr2 = ap*cos(th) + bp*sin(th)
         symo.write_line("\r\n# Equations:".format(th))
         symo.write_line("#===============")
@@ -861,7 +862,7 @@ def _equation_solve(symo, coef, eq_type, unknown, offset):
         symo.write_line("\r\n\r\n# Solutions 3 and 4 are: \r\n")
         r_34 = var(str(r)+'_34')
         symo.add_to_dict(r_34, sol34)
-        
+
     elif eq_type == 6:
         """Solution for the system:
         a4*S(th)^2 + a3*C(th)*S(th) + a2*C(th) + a1*S(th) + a0 = 0
@@ -908,9 +909,9 @@ def _equation_solve(symo, coef, eq_type, unknown, offset):
         t_12 = symo.replace(sol12, "t_12", th)
         symo.add_to_dict("{0}_12".format(th), 2*atan(t_12) - offset )
         symo.write_line("\r\n# Solutions 3 and 4 are: \r\n")
-        t_34 = symo.replace(sol34, "t_34", th)     
+        t_34 = symo.replace(sol34, "t_34", th)
         symo.add_to_dict("{0}_34".format(th), 2*atan(t_34) - offset )
-        
+
     symo.write_line("--------------------------------------------------------------------------------------------")
     return
 
@@ -944,7 +945,7 @@ def solve_position(robo, symo, com_key, X_joints, fc, fs, fr, f0, g):
         robo.theta[j] = robo.theta[j] + robo.gamma[robo.ant[j]]
         offset[1] = robo.b[robo.ant[j]]
         T = _rot_trans(axis=z, th=robo.theta[j], p=0)
-        
+
     tc = T*fc
     tc = symo.replace(trigsimp(tc), 'tc', k)
     ts = T*fs
@@ -989,7 +990,7 @@ def solve_position(robo, symo, com_key, X_joints, fc, fs, fr, f0, g):
 
     return
 
-def solve_orientation(robo, symo, pieper_joints): 
+def solve_orientation(robo, symo, pieper_joints):
     """
     Function that solves the orientation equation for the four spherical cases.
 
@@ -1003,12 +1004,12 @@ def solve_orientation(robo, symo, pieper_joints):
 
     t1 = dgm(robo, symo, m-2, 0, fast_form=True, trig_subs=True)
     t2 = dgm(robo, symo, 6, m+1, fast_form=True, trig_subs=True)
-    
+
     Am2A0 = Matrix([ t1[:3,:3] ])
     A6Am1 = Matrix([ t2[:3,:3] ])
 
     A0 = T_GENERAL[:3,:3]
-    
+
     SNA = _rot(axis=x, th=-robo.alpha[m-1])*Am2A0*A0*A6Am1
     SNA = symo.replace(trigsimp(SNA), 'SNA')
 
@@ -1114,7 +1115,7 @@ def solve_position_prismatic(robo, symo, pieper_joints):
     Parameters:
     ===========
     1) Pieper_joints: The three prismatic joints for the prismatic case
-    """	 
+    """
     eq_type = 0                       # Type 0: Linear system
     [i,j,k] = pieper_joints           # Pieper joints vector
     [x,y,z] = [0,1,2]                 # Book convention indexes

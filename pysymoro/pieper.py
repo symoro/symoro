@@ -1,14 +1,15 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+
+# This file is part of the OpenSYMORO project. Please see
+# https://github.com/symoro/symoro/blob/master/LICENCE for the licence.
+
 
 """
 This module of SYMORO package provides symbolic
 solutions for inverse geometric problem using Pieper Method.
--------------------------------------------------------------
-Master M1 EMARO-ARIA: Group project
-Students: PLATIS Angelos & LUGO Jesus
-Supervisor: KHALIL Wisama
 """
+
 
 from sympy import var, sin, cos, eye, atan2, sqrt, pi
 from sympy import Matrix, Symbol, Expr, trigsimp, zeros, ones
@@ -132,7 +133,7 @@ def _look_for_case_simple(robo, symo):
                     bool_fail = 1
                     symo.write_line("\r\n\r\n# This robot cannot be solved by PIEPER METHOD. Try Paul method. \r\n\r\n")
     bools = [bool_fail, bool_prism, bool_spherical]
-        
+
     return pieper_joints, bools
 
 def _look_for_case_tree(robo,symo):
@@ -151,7 +152,7 @@ def _look_for_case_tree(robo,symo):
     [bool_fail, bool_prism, bool_spherical] = [zeros(1, branches), zeros(1, branches), zeros(1, branches)]
     [pieper_branches, com_key] = [999*ones(1, branches), 999*ones(1, branches)]
     num_prism = zeros(1, branches)
-    
+
     for i in range(branches):
         f_joint = End_joints[i]
         c = 0
@@ -221,7 +222,7 @@ def _look_for_case_tree(robo,symo):
     bools = [bool_fail, bool_prism, bool_spherical]
     pieper_branches = [x for x in pieper_branches if x != 999]
     com_key = [x for x in com_key if x != 999]
-    
+
     return bools, pieper_branches, pieper_joints, X_joints, com_key
 
 def igm_pieper(robo, T_ref, n):
@@ -299,7 +300,7 @@ def XRRRXX(robo, symo, com_key, X_joints, pieper_joints):
     fr = Matrix([fr[0], fr[1], fr[2], 0])
     f0 = sum(dot(A0, [0, 0, robo.r[5]*cos(robo.alpha[5]-robo.alpha[6])]), P0)                                                        ## f0 = A0*[0; 0; r5*C(a5-a6)] + P0
     f0 = Matrix([f0[0][0], f0[1][0], f0[2][0], 1])
-    
+
     # Position Equations First
     solve_position(robo, symo, com_key, X_joints, fc, fs, fr, f0, g)
     # Then Orientation Equations
