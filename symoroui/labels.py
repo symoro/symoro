@@ -169,6 +169,7 @@ GEOM_MENU = OrderedDict(
     m_trans_matrix="Transformation matrix",
     m_fast_dgm="Fast Geometric model",
     m_igm_paul="IGM - Paul method",
+    m_igm_pieper="IGM - Pieper method"
     m_geom_constraint="Geometric constraint equation of loops"
 )
 FILE_MENU = OrderedDict(
