@@ -136,6 +136,9 @@ def dynamic_identification_model(robo, symo):
     antRj, antPj = compute_rot_trans(robo, symo)
     # init velocities and accelerations
     w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
+    w[0] = symo.mat_replace(w[0], 'W', 0)
+    wdot[0] = symo.mat_replace(wdot[0], 'WP', 0, forced=True)
+    vdot[0] = symo.mat_replace(vdot[0], 'VP', 0, forced=True)
     dv0 = ParamsInit.product_combinations(robo.w0)
     symo.mat_replace(dv0, 'DV', 0)
     hatw_hatw = sympy.Matrix([
