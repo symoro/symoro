@@ -389,6 +389,10 @@ def write_numerical_inverse(symo, inertia, symmet=False):
                 )
     # numInvMJE0 = numpy.linalg.inv(numMJE0)
     symo.write_line("# invert matrix")
+    symo.write_line(
+        "# In Matlab this can be performed without matrix inverse"
+    )
+    symo.write_line("# VP0 = numMJE0 \ BETA0")
     symo.write_equation('numInvMJE0', 'numpy.linalg.inv(numMJE0)')
     # assign elements of the inverted matrix
     symo.write_line("# assign each element of the inverted (symmetric)")
