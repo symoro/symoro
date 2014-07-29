@@ -19,30 +19,37 @@ from symoroutils import tools
 from pysymoro import robot
 
 
-_keywords = ['ant', 'sigma', 'b', 'd', 'r',
-             'gamma', 'alpha', 'mu', 'theta',
-             'XX', 'XY', 'XZ', 'YY', 'YZ', 'ZZ',
-             'MX', 'MY', 'MZ', 'M',
-             'IA', 'FV', 'FS', 'FX', 'FY', 'FZ',
-             'CX', 'CY', 'CZ', 'QP', 'QDP', 'GAM',
-             'W0', 'WP0', 'V0', 'VP0',
-             'Z', 'G']
-
-_NF = ['ant', 'sigma', 'b', 'd', 'r',
-       'gamma', 'alpha', 'mu', 'theta']
-_NJ = ['QP', 'QDP', 'GAM']
-_NL = ['XX', 'XY', 'XZ', 'YY', 'YZ', 'ZZ',
-       'MX', 'MY', 'MZ', 'M',
-       'IA', 'FV', 'FS', 'FX', 'FY', 'FZ',
-       'CX', 'CY', 'CZ']
+_keywords = [
+    'ant', 'sigma', 'b', 'd', 'r', 'gamma', 'alpha', 'mu', 'theta',
+    'XX', 'XY', 'XZ', 'YY', 'YZ', 'ZZ', 'MX', 'MY', 'MZ', 'M',
+    'IA', 'FV', 'FS', 'FX', 'FY', 'FZ', 'CX', 'CY', 'CZ',
+    'eta', 'k', 'QP', 'QDP', 'GAM', 'W0', 'WP0', 'V0', 'VP0', 'Z', 'G'
+]
+_NF = ['ant', 'sigma', 'b', 'd', 'r', 'gamma', 'alpha', 'mu', 'theta']
+_NJ = ['eta', 'k', 'QP', 'QDP', 'GAM']
+_NL = [
+    'XX', 'XY', 'XZ', 'YY', 'YZ', 'ZZ', 'MX', 'MY', 'MZ', 'M',
+    'IA', 'FV', 'FS', 'FX', 'FY', 'FZ', 'CX', 'CY', 'CZ'
+]
 _VEC = ['W0', 'WP0', 'V0', 'VP0']
 _ZERO_BASED = {'W0', 'WP0', 'V0', 'VP0', 'Z', 'G'}
-_bool_dict = {'True': True, 'False': False,
-              'true': True, 'false': False,
-              '1': True, '0': False}
-
-_keyword_repl = {'Ant': 'ant', 'Sigma': 'sigma', 'B': 'b', 'R': 'r',
-                 'Alpha': 'alpha', 'Mu': 'mu', 'Theta': 'theta'}
+_bool_dict = {
+    'True': True,
+    'False': False,
+    'true': True,
+    'false': False,
+    '1': True,
+    '0': False
+}
+_keyword_repl = {
+    'Ant': 'ant',
+    'Mu': 'mu',
+    'Sigma': 'sigma',
+    'B': 'b',
+    'Alpha': 'alpha',
+    'Theta': 'theta',
+    'R': 'r'
+}
 
 
 def _extract_vals(robo, key, line):
@@ -80,6 +87,7 @@ def _write_par_list(robo, f, key, N0, N):
 def writepar(robo):
     fname = filemgr.make_file_path(robo)
     with open(fname, 'w') as f:
+        # robot description
         f.write('(* Robotname = \'{0}\' *)\n'.format(robo.name))
         f.write('NL = {0}\n'.format(robo.nl))
         f.write('NJ = {0}\n'.format(robo.nj))
@@ -87,24 +95,27 @@ def writepar(robo):
         f.write('Type = {0}\n'.format(tools.TYPES.index(robo.structure)))
         f.write('is_floating = {0}\n'.format(robo.is_floating))
         f.write('is_mobile = {0}\n'.format(robo.is_mobile))
+        # geometric parameters
         f.write('\n(* Geometric parameters *)\n')
-        if robo.is_floating or robo.is_mobile:
-            N0 = 0
-        else:
-            N0 = 1
         for key in _NF:
             _write_par_list(robo, f, key, 1, robo.NF)
+        # dynamic parameters
         f.write('\n(* Dynamic parameters and external forces *)\n')
+        N0 = 0 if robo.is_floating or robo.is_mobile else 1
         for key in _NL:
             _write_par_list(robo, f, key, N0, robo.NL)
+        # joint parameters
         f.write('\n(* Joint parameters *)\n')
         for key in _NJ:
             _write_par_list(robo, f, key, 1, robo.NJ)
-        f.write('\n(* Speed and acceleration of the base *)\n')
+        # base parameters - velocity and acceleration
+        f.write('\n(* Velocity and acceleration of the base *)\n')
         for key in _VEC:
             _write_par_list(robo, f, key, 0, 3)
+        # gravity vector
         f.write('\n(* Acceleration of gravity *)\n')
         _write_par_list(robo, f, 'G', 0, 3)
+        # base parameters - Z matrix
         f.write('\n(* Transformation of 0 frame position fT0 *)\n')
         _write_par_list(robo, f, 'Z', 0, 16)
         f.write('\n(* End of definition *)\n')
