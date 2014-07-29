@@ -713,27 +713,23 @@ def flexible_inverse_dynmodel(robo, symo):
         compute_gamma(robo, symo, j, antRj, antPj, w, wi, gamma)
         # compute j^beta_j : external+coriolis+centrifugal wrench (6x1)
         compute_beta(robo, symo, j, w, beta)
-        if robo.eta[j]:
+        if not robo.eta[j]:
+            # when rigid
             # compute j^zeta_j : relative acceleration (6x1)
             compute_zeta(robo, symo, j, gamma, jaj, zeta)
     # first backward recursion - initialisation step
     for j in reversed(xrange(0, robo.NL)):
-        # skip base terms for non-floating robots
-        if robo.is_floating and j == 0:
+        if j == 0:
             # compute spatial inertia matrix for base
             grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
             # compute 0^beta_0
             compute_beta(robo, symo, j, w, beta)
-        else:
-            continue
         replace_star_terms(
             symo, grandJ, beta, j, star_inertia, star_beta
         )
     # second backward recursion - compute star terms
     for j in reversed(xrange(0, robo.NL)):
         if j == 0: continue
-        # skip base terms for non-floating robots
-        if not robo.is_floating and robo.ant[j] == 0: continue
         # set composite flag to false when flexible
         if robo.eta[j]: use_composite = False
         if use_composite:
