@@ -188,6 +188,8 @@ def dynamic_identification_model(robo, symo):
         # reset all the parameters to zero
         robo_tmp.put_inert_param(sympy.zeros(10, 1), k)
         # compute model for the joint parameters
+        # avoid these parameters for link 0
+        if k == 0: continue
         _compute_joint_torque_deriv(
             symo, robo.IA[k], robo.qddot[k], k
         )
