@@ -433,9 +433,9 @@ def compute_base_accel(robo, symo, star_inertia, star_beta, grandVp):
     if robo.is_floating:
         forced = True
         symo.flushout()
-        write_numerical_inverse(symo, star_inertia[0], symmet=False)
+        write_numerical_inverse(symo, star_inertia[0], symmet=True)
         inv_base_star_inertia = get_numerical_inverse_out(
-            star_inertia[0], symmet=False
+            star_inertia[0], symmet=True
         )
         grandVp[0] = inv_base_star_inertia * star_beta[0]
     grandVp[0][:3, 0] = symo.mat_replace(

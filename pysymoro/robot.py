@@ -224,19 +224,26 @@ class Robot(object):
         """
         symo = symbolmgr.SymbolManager()
         symo.file_open(self, 'idm')
-        title = "Inverse Dynamic Model using Newton-Euler Algorithm"
-        symo.write_params_table(self, title, inert=True, dynam=True)
+        title = "Inverse Dynamic Model using Newton-Euler Algorithm\n"
         if 1 in self.eta:
             # with flexible joints
+            title = title + "Robot with flexible joints\n"
+            symo.write_params_table(self, title, inert=True, dynam=True)
             nealgos.flexible_inverse_dynmodel(self, symo)
         elif self.is_floating:
             # with rigid joints and floating base
+            title = title + "Robot with rigid joints and floating base\n"
+            symo.write_params_table(self, title, inert=True, dynam=True)
             nealgos.composite_inverse_dynmodel(self, symo)
         elif self.is_mobile:
             # mobile robot with rigid joints - known base acceleration
+            title = title + "Robot with mobile base (Vdot0 is known)\n"
+            symo.write_params_table(self, title, inert=True, dynam=True)
             nealgos.mobile_inverse_dynmodel(self, symo)
         else:
             # with rigid joints and fixed base
+            title = title + "Robot with rigid joints and fixed base\n"
+            symo.write_params_table(self, title, inert=True, dynam=True)
             nealgos.fixed_inverse_dynmodel(self, symo)
         symo.file_close()
         return symo
@@ -248,11 +255,16 @@ class Robot(object):
         """
         symo = symbolmgr.SymbolManager()
         symo.file_open(self, 'inm')
-        title = "Inertia matrix using Composite links algorithm"
-        symo.write_params_table(self, title, inert=True, dynam=True)
+        title = "Inertia matrix using Composite links algorithm\n"
         if self.is_floating or self.is_mobile:
+            # with floating or mobile base
+            title = title + "Robot with floating/mobile base\n"
+            symo.write_params_table(self, title, inert=True, dynam=True)
             inertia.floating_inertia_matrix(self, symo)
         else:
+            # with fixed base
+            title = title + "Robot with fixed base\n"
+            symo.write_params_table(self, title, inert=True, dynam=True)
             inertia.fixed_inertia_matrix(self, symo)
         symo.file_close()
         return symo
@@ -264,13 +276,16 @@ class Robot(object):
         """
         symo = symbolmgr.SymbolManager()
         symo.file_open(self, 'ddm')
-        title = "Direct Dynamic Model using Newton-Euler Algorithm"
-        symo.write_params_table(self, title, inert=True, dynam=True)
+        title = "Direct Dynamic Model using Newton-Euler Algorithm\n"
         if self.is_floating:
             # with floating base
+            title = title + "Robot with floating base\n"
+            symo.write_params_table(self, title, inert=True, dynam=True)
             nealgos.floating_direct_dynmodel(self, symo)
         else:
             # with fixed base
+            title = title + "Robot with fixed base\n"
+            symo.write_params_table(self, title, inert=True, dynam=True)
             dynamics.compute_direct_dynamic_NE(self, symo)
         symo.file_close()
         return symo
@@ -284,19 +299,26 @@ class Robot(object):
         pseudorobo.qddot = zeros(pseudorobo.NL, 1)
         symo = symbolmgr.SymbolManager()
         symo.file_open(self, 'ccg')
-        title = "Pseudo forces using Newton-Euler Algorithm"
-        symo.write_params_table(self, title, inert=True, dynam=True)
+        title = "Pseudo forces using Newton-Euler Algorithm\n"
         if 1 in pseudorobo.eta:
             # with flexible joints
+            title = title + "Robot with flexible joints\n"
+            symo.write_params_table(self, title, inert=True, dynam=True)
             nealgos.flexible_inverse_dynmodel(pseudorobo, symo)
         elif pseudorobo.is_floating:
             # with rigid joints and floating base
+            title = title + "Robot with rigid joints and floating base\n"
+            symo.write_params_table(self, title, inert=True, dynam=True)
             nealgos.composite_inverse_dynmodel(pseudorobo, symo)
         elif pseudorobo.is_mobile:
             # mobile robot with rigid joints - known base acceleration
+            title = title + "Robot with mobile base (Vdot0 is known)\n"
+            symo.write_params_table(self, title, inert=True, dynam=True)
             nealgos.mobile_inverse_dynmodel(pseudorobo, symo)
         else:
             # with rigid joints and fixed base
+            title = title + "Robot with rigid joints and fixed base\n"
+            symo.write_params_table(self, title, inert=True, dynam=True)
             nealgos.fixed_inverse_dynmodel(pseudorobo, symo)
         symo.file_close()
         return symo
