@@ -663,6 +663,13 @@ class MainFrame(wx.Frame):
                 new_robo.MS[:nl] = self.robo.MS[:nl]
                 new_robo.M[:nl] = self.robo.M[:nl]
                 new_robo.J[:nl] = self.robo.J[:nl]
+            if result['keep_joint']:
+                nj = min(self.robo.NJ, new_robo.NJ)
+                new_robo.eta[:nj] = self.robo.eta[:nj]
+                new_robo.k[:nj] = self.robo.k[:nj]
+                new_robo.qdot[:nj] = self.robo.qdot[:nj]
+                new_robo.qddot[:nj] = self.robo.qddot[:nj]
+                new_robo.GAM[:nj] = self.robo.GAM[:nj]
             if result['keep_base']:
                 new_robo.Z = self.robo.Z
                 new_robo.w0 = self.robo.w0

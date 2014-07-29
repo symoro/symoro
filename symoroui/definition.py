@@ -97,6 +97,10 @@ class DialogDefinition(wx.Dialog):
             self, label=' Keep dynamic parameters'
         )
         self.chk_keep_dyn.Value = True
+        self.chk_keep_joint = wx.CheckBox(
+            self, label=' Keep joint parameters'
+        )
+        self.chk_keep_joint.Value = True
         self.chk_keep_base = wx.CheckBox(
             self, label=' Keep base parameters'
         )
@@ -111,6 +115,10 @@ class DialogDefinition(wx.Dialog):
         )
         szr_topmost.Add(
             self.chk_keep_dyn, 0,
+            wx.TOP | wx.LEFT | wx.ALIGN_LEFT, 15
+        )
+        szr_topmost.Add(
+            self.chk_keep_joint, 0,
             wx.TOP | wx.LEFT | wx.ALIGN_LEFT, 15
         )
         szr_topmost.Add(
@@ -167,6 +175,7 @@ class DialogDefinition(wx.Dialog):
             'is_mobile': is_mobile,
             'keep_geo': self.chk_keep_geo.Value,
             'keep_dyn': self.chk_keep_dyn.Value,
+            'keep_joint': self.chk_keep_joint.Value,
             'keep_base': self.chk_keep_base.Value
         }
         return params
