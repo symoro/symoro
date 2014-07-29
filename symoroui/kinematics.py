@@ -112,22 +112,22 @@ class DialogDeterminant(wx.Dialog):
                  flag=wx.ALIGN_CENTER_HORIZONTAL | wx.BOTTOM, border=15)
         chain = self.robo.chain(int(self.cmb_frame.Value))
         choices = [str(i) for i in reversed(chain + [0])]
-        label = wx.StaticText(self, label='Projection frame ( i )')
+        label = wx.StaticText(self, label='Projection frame ( j )')
         grid.Add(label, pos=(2, 0), span=(1, 2),
-                 flag=wx.ALIGN_CENTER_HORIZONTAL | wx.ALL)
-        self.cmb_inter = wx.ComboBox(self, size=(50, -1),
-                                     choices=choices, style=wx.CB_READONLY)
-        self.cmb_inter.SetSelection(0)
-        grid.Add(self.cmb_inter, pos=(3, 0), span=(1, 2),
-                 flag=wx.ALIGN_CENTER_HORIZONTAL | wx.BOTTOM, border=15)
-        label = wx.StaticText(self, label='Intermediate frame ( j )')
-        grid.Add(label, pos=(4, 0), span=(1, 2),
                  flag=wx.ALIGN_CENTER_HORIZONTAL | wx.ALL)
         self.cmb_proj = wx.ComboBox(self, size=(50, -1),
                                     choices=choices, style=wx.CB_READONLY)
         self.cmb_proj.SetSelection(len(choices)-1)
         self.cmb_proj.SetSelection(0)
-        grid.Add(self.cmb_proj, pos=(5, 0), span=(1, 2),
+        grid.Add(self.cmb_proj, pos=(3, 0), span=(1, 2),
+                 flag=wx.ALIGN_CENTER_HORIZONTAL | wx.BOTTOM, border=15)
+        label = wx.StaticText(self, label='Intermediate frame ( i )')
+        grid.Add(label, pos=(4, 0), span=(1, 2),
+                 flag=wx.ALIGN_CENTER_HORIZONTAL | wx.ALL)
+        self.cmb_inter = wx.ComboBox(self, size=(50, -1),
+                                     choices=choices, style=wx.CB_READONLY)
+        self.cmb_inter.SetSelection(0)
+        grid.Add(self.cmb_inter, pos=(5, 0), span=(1, 2),
                  flag=wx.ALIGN_CENTER_HORIZONTAL | wx.BOTTOM, border=15)
         label_main = wx.StaticText(self, label="Definition of sub-matrix")
         grid.Add(label_main, pos=(6, 0), span=(1, 2),
