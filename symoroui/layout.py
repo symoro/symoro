@@ -317,6 +317,8 @@ class MainFrame(wx.Frame):
     def OnSpeedChanged(self, event):
         joint_index = int(self.widgets['joint'].Value)
         self.Change(joint_index, event.EventObject.Name, event.EventObject)
+        if event.EventObject.Name == 'eta':
+            self.update_joint_params()
 
     def OnBaseTwistChanged(self, event):
         index = int(event.EventObject.Id)
@@ -359,6 +361,7 @@ class MainFrame(wx.Frame):
         self.update_params(index, pars)
 
     def update_joint_params(self):
+        self.robo.set_defaults(joint=True)
         pars = self._extract_param_names(ui_labels.JOINT_PARAMS)
         index = int(self.widgets['joint'].Value)
         self.widgets[pars[0]].SetValue(

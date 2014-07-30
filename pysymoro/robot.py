@@ -676,6 +676,10 @@ class Robot(object):
             except IndexError:
                 # just ignore exception
                 pass
+            if self.eta[j] == 1:
+                self.k[j] = var('k{0}'.format(j))
+            else:
+                self.k[j] = 0
 
     def _set_geom_defaults(self):
         """
