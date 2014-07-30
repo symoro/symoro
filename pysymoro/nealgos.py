@@ -432,7 +432,7 @@ def compute_base_accel(robo, symo, star_inertia, star_beta, grandVp):
     Note:
         grandVp is the output parameter
     """
-    forced = False
+    forced = True
     grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
     if robo.is_floating:
         forced = True
@@ -460,7 +460,7 @@ def compute_base_accel_composite(
     Note:
         grandVp is the output parameter
     """
-    forced = False
+    forced = True
     grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
     if robo.is_floating:
         forced = True
@@ -544,6 +544,9 @@ def mobile_inverse_dynmodel(robo, symo):
     antRj, antPj = compute_rot_trans(robo, symo)
     # init velocities and accelerations
     w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
+    w[0] = symo.mat_replace(w[0], 'W', 0)
+    wdot[0] = symo.mat_replace(wdot[0], 'WP', 0, forced=True)
+    vdot[0] = symo.mat_replace(vdot[0], 'VP', 0, forced=True)
     dv0 = ParamsInit.product_combinations(robo.w0)
     symo.mat_replace(dv0, 'DV', 0)
     hatw_hatw = sympy.Matrix([
