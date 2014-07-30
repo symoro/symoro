@@ -612,7 +612,7 @@ class Robot(object):
         get_ext_dynam_head: list of strings
         """
         return ['j', 'FX', 'FY', 'FZ', 'CX', 'CY', 'CZ',
-                'FS', 'FV', 'QP', 'QDP', 'GAM']
+                'FS', 'FV', 'QP', 'QDP', 'GAM', 'eta', 'k']
 
     def get_dynam_head(self):
         """Returns header for inertia parameters.
