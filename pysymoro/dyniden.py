@@ -135,19 +135,9 @@ def dynamic_identification_model(robo, symo):
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
     # init velocities and accelerations
-    w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
-    w[0] = symo.mat_replace(w[0], 'W', 0)
-    wdot[0] = symo.mat_replace(wdot[0], 'WP', 0, forced=True)
-    vdot[0] = symo.mat_replace(vdot[0], 'VP', 0, forced=True)
-    dv0 = ParamsInit.product_combinations(robo.w0)
-    symo.mat_replace(dv0, 'DV', 0)
-    hatw_hatw = sympy.Matrix([
-        [-dv0[3]-dv0[5], dv0[1], dv0[2]],
-        [dv0[1], -dv0[5]-dv0[0], dv0[4]],
-        [dv0[2], dv0[4], -dv0[3]-dv0[0]]
-    ])
-    U[0] = hatw_hatw + tools.skew(robo.wdot0)
-    symo.mat_replace(U[0], 'U', 0)
+    w, wdot, vdot, U = compute_vel_acc(
+        robo, symo, antRj, antPj, floating=True
+    )
     # virtual robot with only one non-zero parameter at once
     robo_tmp = copy.deepcopy(robo)
     robo_tmp.IA = sympy.zeros(robo.NL, 1)
