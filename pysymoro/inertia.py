@@ -155,11 +155,11 @@ def fixed_inertia_matrix(robo, symo):
     inertia_a22 = sympy.zeros(robo.nl, robo.nl)
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
-    for j in reversed(xrange(0, robo.NL)):
+    for j in reversed(xrange(1, robo.NL)):
         replace_composite_terms(
             symo, j, comp_inertia3, comp_ms, comp_mass
         )
-        if j != 0:
+        if j != 1:
             compute_composite_inertia(
                 robo, symo, j, antRj, antPj,
                 aje1, comp_inertia3, comp_ms, comp_mass
