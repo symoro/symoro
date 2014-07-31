@@ -232,8 +232,8 @@ def compute_vel_acc(
     for j in xrange(first_link, robo.NL):
         if j == 0:
             w[j] = symo.mat_replace(w[j], 'W', j)
-            wdot[j] = symo.mat_replace(wdot[j], 'WP', j, forced=True)
-            vdot[j] = symo.mat_replace(vdot[j], 'VP', j, forced=True)
+            wdot[j] = symo.mat_replace(wdot[j], 'WP', j)
+            vdot[j] = symo.mat_replace(vdot[j], 'VP', j)
             dv0 = ParamsInit.product_combinations(w[j])
             symo.mat_replace(dv0, 'DV', j)
             hatw_hatw = Matrix([
