@@ -392,7 +392,7 @@ def write_numerical_inverse(symo, inertia, symmet=False):
     symo.write_line(
         "# In Matlab this can be performed without matrix inverse"
     )
-    symo.write_line("# VP0 = numMJE0 \ BETA0")
+    symo.write_line("# VP0 = numMJE0 \ numBETA0")
     symo.write_equation('numInvMJE0', 'numpy.linalg.inv(numMJE0)')
     # assign elements of the inverted matrix
     symo.write_line("# assign each element of the inverted (symmetric)")
@@ -432,7 +432,7 @@ def compute_base_accel(robo, symo, star_inertia, star_beta, grandVp):
     Note:
         grandVp is the output parameter
     """
-    forced = True
+    forced = False
     grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
     if robo.is_floating:
         forced = True
@@ -460,7 +460,7 @@ def compute_base_accel_composite(
     Note:
         grandVp is the output parameter
     """
-    forced = True
+    forced = False
     grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
     if robo.is_floating:
         forced = True
@@ -724,9 +724,11 @@ def flexible_inverse_dynmodel(robo, symo):
             # when rigid
             # compute j^zeta_j : relative acceleration (6x1)
             compute_zeta(robo, symo, j, gamma, jaj, zeta)
+    # decide first link
+    first_link = 0 if robo.is_floating else 1
     # first backward recursion - initialisation step
-    for j in reversed(xrange(0, robo.NL)):
-        if j == 0:
+    for j in reversed(xrange(first_link, robo.NL)):
+        if j == first_link and robo.is_floating:
             # compute spatial inertia matrix for base
             grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
             # compute 0^beta_0
@@ -735,8 +737,8 @@ def flexible_inverse_dynmodel(robo, symo):
             symo, grandJ, beta, j, star_inertia, star_beta
         )
     # second backward recursion - compute star terms
-    for j in reversed(xrange(0, robo.NL)):
-        if j == 0: continue
+    for j in reversed(xrange(first_link, robo.NL)):
+        if j == first_link: continue
         # set composite flag to false when flexible
         if robo.eta[j]: use_composite = False
         if use_composite:
