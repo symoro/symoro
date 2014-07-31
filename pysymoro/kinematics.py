@@ -46,7 +46,9 @@ def _v_j(robo, j, antPj, jRant, v, w, qdj, forced=False):
     return v[j]
 
 
-def _v_dot_j(robo, symo, j, jRant, antPj, w, wi, wdot, U, vdot, qdj, qddj):
+def _v_dot_j(
+    robo, symo, j, jRant, antPj, w, wi, wdot, U, vdot, qdj, qddj
+):
     DV = ParamsInit.product_combinations(w[j])
     symo.mat_replace(DV, 'DV', j)
     hatw_hatw = Matrix([[-DV[3]-DV[5], DV[1], DV[2]],
@@ -206,7 +208,9 @@ def _kinematic_loop_constraints(robo, symo, proj=None):
     return W_a, W_p, W_ac, W_pc, W_c
 
 
-def compute_vel_acc(robo, symo, antRj, antPj, forced=False, gravity=True):
+def compute_vel_acc(
+    robo, symo, antRj, antPj, forced=False, gravity=True, floating=False
+):
     """Internal function. Computes speeds and accelerations usitn
 
     Parameters
@@ -219,19 +223,37 @@ def compute_vel_acc(robo, symo, antRj, antPj, forced=False, gravity=True):
     #init velocities and accelerations
     w = ParamsInit.init_w(robo)
     wdot, vdot = ParamsInit.init_wv_dot(robo, gravity)
+    # decide first link
+    first_link = 1
+    if floating or robo.is_floating or robo.is_mobile:
+        first_link = 0
     #init auxilary matrix
     U = ParamsInit.init_u(robo)
-    for j in xrange(1, robo.NL):
-        jRant = antRj[j].T
-        qdj = Z_AXIS * robo.qdot[j]
-        qddj = Z_AXIS * robo.qddot[j]
-        wi, w[j] = _omega_ij(robo, j, jRant, w, qdj)
-        symo.mat_replace(w[j], 'W', j)
-        symo.mat_replace(wi, 'WI', j)
-        _omega_dot_j(robo, j, jRant, w, wi, wdot, qdj, qddj)
-        symo.mat_replace(wdot[j], 'WP', j, forced)
-        _v_dot_j(robo, symo, j, jRant, antPj, w, wi, wdot, U, vdot, qdj, qddj)
-        symo.mat_replace(vdot[j], 'VP', j, forced)
+    for j in xrange(first_link, robo.NL):
+        if j == 0:
+            w[j] = symo.mat_replace(w[j], 'W', j)
+            wdot[j] = symo.mat_replace(wdot[j], 'WP', j, forced=True)
+            vdot[j] = symo.mat_replace(vdot[j], 'VP', j, forced=True)
+            dv0 = ParamsInit.product_combinations(w[j])
+            symo.mat_replace(dv0, 'DV', j)
+            hatw_hatw = Matrix([
+                [-dv0[3]-dv0[5], dv0[1], dv0[2]],
+                [dv0[1], -dv0[5]-dv0[0], dv0[4]],
+                [dv0[2], dv0[4], -dv0[3]-dv0[0]]
+            ])
+            U[j] = hatw_hatw + tools.skew(wdot[j])
+            symo.mat_replace(U[j], 'U', j)
+        else:
+            jRant = antRj[j].T
+            qdj = Z_AXIS * robo.qdot[j]
+            qddj = Z_AXIS * robo.qddot[j]
+            wi, w[j] = _omega_ij(robo, j, jRant, w, qdj)
+            symo.mat_replace(w[j], 'W', j)
+            symo.mat_replace(wi, 'WI', j)
+            _omega_dot_j(robo, j, jRant, w, wi, wdot, qdj, qddj)
+            symo.mat_replace(wdot[j], 'WP', j, forced)
+            _v_dot_j(robo, symo, j, jRant, antPj, w, wi, wdot, U, vdot, qdj, qddj)
+            symo.mat_replace(vdot[j], 'VP', j, forced)
     return w, wdot, vdot, U
 
 
