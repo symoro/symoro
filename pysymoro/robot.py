@@ -701,10 +701,10 @@ class Robot(object):
         """
         if self.is_floating or self.is_mobile:
             self.G = Matrix([var('GX'), var('GY'), var('GZ')])
-            self.v0 = Matrix([var('VX0'), var('VY0'), var('VZ0')])
-            self.w0 = Matrix([var('WX0'), var('WY0'), var('WZ0')])
-            self.vdot0 = Matrix([var('VPX0'), var('VPY0'), var('VPZ0')])
-            self.wdot0 = Matrix([var('WPX0'), var('WPY0'), var('WPZ0')])
+            self.v0 = Matrix([var('VXb'), var('VYb'), var('VZb')])
+            self.w0 = Matrix([var('WXb'), var('WYb'), var('WZb')])
+            self.vdot0 = Matrix([var('VPXb'), var('VPYb'), var('VPZb')])
+            self.wdot0 = Matrix([var('WPXb'), var('WPYb'), var('WPZb')])
             # Z matrix
             for i in range(0, 3):
                 for j in range(0, 3):

@@ -51,18 +51,18 @@ JOINT_PARAMS = OrderedDict([
 ])
 # base velocity and acceleration params
 BASE_VEL_ACC = OrderedDict([
-    ('vx', FieldEntry('V0X', 'V0X', 'txt', (0, 0), 'OnBaseTwistChanged', 0)),
-    ('vy', FieldEntry('V0Y', 'V0Y', 'txt', (1, 0), 'OnBaseTwistChanged', 1)),
-    ('vz', FieldEntry('V0Z', 'V0Z', 'txt', (2, 0), 'OnBaseTwistChanged', 2)),
-    ('wx', FieldEntry('W0X', 'W0X', 'txt', (0, 1), 'OnBaseTwistChanged', 0)),
-    ('wy', FieldEntry('W0Y', 'W0Y', 'txt', (1, 1), 'OnBaseTwistChanged', 1)),
-    ('wz', FieldEntry('W0Z', 'W0Z', 'txt', (2, 1), 'OnBaseTwistChanged', 2)),
-    ('vpx', FieldEntry('VP0X', 'VP0X', 'txt', (0, 2), 'OnBaseTwistChanged', 0)),
-    ('vpy', FieldEntry('VP0Y', 'VP0Y', 'txt', (1, 2), 'OnBaseTwistChanged', 1)),
-    ('vpz', FieldEntry('VP0Z', 'VP0Z', 'txt', (2, 2), 'OnBaseTwistChanged', 2)),
-    ('wpx', FieldEntry('WP0X', 'WP0X', 'txt', (0, 3), 'OnBaseTwistChanged', 0)),
-    ('wpy', FieldEntry('WP0Y', 'WP0Y', 'txt', (1, 3), 'OnBaseTwistChanged', 1)),
-    ('wpz', FieldEntry('WP0Z', 'WP0Z', 'txt', (2, 3), 'OnBaseTwistChanged', 2))
+    ('vx', FieldEntry('VXb', 'V0X', 'txt', (0, 0), 'OnBaseTwistChanged', 0)),
+    ('vy', FieldEntry('VYb', 'V0Y', 'txt', (1, 0), 'OnBaseTwistChanged', 1)),
+    ('vz', FieldEntry('VZb', 'V0Z', 'txt', (2, 0), 'OnBaseTwistChanged', 2)),
+    ('wx', FieldEntry('WXb', 'W0X', 'txt', (0, 1), 'OnBaseTwistChanged', 0)),
+    ('wy', FieldEntry('WYb', 'W0Y', 'txt', (1, 1), 'OnBaseTwistChanged', 1)),
+    ('wz', FieldEntry('WZb', 'W0Z', 'txt', (2, 1), 'OnBaseTwistChanged', 2)),
+    ('vpx', FieldEntry('VPXb', 'VP0X', 'txt', (0, 2), 'OnBaseTwistChanged', 0)),
+    ('vpy', FieldEntry('VPYb', 'VP0Y', 'txt', (1, 2), 'OnBaseTwistChanged', 1)),
+    ('vpz', FieldEntry('VPZb', 'VP0Z', 'txt', (2, 2), 'OnBaseTwistChanged', 2)),
+    ('wpx', FieldEntry('WPXb', 'WP0X', 'txt', (0, 3), 'OnBaseTwistChanged', 0)),
+    ('wpy', FieldEntry('WPYb', 'WP0Y', 'txt', (1, 3), 'OnBaseTwistChanged', 1)),
+    ('wpz', FieldEntry('WPZb', 'WP0Z', 'txt', (2, 3), 'OnBaseTwistChanged', 2))
 ])
 # inertial params
 DYN_PARAMS_I = OrderedDict([
