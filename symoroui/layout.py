@@ -787,7 +787,9 @@ class MainFrame(wx.Frame):
 
     def OnSaveAs(self, event):
         dialog = wx.FileDialog(
-            self, message="Save PAR file",
+            self,
+            message="Save PAR file",
+            style=wx.FD_SAVE,
             defaultFile=self.robo.name+'.par',
             defaultDir=self.robo.directory,
             wildcard='*.par'
