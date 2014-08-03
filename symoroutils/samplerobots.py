@@ -152,7 +152,7 @@ def rx90():
         ("XZ{0}, YZ{0}, ZZ{0}")
     robo.J = [
         Matrix(3, 3, var(inertia_matrix_terms.format(i))) \
-        for i in robo.num
+        for i in num
     ]
     robo.G = Matrix([0, 0, var('G3')])
     return robo

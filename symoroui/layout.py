@@ -44,8 +44,6 @@ class MainFrame(wx.Frame):
         self.statusbar = self.CreateStatusBar()
         # create menu bar
         self.create_menu()
-        # set default robot
-        self.robo = samplerobots.planar2r()
         # object to store different ui elements and their keys
         self.widgets = {}
         self.widget_keys = {}
@@ -57,6 +55,8 @@ class MainFrame(wx.Frame):
         self.create_ui()
         self.panel.SetSizerAndFit(self.szr_topmost)
         self.Fit()
+        # load robot
+        self.robo = samplerobots.rx90()
         # update fields with data
         self.feed_data()
         # configure status bar
