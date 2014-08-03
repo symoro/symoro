@@ -19,6 +19,12 @@ class Frame(object):
         self.show_frame = show_frame
         self.index = index
 
+    def __str__(self):
+        return '(Frame {0} Children: {1})'.format(self.index, self.children)
+
+    def __repr__(self):
+        return self.__str__()
+
     def draw_frame(self):
         if self.show_frame:
             gl.glPushMatrix()
@@ -57,9 +63,6 @@ class Frame(object):
         for child in self.children:
             child.draw()
         gl.glPopMatrix()
-
-    def __str__(self):
-        return '{0} Children: {1}'.format(self.index, self.children)
 
     def set_length(self, new_length):
         self.arr_vertices, self.arr_indices, self.arr_normals = \
@@ -152,6 +155,14 @@ class RevoluteJoint(JointObject):
         super(RevoluteJoint, self).__init__(*args)
         self.q_init = self.theta
 
+    def __str__(self):
+        return '(RevoluteJoint {0} children: {1})'.format(
+            self.index, self.children
+        )
+
+    def __repr__(self):
+        return self.__str__()
+
     def draw_joint(self):
         gl.glColor3f(1., 1., 0.)
         gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.cyl_vertices)
@@ -179,6 +190,14 @@ class PrismaticJoint(JointObject):
     def __init__(self, *args):
         super(PrismaticJoint, self).__init__(*args)
         self.q_init = self.r
+
+    def __str__(self):
+        return '(PrismaticJoint {0} children: {1})'.format(
+            self.index, self.children
+        )
+
+    def __repr__(self):
+        return self.__str__()
 
     def draw_joint(self):
         gl.glColor3f(1., 0.6, 0.)
@@ -234,6 +253,14 @@ class FixedJoint(JointObject):
     def __init__(self, *args):
         super(FixedJoint, self).__init__(*args)
 
+    def __str__(self):
+        return '(FixedJoint {0} children: {1})'.format(
+            self.index, self.children
+        )
+
+    def __repr__(self):
+        return self.__str__()
+
     def draw_joint(self):
         gl.glColor3f(1., 0., 1.)
         gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.sph_vertices)
@@ -247,5 +274,39 @@ class FixedJoint(JointObject):
         self.sph_vertices, self.sph_indices, self.sph_normals = \
             Primitives.sph_array(new_length)
         super(FixedJoint, self).set_length(new_length)
+
+
+class BaseObject(object):
+    def __init__(self, index):
+        self.index = index
+
+    def __str__(self):
+        return '(Base {0})'.format(self.index)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def draw(self):
+        pass
+
+    def draw_frames(self):
+        pass
+
+
+class EndEffector(JointObject):
+    def __init__(self, *args):
+        super(EndEffector, self).__init__(*args)
+
+    def __str__(self):
+        return '(End {0})'.format(self.index)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def draw(self):
+        pass
+
+    def draw_frames(self):
+        pass
 
 

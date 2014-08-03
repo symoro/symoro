@@ -28,6 +28,8 @@ from symoroviz.objects import Frame
 from symoroviz.objects import RevoluteJoint
 from symoroviz.objects import FixedJoint
 from symoroviz.objects import PrismaticJoint
+from symoroviz.objects import BaseObject
+from symoroviz.objects import EndEffector
 
 #TODO: Fullscreen camera rotation bug
 #TODO: X-, Z-axis
@@ -89,6 +91,10 @@ class VizGlCanvas(GLCanvas):
 
     def add_items_to_frame(self, frame, index, jnt_hier):
         children = jnt_hier[index]
+        if not children:
+            frame.add_child(EndEffector(index))
+        if index == 0:
+            frame.add_child(BaseObject(index))
         for child_i in children:
             params = [child_i]
             for par in ['theta', 'r', 'alpha', 'd', 'gamma', 'b']:
