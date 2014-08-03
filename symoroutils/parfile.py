@@ -85,7 +85,7 @@ def _write_par_list(robo, f, key, N0, N):
 
 
 def writepar(robo):
-    fname = filemgr.get_file_path(robo)
+    fname = robo.par_file_path
     with open(fname, 'w') as f:
         # robot description
         f.write('(* Robotname = \'{0}\' *)\n'.format(robo.name))
