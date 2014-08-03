@@ -763,9 +763,9 @@ class MainFrame(wx.Frame):
         dialog = wx.FileDialog(
             self,
             message="Choose PAR file",
-            style=wx.OPEN,
+            style=wx.FD_OPEN,
             wildcard='*.par',
-            defaultFile='*.par'
+            defaultDir=filemgr.get_base_path()
         )
         if dialog.ShowModal() == wx.ID_OK:
             new_robo, flag = parfile.readpar(
