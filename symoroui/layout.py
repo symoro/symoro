@@ -56,7 +56,7 @@ class MainFrame(wx.Frame):
         self.panel.SetSizerAndFit(self.szr_topmost)
         self.Fit()
         # load robot
-        self.robo = samplerobots.rx90()
+        self.robo = self.load_robot()
         # update fields with data
         self.feed_data()
         # configure status bar
@@ -64,9 +64,39 @@ class MainFrame(wx.Frame):
         self.statusbar.SetStatusWidths(widths=[-1, -1])
         self.statusbar.SetStatusText(text="Ready", number=0)
         self.statusbar.SetStatusText(
-            text="Location of robot files is %s"
-            % filemgr.get_base_path(), number = 1
+            text="Location of robot files is {0}".format(
+                filemgr.get_base_path()
+            ), number = 1
         )
+
+    def load_robot(self):
+        """
+        Load either the default robot or the last used robot at the
+        start of the program.
+
+        Returns:
+            An instance of `Robot` class.
+        """
+        par_file_path = configfile.get_last_robot()
+        if par_file_path is None:
+            # when last used robot was not saved
+            return samplerobots.rx90()
+        elif not os.path.exists(par_file_path):
+            # when the PAR file does not exist
+            self.message_error("The PAR file does not exist.")
+            return samplerobots.rx90()
+        else:
+            robo_name = os.path.split(par_file_path)[1][:-4]
+            robo, flag = parfile.readpar(robo_name, par_file_path)
+            if robo is None:
+                robo = samplerobots.rx90()
+                self.message_error("File could not be read!")
+            elif flag == tools.FAIL:
+                robo = samplerobots.rx90()
+                self.message_warning(
+                    "While reading file an error occured."
+                )
+            return robo
 
     def params_in_grid(self, szr_grd, elements, rows, cols, width=70):
         """Method to display a set of fields in a grid."""
