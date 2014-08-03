@@ -22,8 +22,9 @@ from pysymoro import kinematics
 from pysymoro import dynamics
 from pysymoro import invgeom
 from pysymoro import pieper
-from symoroutils import parfile
+from symoroutils import configfile
 from symoroutils import filemgr
+from symoroutils import parfile
 from symoroutils import samplerobots
 from symoroutils import tools
 from symoroui import definition as ui_definition
@@ -904,6 +905,7 @@ class MainFrame(wx.Frame):
                     return
             elif result == wx.CANCEL:
                 return
+        configfile.set_last_robot(self.robo.par_file_path)
         self.Destroy()
         wx.GetApp().ExitMainLoop()
 
