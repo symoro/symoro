@@ -45,6 +45,8 @@ class Robot(object):
         self.name = name
         """ directory name"""
         self.directory = filemgr.get_folder_path(name)
+        """ PAR file path"""
+        self.par_file_path = filemgr.get_file_path(self)
         """ whether the base frame is floating: bool"""
         self.is_floating = is_floating
         """ whether the robot is a mobile robot"""

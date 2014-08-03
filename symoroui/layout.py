@@ -22,8 +22,9 @@ from pysymoro import kinematics
 from pysymoro import dynamics
 from pysymoro import invgeom
 from pysymoro import pieper
-from symoroutils import parfile
+from symoroutils import configfile
 from symoroutils import filemgr
+from symoroutils import parfile
 from symoroutils import samplerobots
 from symoroutils import tools
 from symoroui import definition as ui_definition
@@ -43,8 +44,6 @@ class MainFrame(wx.Frame):
         self.statusbar = self.CreateStatusBar()
         # create menu bar
         self.create_menu()
-        # set default robot
-        self.robo = samplerobots.planar2r()
         # object to store different ui elements and their keys
         self.widgets = {}
         self.widget_keys = {}
@@ -56,6 +55,8 @@ class MainFrame(wx.Frame):
         self.create_ui()
         self.panel.SetSizerAndFit(self.szr_topmost)
         self.Fit()
+        # load robot
+        self.robo = self.load_robot()
         # update fields with data
         self.feed_data()
         # configure status bar
@@ -63,9 +64,39 @@ class MainFrame(wx.Frame):
         self.statusbar.SetStatusWidths(widths=[-1, -1])
         self.statusbar.SetStatusText(text="Ready", number=0)
         self.statusbar.SetStatusText(
-            text="Location of robot files is %s"
-            % filemgr.get_base_path(), number = 1
+            text="Location of robot files is {0}".format(
+                filemgr.get_base_path()
+            ), number = 1
         )
+
+    def load_robot(self):
+        """
+        Load either the default robot or the last used robot at the
+        start of the program.
+
+        Returns:
+            An instance of `Robot` class.
+        """
+        par_file_path = configfile.get_last_robot()
+        if par_file_path is None:
+            # when last used robot was not saved
+            return samplerobots.rx90()
+        elif not os.path.exists(par_file_path):
+            # when the PAR file does not exist
+            self.message_error("The PAR file does not exist.")
+            return samplerobots.rx90()
+        else:
+            robo_name = os.path.split(par_file_path)[1][:-4]
+            robo, flag = parfile.readpar(robo_name, par_file_path)
+            if robo is None:
+                robo = samplerobots.rx90()
+                self.message_error("File could not be read!")
+            elif flag == tools.FAIL:
+                robo = samplerobots.rx90()
+                self.message_warning(
+                    "While reading file an error occured."
+                )
+            return robo
 
     def params_in_grid(self, szr_grd, elements, rows, cols, width=70):
         """Method to display a set of fields in a grid."""
@@ -732,9 +763,9 @@ class MainFrame(wx.Frame):
         dialog = wx.FileDialog(
             self,
             message="Choose PAR file",
-            style=wx.OPEN,
+            style=wx.FD_OPEN,
             wildcard='*.par',
-            defaultFile='*.par'
+            defaultDir=filemgr.get_base_path()
         )
         if dialog.ShowModal() == wx.ID_OK:
             new_robo, flag = parfile.readpar(
@@ -756,7 +787,9 @@ class MainFrame(wx.Frame):
 
     def OnSaveAs(self, event):
         dialog = wx.FileDialog(
-            self, message="Save PAR file",
+            self,
+            message="Save PAR file",
+            style=wx.FD_SAVE,
             defaultFile=self.robo.name+'.par',
             defaultDir=self.robo.directory,
             wildcard='*.par'
@@ -904,6 +937,7 @@ class MainFrame(wx.Frame):
                     return
             elif result == wx.CANCEL:
                 return
+        configfile.set_last_robot(self.robo.par_file_path)
         self.Destroy()
         wx.GetApp().ExitMainLoop()
 

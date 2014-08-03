@@ -436,7 +436,7 @@ class SymbolManager(object):
         ext: string
             provides the file name extention
         """
-        fname = filemgr.make_file_path(robo, ext)
+        fname = filemgr.get_file_path(robo, ext)
         self.file_out = open(fname, 'w')
 
     def file_close(self):
