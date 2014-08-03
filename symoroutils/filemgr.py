@@ -76,13 +76,13 @@ def get_folder_path(robot_name):
     return folder_path
 
 
-def make_file_path(robot, ext=None):
+def get_file_path(robo, ext=None):
     """
     Create the file path with the appropriate extension appended to
     the file name using an underscore.
 
     Args:
-        robot: An instance of the `Robot` class.
+        robo: An instance of the `Robot` class.
         ext: The extension (string) that is to be appended to the file
             name with an underscore.
 
@@ -90,11 +90,11 @@ def make_file_path(robot, ext=None):
         The file path (string) created.
     """
     if ext is None:
-        fname = '%s.par' % get_clean_name(robot.name)
+        fname = '{0}.par'.format(get_clean_name(robo.name))
     else:
-        fname = '%s_%s.txt' % (get_clean_name(robot.name), ext)
-    file_path = os.path.join(robot.directory, fname)
-    make_folders(robot.directory)
+        fname = '{0}_{1}.txt'.format(get_clean_name(robo.name), ext)
+    file_path = os.path.join(robo.directory, fname)
+    make_folders(robo.directory)
     return file_path
 
 

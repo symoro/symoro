@@ -51,21 +51,21 @@ class TestFileMgr(unittest.TestCase):
             os.path.join(self.base_path, rob2_clean)
         )
 
-    def test_make_file_path(self):
+    def test_get_file_path(self):
         robot_name_clean = filemgr.get_clean_name(self.tmp_robot.name)
         # scenario 1
         par_checker = os.path.join(
             self.tmp_robot.directory,
             '%s.par' % robot_name_clean
         )
-        par_format = filemgr.make_file_path(self.tmp_robot)
+        par_format = filemgr.get_file_path(self.tmp_robot)
         self.assertEqual(par_format, par_checker)
         # scenario 2
         trm_checker = os.path.join(
             self.tmp_robot.directory,
             '%s_%s.txt' % (robot_name_clean, 'trm')
         )
-        trm_format = filemgr.make_file_path(self.tmp_robot, 'trm')
+        trm_format = filemgr.get_file_path(self.tmp_robot, 'trm')
         self.assertEqual(trm_format, trm_checker)
 
     def tearDown(self):
