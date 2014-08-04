@@ -28,7 +28,7 @@ from symoroviz.objects import Frame
 from symoroviz.objects import RevoluteJoint
 from symoroviz.objects import FixedJoint
 from symoroviz.objects import PrismaticJoint
-from symoroviz.objects import BaseObject
+from symoroviz.objects import BaseLink
 from symoroviz.objects import EndEffector
 
 #TODO: Fullscreen camera rotation bug
@@ -94,7 +94,7 @@ class VizGlCanvas(GLCanvas):
         if not children:
             frame.add_child(EndEffector(index))
         if index == 0:
-            frame.add_child(BaseObject(index))
+            frame.add_child(BaseLink(index))
         for child_i in children:
             params = [child_i]
             for par in ['theta', 'r', 'alpha', 'd', 'gamma', 'b']:
@@ -229,7 +229,6 @@ class VizGlCanvas(GLCanvas):
                 i = self.jnt_dict[sym].index
                 if i < self.robo.NL:
                     qs_pas.append((self.jnt_dict[sym].q, self.robo.sigma[i]))
-
         self.find_solution(qs_act, qs_pas)
 
     def generate_loop_fcn(self):
@@ -348,7 +347,6 @@ class VizGlCanvas(GLCanvas):
         if not self.init:
             return
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
-
         gl.glEnableClientState(gl.GL_VERTEX_ARRAY)
         gl.glEnableClientState(gl.GL_NORMAL_ARRAY)
         self.base.draw()

@@ -145,7 +145,7 @@ MAIN_MENU = OrderedDict(
     optim_menu="&Optimiser",
     viz_menu="&Visualisation"
 )
-VIZ_MENU = OrderedDict(m_viz="Visualisation")
+VIZ_MENU = OrderedDict(m_viz="&Visualisation")
 IDEN_MENU = OrderedDict(
     m_base_inertial_params="Base Inertial parameters",
     m_dyn_iden_model="Dynamic Identification Model",

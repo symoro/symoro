@@ -276,9 +276,9 @@ class FixedJoint(JointObject):
         super(FixedJoint, self).set_length(new_length)
 
 
-class BaseObject(object):
-    def __init__(self, index):
-        self.index = index
+class BaseLink(JointObject):
+    def __init__(self, *args):
+        super(BaseLink, self).__init__(*args)
 
     def __str__(self):
         return '(Base {0})'.format(self.index)
