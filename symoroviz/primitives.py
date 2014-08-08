@@ -101,7 +101,6 @@ def create_box_array(length=3., width=1.):
 
 
 class Primitives:
-
     @classmethod
     def box_array(cls, length):
         """ Returns:

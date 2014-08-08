@@ -80,6 +80,8 @@ class JointObject(Frame):
         self.b = b
         self.shift = 0.
         self.init_length = 0.
+        self.has_base = False
+        self.has_end = False
 
     def draw_rod(self, length):
         gl.glPushMatrix()
@@ -134,12 +136,36 @@ class JointObject(Frame):
             self.draw_rod(shift)
             gl.glTranslatef(0, 0, shift)
             self.draw_joint()
+            self.draw_base()
+            self.draw_end()
             gl.glPopMatrix()
         else:
             self.draw_joint()
+            self.draw_base()
+            self.draw_end()
         for child in self.children:
             child.draw()
         gl.glPopMatrix()
+
+    def draw_base(self):
+        if self.has_base:
+            gl.glColor3f(0.0, 0.0, 0.0)
+            gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.sph_vertices)
+            gl.glNormalPointer(gl.GL_FLOAT, 0, self.sph_normals)
+            gl.glDrawElements(
+                gl.GL_TRIANGLES, len(self.sph_indices),
+                gl.GL_UNSIGNED_INT, self.sph_indices,
+            )
+
+    def draw_end(self):
+        if self.has_end:
+            gl.glColor3f(0.0, 0.0, 1.0)
+            gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.sph_vertices)
+            gl.glNormalPointer(gl.GL_FLOAT, 0, self.sph_normals)
+            gl.glDrawElements(
+                gl.GL_TRIANGLES, len(self.sph_indices),
+                gl.GL_UNSIGNED_INT, self.sph_indices,
+            )
 
     def set_length(self, new_length):
         if not self.init_length:
@@ -147,6 +173,9 @@ class JointObject(Frame):
                 Primitives.rod_array(new_length)
             self.init_length = new_length
         self.length = new_length
+        if self.has_base or self.has_end:
+            self.sph_vertices, self.sph_indices, self.sph_normals = \
+                Primitives.sph_array(1.5 * new_length)
         super(JointObject, self).set_length(new_length)
 
 
@@ -237,9 +266,13 @@ class PrismaticJoint(JointObject):
             self.draw_rod(shift)
             gl.glTranslatef(0, 0, shift)
             self.draw_joint()
+            self.draw_base()
+            self.draw_end()
             gl.glPopMatrix()
         else:
             self.draw_joint()
+            self.draw_base()
+            self.draw_end()
         if self.r:
             self.draw_rod(self.r)
             gl.glTranslatef(0, 0, self.r)
@@ -274,39 +307,5 @@ class FixedJoint(JointObject):
         self.sph_vertices, self.sph_indices, self.sph_normals = \
             Primitives.sph_array(new_length)
         super(FixedJoint, self).set_length(new_length)
-
-
-class BaseLink(JointObject):
-    def __init__(self, *args):
-        super(BaseLink, self).__init__(*args)
-
-    def __str__(self):
-        return '(Base {0})'.format(self.index)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def draw(self):
-        pass
-
-    def draw_frames(self):
-        pass
-
-
-class EndEffector(JointObject):
-    def __init__(self, *args):
-        super(EndEffector, self).__init__(*args)
-
-    def __str__(self):
-        return '(End {0})'.format(self.index)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def draw(self):
-        pass
-
-    def draw_frames(self):
-        pass
 
 

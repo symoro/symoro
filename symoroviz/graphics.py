@@ -28,8 +28,6 @@ from symoroviz.objects import Frame
 from symoroviz.objects import RevoluteJoint
 from symoroviz.objects import FixedJoint
 from symoroviz.objects import PrismaticJoint
-from symoroviz.objects import BaseLink
-from symoroviz.objects import EndEffector
 
 #TODO: Fullscreen camera rotation bug
 #TODO: X-, Z-axis
@@ -91,10 +89,6 @@ class VizGlCanvas(GLCanvas):
 
     def add_items_to_frame(self, frame, index, jnt_hier):
         children = jnt_hier[index]
-        if not children:
-            frame.add_child(EndEffector(index))
-        if index == 0:
-            frame.add_child(BaseLink(index))
         for child_i in children:
             params = [child_i]
             for par in ['theta', 'r', 'alpha', 'd', 'gamma', 'b']:
@@ -113,6 +107,10 @@ class VizGlCanvas(GLCanvas):
                 child_frame = PrismaticJoint(*params)
             else:
                 child_frame = FixedJoint(*params)
+            if self.has_end(child_i):
+                child_frame.has_end = True
+            if self.has_base(child_i):
+                child_frame.has_base = True
             self.jnt_objs.append(child_frame)
             frame.add_child(child_frame)
             self.add_items_to_frame(child_frame, child_i, jnt_hier)
@@ -336,6 +334,31 @@ class VizGlCanvas(GLCanvas):
         for index in lst:
             self.jnt_objs[index].set_show_frame(True)
         self.OnDraw()
+
+    def has_end(self, index):
+        """
+        Check if current index value corresponds to a terminal link.
+        """
+        if index in range(self.robo.NL) and \
+            not index in self.robo.ant:
+            # when index value is present in the list of links (for
+            # closed-loop case) and not present in the list of
+            # antecedent values
+            return True
+        else:
+            return False
+
+    def has_base(self, index):
+        """
+        Check if current index value is linked to the base.
+        """
+        try:
+            if self.robo.ant[index] == 0:
+                return True
+            else:
+                return False
+        except IndexError:
+            return False
 
     def change_lengths(self, new_length):
         for jnt in self.jnt_objs:
