@@ -434,25 +434,71 @@ class MainWindow(wx.Frame):
         self.Show()
 
     def init_ui(self):
-        top_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        gridControl = wx.GridBagSizer(hgap=10, vgap=10)
-        cb = wx.CheckBox(self.p, label="Exploded View")
-        cb.SetValue(True)
-        gridControl.Add(cb, pos=(0, 0), flag=wx.ALIGN_CENTER_VERTICAL)
-        cb.Bind(wx.EVT_CHECKBOX, self.OnChangeRepresentation)
-        self.tButton = wx.ToggleButton(self.p, label="All Frames")
-        self.tButton.SetValue(True)
-        self.tButton.Bind(wx.EVT_TOGGLEBUTTON, self.OnShowAllFrames)
-        gridControl.Add(self.tButton, pos=(3, 0), flag=wx.ALIGN_CENTER)
-        btnReset = wx.Button(self.p, label="Reset All")
-        btnReset.Bind(wx.EVT_BUTTON, self.OnResetJoints)
-        gridControl.Add(btnReset, pos=(5, 0), flag=wx.ALIGN_CENTER)
-        btnRandom = wx.Button(self.p, label="Random")
-        btnRandom.Bind(wx.EVT_BUTTON, self.OnFindRandom)
-        gridControl.Add(btnRandom, pos=(6, 0), flag=wx.ALIGN_CENTER)
-        btnHome = wx.Button(self.p, label="Default Position")
-        btnHome.Bind(wx.EVT_BUTTON, self.OnHomePosition)
-        gridControl.Add(btnHome, pos=(7,0), flag=wx.ALIGN_CENTER)
+        szr_container = wx.BoxSizer(wx.HORIZONTAL)
+        grd_szr_control = wx.GridBagSizer(hgap=10, vgap=10)
+        # exploded view checkbox
+        chk_exploded = wx.CheckBox(self.p, label="Exploded View")
+        chk_exploded.SetValue(True)
+        chk_exploded.Bind(wx.EVT_CHECKBOX, self.OnChangeRepresentation)
+        grd_szr_control.Add(
+            chk_exploded, pos=(0, 0), flag=wx.ALIGN_CENTER_VERTICAL
+        )
+        # joint size slider
+        self.slr_joint_size = wx.Slider(self.p, minValue=1, maxValue=100)
+        self.slr_joint_size.SetValue(100*self.canvas.length)
+        self.slr_joint_size.Bind(wx.EVT_SCROLL, self.OnSliderChanged)
+        grd_szr_control.Add(
+            wx.StaticText(self.p, label="Joint Size"),
+            pos=(1, 0), flag=wx.ALIGN_CENTER
+        )
+        grd_szr_control.Add(
+            self.slr_joint_size, pos=(2, 0), flag=wx.ALIGN_CENTER
+        )
+        # all frame toggle button
+        self.tgl_btn_frames = wx.ToggleButton(self.p, label="All Frames")
+        self.tgl_btn_frames.SetValue(True)
+        self.tgl_btn_frames.Bind(
+            wx.EVT_TOGGLEBUTTON, self.OnShowAllFrames
+        )
+        grd_szr_control.Add(
+            self.tgl_btn_frames, pos=(3, 0), flag=wx.ALIGN_CENTER
+        )
+        # frames list box
+        choices = []
+        for jnt in self.canvas.jnt_objs:
+            choices.append("Frame " + str(jnt.index))
+        self.drag_pos = None
+        self.clb_frames = wx.CheckListBox(self.p, choices=choices)
+        self.clb_frames.SetChecked(range(len(choices)))
+        self.clb_frames.Bind(wx.EVT_CHECKLISTBOX, self.CheckFrames)
+        self.clb_frames.Bind(wx.EVT_LISTBOX, self.SelectFrames)
+        grd_szr_control.Add(
+            self.clb_frames, pos=(4, 0), flag=wx.ALIGN_CENTER
+        )
+
+        # reset all button
+        btn_reset = wx.Button(self.p, label="Reset All")
+        btn_reset.Bind(wx.EVT_BUTTON, self.OnResetJoints)
+        grd_szr_control.Add(btn_reset, pos=(5, 0), flag=wx.ALIGN_CENTER)
+        # random buttom
+        btn_random = wx.Button(self.p, label="Random")
+        btn_random.Bind(wx.EVT_BUTTON, self.OnFindRandom)
+        grd_szr_control.Add(btn_random, pos=(6, 0), flag=wx.ALIGN_CENTER)
+        # home position button
+        btn_home = wx.Button(self.p, label="Default Position")
+        btn_home.Bind(wx.EVT_BUTTON, self.OnHomePosition)
+        grd_szr_control.Add(btn_home, pos=(7,0), flag=wx.ALIGN_CENTER)
+        # break/make loop radio buttons
+        if self.robo.structure == tools.CLOSED_LOOP:
+            choice_list = ['Break Loops', 'Make Loops']
+            self.rbx_loops = wx.RadioBox(
+                self.p, choices=choice_list, style=wx.RA_SPECIFY_ROWS
+            )
+            self.rbx_loops.Bind(wx.EVT_RADIOBOX, self.OnSelectLoops)
+            grd_szr_control.Add(
+                self.rbx_loops, pos=(8, 0), flag=wx.ALIGN_CENTER
+            )
+        # help text
         move_help = """
         To Translate:
         Left button +
@@ -467,12 +513,13 @@ class MainWindow(wx.Frame):
         button + move
         mouse
         """
-        gridControl.Add(
+        grd_szr_control.Add(
             wx.StaticText(self.p, label=move_help),
-            pos=(8,0), flag=wx.ALIGN_LEFT
+            pos=(9,0), flag=wx.ALIGN_LEFT
         )
+        # joint variables box
         self.spin_ctrls = {}
-        gridJnts = wx.GridBagSizer(hgap=10, vgap=10)
+        grd_szr_joints = wx.GridBagSizer(hgap=10, vgap=10)
         p_index = 0
         for sym in self.canvas.q_sym:
             if sym == 0: continue
@@ -481,59 +528,35 @@ class MainWindow(wx.Frame):
                 label = 'th'
             else:
                 label = 'r'
-            gridJnts.Add(
+            grd_szr_joints.Add(
                 wx.StaticText(self.p, label=label+str(jnt.index)),
                 pos=(p_index, 0), flag=wx.ALIGN_CENTER_VERTICAL
             )
-            s = FS.FloatSpin(
+            fsn_qvar = FS.FloatSpin(
                 self.p, size=(70, -1), id=jnt.index, increment=0.05,
                 min_val=-10., max_val=10.0
             )
-            s.Bind(FS.EVT_FLOATSPIN, self.OnSetJointVar)
-            s.SetDigits(2)
+            fsn_qvar.Bind(FS.EVT_FLOATSPIN, self.OnSetJointVar)
+            fsn_qvar.SetDigits(2)
             # if sym in self.canvas.q_pas_sym:
-            #     s.Enable(False)
-            self.spin_ctrls[sym] = s
-            gridJnts.Add(
-                s, pos=(p_index, 1), flag=wx.ALIGN_CENTER_VERTICAL
+            #     fsn_qvar.Enable(False)
+            self.spin_ctrls[sym] = fsn_qvar
+            grd_szr_joints.Add(
+                fsn_qvar, pos=(p_index, 1),
+                flag=wx.ALIGN_CENTER_VERTICAL
             )
             p_index = p_index + 1
-        if self.robo.structure == tools.CLOSED_LOOP:
-            choise_list = ['Break Loops', 'Make Loops']
-            self.radioBox = wx.RadioBox(
-                self.p, choices=choise_list, style=wx.RA_SPECIFY_ROWS
-            )
-            self.radioBox.Bind(wx.EVT_RADIOBOX, self.OnSelectLoops)
-            gridControl.Add(
-                self.radioBox, pos=(7, 0), flag=wx.ALIGN_CENTER
-            )
-        choices = []
-        for jnt in self.canvas.jnt_objs:
-            choices.append("Frame " + str(jnt.index))
-        self.drag_pos = None
-        self.check_list = wx.CheckListBox(self.p, choices=choices)
-        self.check_list.SetChecked(range(len(choices)))
-        self.check_list.Bind(wx.EVT_CHECKLISTBOX, self.CheckFrames)
-        self.check_list.Bind(wx.EVT_LISTBOX, self.SelectFrames)
-        gridControl.Add(
-            self.check_list, pos=(4, 0), flag=wx.ALIGN_CENTER
-        )
-        lbl_length = wx.StaticText(self.p, label='Joint size')
-        self.jnt_slider = wx.Slider(self.p, minValue=1, maxValue=100)
-        self.jnt_slider.SetValue(100*self.canvas.length)
-        self.jnt_slider.Bind(wx.EVT_SCROLL, self.OnSliderChanged)
-        gridControl.Add(lbl_length, pos=(1, 0), flag=wx.ALIGN_CENTER)
-        gridControl.Add(self.jnt_slider, pos=(2, 0), flag=wx.ALIGN_CENTER)
-        q_box = wx.StaticBoxSizer(
+        # add all components to sizer
+        szr_qbox = wx.StaticBoxSizer(
             wx.StaticBox(self.p, label='Joint variables')
         )
-        q_box.Add(gridJnts, 0, wx.ALL, 10)
-        ver_sizer = wx.BoxSizer(wx.VERTICAL)
-        ver_sizer.Add(q_box)
-        top_sizer.Add(gridControl, 0, wx.ALL, 10)
-        top_sizer.AddSpacer(10)
-        top_sizer.Add(ver_sizer, 0, wx.ALL, 10)
-        self.p.SetSizer(top_sizer)
+        szr_qbox.Add(grd_szr_joints, 0, wx.ALL, 10)
+        szr_vertical = wx.BoxSizer(wx.VERTICAL)
+        szr_vertical.Add(szr_qbox)
+        szr_container.Add(grd_szr_control, 0, wx.ALL, 10)
+        szr_container.AddSpacer(10)
+        szr_container.Add(szr_vertical, 0, wx.ALL, 10)
+        self.p.SetSizer(szr_container)
 
     def OnChangeRepresentation(self, evt):
         self.canvas.representation(evt.EventObject.GetValue())
@@ -545,12 +568,12 @@ class MainWindow(wx.Frame):
     def OnShowAllFrames(self, _):
         """Shows or hides all the frames (Toggle button event handler)
         """
-        if self.tButton.Value:
+        if self.tgl_btn_frames.Value:
             indices = range(len(self.canvas.jnt_objs))
         else:
             indices = []
         self.canvas.show_frames(indices)
-        self.check_list.SetChecked(indices)
+        self.clb_frames.SetChecked(indices)
 
     def update_spin_controls(self):
         for ctrl in self.spin_ctrls.values():
@@ -558,8 +581,8 @@ class MainWindow(wx.Frame):
 
     def OnSelectLoops(self, _):
         for q in self.canvas.q_pas_sym:
-            self.spin_ctrls[q].Enable(not self.radioBox.Selection)
-        if self.radioBox.Selection == 1:
+            self.spin_ctrls[q].Enable(not self.rbx_loops.Selection)
+        if self.rbx_loops.Selection == 1:
             self.solve_loops = True
             self.canvas.solve()
             self.update_spin_controls()
@@ -599,7 +622,7 @@ class MainWindow(wx.Frame):
 
     def CheckFrames(self, evt):
         self.canvas.show_frames(evt.EventObject.GetChecked())
-        self.tButton.Value = False
+        self.tgl_btn_frames.Value = False
         evt.EventObject.DeselectAll()
 
     def SelectFrames(self, evt):
@@ -608,6 +631,6 @@ class MainWindow(wx.Frame):
             self.canvas.centralize_to_frame(selections[0])
 
     def OnSliderChanged(self, _):
-        self.canvas.change_lengths(self.jnt_slider.Value/100.)
+        self.canvas.change_lengths(self.slr_joint_size.Value/100.)
 
 
