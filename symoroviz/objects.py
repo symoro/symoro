@@ -28,8 +28,10 @@ class Frame(object):
     def draw_frame(self):
         if self.show_frame:
             gl.glPushMatrix()
+            # z-axis (joint axis) - red
             gl.glColor3f(1, 0, 0)
             self.draw_arrow()
+            # x-axis - green
             gl.glRotatef(90, 0, 1, 0)
             gl.glColor3f(0, 1, 0)
             self.draw_arrow()
