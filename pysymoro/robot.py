@@ -282,13 +282,11 @@ class Robot(object):
         if self.is_floating:
             # with floating base
             title = title + "Robot with floating base\n"
-            symo.write_params_table(self, title, inert=True, dynam=True)
-            nealgos.floating_direct_dynmodel(self, symo)
         else:
             # with fixed base
             title = title + "Robot with fixed base\n"
-            symo.write_params_table(self, title, inert=True, dynam=True)
-            dynamics.compute_direct_dynamic_NE(self, symo)
+        symo.write_params_table(self, title, inert=True, dynam=True)
+        nealgos.direct_dynmodel(self, symo)
         symo.file_close()
         return symo
 
