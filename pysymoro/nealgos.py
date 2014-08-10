@@ -782,10 +782,10 @@ def flexible_inverse_dynmodel(robo, symo):
             compute_torque(robo, symo, j, jaj, react_wrench, torque)
 
 
-def floating_direct_dynmodel(robo, symo):
+def direct_dynmodel(robo, symo):
     """
     Compute the Direct Dynamic Model using Newton-Euler algorithm for
-    robots with floating base.
+    robots with floating and fixed base.
 
     Parameters:
         robo: Robot - instance of robot description container
