@@ -23,7 +23,6 @@ from pysymoro import geometry
 from pysymoro.geometry import Transform as trns
 from pysymoro import kinematics
 from pysymoro import invgeom
-from pysymoro import dynamics
 from symoroutils import filemgr
 from symoroutils import parfile
 from symoroutils import samplerobots
@@ -212,29 +211,6 @@ class testKinematics(unittest.TestCase):
             self.assertLess(amax(j66 - X*j63), 1e-12)
 
 
-class testDynamics(unittest.TestCase):
-    def test_dynamics(self):
-        robo = samplerobots.cart_pole()
-
-        print 'Inverse dynamic model using Newton - Euler Algorith'
-        dynamics.inverse_dynamic_NE(robo)
-
-        print 'Direct dynamic model using Newton - Euler Algorith'
-        dynamics.direct_dynamic_NE(robo)
-
-        print 'Dynamic identification model using Newton - Euler Algorith'
-        dynamics.dynamic_identification_NE(robo)
-
-        print 'Inertia Matrix using composite links'
-        dynamics.inertia_matrix(robo)
-
-        print 'Coriolis torques using Newton - Euler Algorith'
-        dynamics.pseudo_force_NE(robo)
-
-        print 'Base parameters computation'
-        dynamics.base_paremeters(robo)
-
-
 if __name__ == '__main__':
 #    suite = unittest.TestSuite()
 #    suite.addTest(testMisc('test_robo_misc'))
@@ -246,25 +222,5 @@ if __name__ == '__main__':
 #    suite.addTest(testKinematics('test_jac2'))
 #    unittest.TextTestRunner(verbosity=2).run(suite)
 #    unittest.main()
-    robo = samplerobots.planar2r()
-
-    print 'Inverse dynamic model using Newton - Euler Algorith'
-    dynamics.inverse_dynamic_NE(robo)
-
-    print 'Direct dynamic model using Newton - Euler Algorith'
-    dynamics.direct_dynamic_NE(robo)
-
-    print 'Dynamic identification model using Newton - Euler Algorith'
-    dynamics.dynamic_identification_NE(robo)
-
-    print 'Inertia Matrix using composite links'
-    dynamics.inertia_matrix(robo)
-
-    print 'Coriolis torques using Newton - Euler Algorith'
-    dynamics.pseudo_force_NE(robo)
-
-    print 'Base parameters computation'
-    dynamics.base_paremeters(robo)
-
 
 
