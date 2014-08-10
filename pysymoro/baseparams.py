@@ -6,8 +6,8 @@
 
 
 """
-This module of SYMORO package provides symbolic
-modeling of robot dynamics.
+This module of SYMORO package contains function to compute the base
+inertial parameters.
 """
 
 
@@ -16,13 +16,10 @@ from copy import copy
 import sympy
 from sympy import Matrix
 
-from pysymoro.geometry import compute_screw_transform
-from pysymoro.geometry import compute_rot_trans, Transform
-from pysymoro.kinematics import compute_vel_acc
-from pysymoro.kinematics import compute_omega
+from pysymoro.geometry import compute_rot_trans
+from pysymoro.geometry import Transform
 from symoroutils import symbolmgr
 from symoroutils import tools
-from symoroutils.paramsinit import ParamsInit
 
 
 inert_names = ('XXR', 'XYR', 'XZR', 'YYR', 'YZR',
@@ -30,7 +27,7 @@ inert_names = ('XXR', 'XYR', 'XZR', 'YYR', 'YZR',
 
 
 # TODO:Finish base parameters computation
-def base_paremeters(robo_orig):
+def base_inertial_parameters(robo_orig):
     """Computes grouped inertia parameters. New parametrization
     contains less parameters but generates the same dynamic model
 

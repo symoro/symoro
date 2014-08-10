@@ -19,8 +19,8 @@ import wx
 from pysymoro.robot import Robot
 from pysymoro import geometry
 from pysymoro import kinematics
-from pysymoro import dynamics
 from pysymoro import invgeom
+from pysymoro import baseparams
 from pysymoro import pieper
 from symoroutils import configfile
 from symoroutils import filemgr
@@ -903,7 +903,7 @@ class MainFrame(wx.Frame):
         self.model_success('ddm')
 
     def OnBaseInertialParams(self, event):
-        dynamics.base_paremeters(self.robo)
+        baseparams.base_inertial_parameters(self.robo)
         self.model_success('regp')
 
     def OnDynIdentifModel(self, event):

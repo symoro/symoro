@@ -20,7 +20,6 @@ from sympy import sin, cos, sign, pi
 from sympy import Symbol, Matrix, Expr, Integer
 from sympy import Mul, Add, factor, zeros, var, sympify, eye
 
-from pysymoro import dynamics
 from pysymoro import dyniden
 from pysymoro import inertia
 from pysymoro import nealgos
