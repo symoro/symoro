@@ -625,7 +625,8 @@ def composite_inverse_dynmodel(robo, symo):
         )
     # second backward recursion - compute composite term
     for j in reversed(xrange(0, robo.NL)):
-        if j == 0: continue
+        if j == 0:
+            continue
         compute_composite_inertia(
             robo, symo, j, antRj, antPj,
             comp_inertia3, comp_ms, comp_mass, composite_inertia
@@ -726,7 +727,8 @@ def flexible_inverse_dynmodel(robo, symo):
         )
     # second backward recursion - compute star terms
     for j in reversed(xrange(first_link, robo.NL)):
-        if j == first_link: continue
+        if j == first_link:
+            continue
         # set composite flag to false when flexible
         if robo.eta[j]: use_composite = False
         if use_composite:
@@ -830,9 +832,11 @@ def floating_direct_dynmodel(robo, symo):
         compute_gamma(robo, symo, j, antRj, antPj, w, wi, gamma)
         # compute j^beta_j : external+coriolis+centrifugal wrench (6x1)
         compute_beta(robo, symo, j, w, beta)
+    # decide first link
+    first_link = 0 if robo.is_floating else 1
     # first backward recursion - initialisation step
-    for j in reversed(xrange(0, robo.NL)):
-        if j == 0:
+    for j in reversed(xrange(first_link, robo.NL)):
+        if j == first_link and robo.is_floating:
             # compute spatial inertia matrix for base
             grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
             # compute 0^beta_0
@@ -841,13 +845,16 @@ def floating_direct_dynmodel(robo, symo):
             symo, grandJ, beta, j, star_inertia, star_beta
         )
     # second backward recursion - compute star terms
-    for j in reversed(xrange(0, robo.NL)):
-        if j == 0: continue
+    for j in reversed(xrange(first_link, robo.NL)):
+        if j == 0:
+            continue
         compute_tau(robo, symo, j, jaj, star_beta, tau)
         compute_star_terms(
             robo, symo, j, jaj, jTant, gamma, tau,
             h_inv, jah, star_inertia, star_beta
         )
+        if j == first_link:
+            continue
         replace_star_terms(
             symo, star_inertia, star_beta, robo.ant[j],
             star_inertia, star_beta, replace=True
