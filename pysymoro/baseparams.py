@@ -11,8 +11,6 @@ inertial parameters.
 """
 
 
-from copy import copy
-
 import sympy
 from sympy import Matrix
 
@@ -27,7 +25,7 @@ inert_names = ('XXR', 'XYR', 'XZR', 'YYR', 'YZR',
 
 
 # TODO:Finish base parameters computation
-def base_inertial_parameters(robo_orig):
+def base_inertial_parameters(robo, symo):
     """Computes grouped inertia parameters. New parametrization
     contains less parameters but generates the same dynamic model
 
@@ -41,12 +39,7 @@ def base_inertial_parameters(robo_orig):
     symo.sydi : dictionary
         Dictionary with the information of all the sybstitution
     """
-    robo = copy(robo_orig)
     lam = [0 for i in xrange(robo.NL)]
-    symo = symbolmgr.SymbolManager()
-    symo.file_open(robo, 'regp')
-    title = 'Base parameters computation'
-    symo.write_params_table(robo, title, inert=True, dynam=True)
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
     for j in reversed(xrange(1, robo.NL)):
@@ -67,13 +60,7 @@ def base_inertial_parameters(robo_orig):
             # fixed joint, group everuthing
             compute_lambda(robo, symo, j, antRj, antPj, lam)
             group_param_fix(robo, symo, j, lam)
-        pass
     symo.write_line('*=*')
-    symo.write_line()
-    title = robo.name + ' grouped inertia parameters'
-    symo.write_params_table(robo, title, inert=True, equations=False)
-    symo.file_close()
-    return symo, robo
 
 
 def vec_mut_J(v, u):

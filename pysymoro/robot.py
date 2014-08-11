@@ -20,6 +20,7 @@ from sympy import sin, cos, sign, pi
 from sympy import Symbol, Matrix, Expr, Integer
 from sympy import Mul, Add, factor, zeros, var, sympify, eye
 
+from pysymoro import baseparams
 from pysymoro import dyniden
 from pysymoro import inertia
 from pysymoro import nealgos
@@ -119,6 +120,9 @@ class Robot(object):
         self.eta = [0 for j in numj]
         """  k - joint stiffness"""
         self.k = [0 for j in numj]
+
+    def set_par_file_path(self, path):
+        self.par_file_path = path
 
     def set_defaults(self, joint=False, geom=False, base=False):
         # joint params
@@ -294,33 +298,55 @@ class Robot(object):
         Compute Coriolis, Centrifugal, Gravity, Friction and external
         torques using Newton-Euler algortihm.
         """
-        pseudorobo = copy.deepcopy(self)
-        pseudorobo.qddot = zeros(pseudorobo.NL, 1)
+        pseudo_robo = copy.deepcopy(self)
+        pseudo_robo.qddot = zeros(pseudo_robo.NL, 1)
         symo = symbolmgr.SymbolManager()
         symo.file_open(self, 'ccg')
         title = "Pseudo forces using Newton-Euler Algorithm\n"
-        if 1 in pseudorobo.eta:
+        if 1 in pseudo_robo.eta:
             # with flexible joints
             title = title + "Robot with flexible joints\n"
             symo.write_params_table(self, title, inert=True, dynam=True)
-            nealgos.flexible_inverse_dynmodel(pseudorobo, symo)
-        elif pseudorobo.is_floating:
+            nealgos.flexible_inverse_dynmodel(pseudo_robo, symo)
+        elif pseudo_robo.is_floating:
             # with rigid joints and floating base
             title = title + "Robot with rigid joints and floating base\n"
             symo.write_params_table(self, title, inert=True, dynam=True)
-            nealgos.composite_inverse_dynmodel(pseudorobo, symo)
-        elif pseudorobo.is_mobile:
+            nealgos.composite_inverse_dynmodel(pseudo_robo, symo)
+        elif pseudo_robo.is_mobile:
             # mobile robot with rigid joints - known base acceleration
             title = title + "Robot with mobile base (Vdot0 is known)\n"
             symo.write_params_table(self, title, inert=True, dynam=True)
-            nealgos.mobile_inverse_dynmodel(pseudorobo, symo)
+            nealgos.mobile_inverse_dynmodel(pseudo_robo, symo)
         else:
             # with rigid joints and fixed base
             title = title + "Robot with rigid joints and fixed base\n"
             symo.write_params_table(self, title, inert=True, dynam=True)
-            nealgos.fixed_inverse_dynmodel(pseudorobo, symo)
+            nealgos.fixed_inverse_dynmodel(pseudo_robo, symo)
         symo.file_close()
         return symo
+
+    def compute_baseparams(self):
+        """
+        Compute the Base Inertial Parameters of the robot.
+        """
+        base_robo = copy.deepcopy(self)
+        symo = symbolmgr.SymbolManager()
+        symo.file_open(base_robo, 'regp')
+        title = "Base Inertial Parameters equations"
+        symo.write_params_table(
+            base_robo, title, inert=True, dynam=True
+        )
+        # compute base inertial params
+        baseparams.base_inertial_parameters(base_robo, symo)
+        symo.write_line()
+        title = "Grouped inertial parameters"
+        symo.write_params_table(
+            base_robo, title, inert=True, equations=False
+        )
+        symo.file_close()
+        # save a new robot with base params
+        return symo, base_robo
 
     def compute_dynidenmodel(self):
         """

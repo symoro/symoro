@@ -22,7 +22,6 @@ from pysymoro.robot import Robot
 from pysymoro import geometry
 from pysymoro import kinematics
 from pysymoro import invgeom
-from pysymoro import baseparams
 from pysymoro import pieper
 from symoroutils import configfile
 from symoroutils import filemgr
@@ -968,9 +967,7 @@ class MainFrame(wx.Frame):
         self.model_success(out_file_path)
 
     def OnBaseInertialParams(self, event):
-        model_symo, base_robo = baseparams.base_inertial_parameters(
-            self.robo
-        )
+        model_symo, base_robo = self.robo.compute_baseparams()
         out_file_path = self.prompt_file_save(model_symo)
         self.model_success(out_file_path)
 
