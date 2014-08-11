@@ -638,15 +638,16 @@ class MainFrame(wx.Frame):
         )
         self.Bind(wx.EVT_MENU, self.OnDynIdentifModel, m_dyn_iden_model)
         iden_menu.AppendItem(m_dyn_iden_model)
-        m_energy_iden_model = wx.MenuItem(
-            iden_menu, wx.ID_ANY,
-            ui_labels.IDEN_MENU['m_energy_iden_model']
-        )
-        # TODO: uncomment the 3 lines below to add the event
+        # TODO: uncomment lines below to include Energy Identification
+        # Model
+        #m_energy_iden_model = wx.MenuItem(
+        #    iden_menu, wx.ID_ANY,
+        #    ui_labels.IDEN_MENU['m_energy_iden_model']
+        #)
         #self.Bind(
         #    wx.EVT_MENU, self.OnEnergyIdentifModel, m_energy_iden_model
         #)
-        iden_menu.AppendItem(m_energy_iden_model)
+        #iden_menu.AppendItem(m_energy_iden_model)
         menu_bar.Append(iden_menu, ui_labels.MAIN_MENU['iden_menu'])
         # menu item - visualisation
         viz_menu = wx.Menu()
@@ -658,66 +659,6 @@ class MainFrame(wx.Frame):
         menu_bar.Append(viz_menu, ui_labels.MAIN_MENU['viz_menu'])
         # set menu bar
         self.SetMenuBar(menu_bar)
-
-    def OnNew(self, event):
-        dialog = ui_definition.DialogDefinition(
-            ui_labels.MAIN_WIN['prog_name'],
-            self.robo.name, self.robo.nl,
-            self.robo.nj, self.robo.structure,
-            self.robo.is_floating, self.robo.is_mobile
-        )
-        if dialog.ShowModal() == wx.ID_OK:
-            result = dialog.get_values()
-            new_robo = Robot(
-                name=result['name'],
-                NL=result['num_links'],
-                NJ=result['num_joints'],
-                NF=result['num_frames'],
-                structure=result['structure'],
-                is_floating=result['is_floating'],
-                is_mobile=result['is_mobile']
-            )
-            new_robo.set_defaults(base=True)
-            if result['keep_geo']:
-                nf = min(self.robo.NF, new_robo.NF)
-                new_robo.ant[:nf] = self.robo.ant[:nf]
-                new_robo.sigma[:nf] = self.robo.sigma[:nf]
-                new_robo.mu[:nf] = self.robo.mu[:nf]
-                new_robo.gamma[:nf] = self.robo.gamma[:nf]
-                new_robo.alpha[:nf] = self.robo.alpha[:nf]
-                new_robo.theta[:nf] = self.robo.theta[:nf]
-                new_robo.b[:nf] = self.robo.b[:nf]
-                new_robo.d[:nf] = self.robo.d[:nf]
-                new_robo.r[:nf] = self.robo.r[:nf]
-            if result['keep_dyn']:
-                nl = min(self.robo.NL, new_robo.NL)
-                new_robo.Nex[:nl] = self.robo.Nex[:nl]
-                new_robo.Fex[:nl] = self.robo.Fex[:nl]
-                new_robo.FS[:nl] = self.robo.FS[:nl]
-                new_robo.IA[:nl] = self.robo.IA[:nl]
-                new_robo.FV[:nl] = self.robo.FV[:nl]
-                new_robo.MS[:nl] = self.robo.MS[:nl]
-                new_robo.M[:nl] = self.robo.M[:nl]
-                new_robo.J[:nl] = self.robo.J[:nl]
-            if result['keep_joint']:
-                nj = min(self.robo.NJ, new_robo.NJ)
-                new_robo.eta[:nj] = self.robo.eta[:nj]
-                new_robo.k[:nj] = self.robo.k[:nj]
-                new_robo.qdot[:nj] = self.robo.qdot[:nj]
-                new_robo.qddot[:nj] = self.robo.qddot[:nj]
-                new_robo.GAM[:nj] = self.robo.GAM[:nj]
-            if result['keep_base']:
-                new_robo.Z = self.robo.Z
-                new_robo.w0 = self.robo.w0
-                new_robo.wdot0 = self.robo.wdot0
-                new_robo.v0 = self.robo.v0
-                new_robo.vdot0 = self.robo.vdot0
-                new_robo.G = self.robo.G
-            new_robo.set_defaults(joint=True)
-            self.robo = new_robo
-            self.robo.directory = filemgr.get_folder_path(self.robo.name)
-            self.feed_data()
-        dialog.Destroy()
 
     def message_error(self, message):
         wx.MessageDialog(
@@ -792,6 +733,66 @@ class MainFrame(wx.Frame):
         else:
             return old_file_path
 
+    def OnNew(self, event):
+        dialog = ui_definition.DialogDefinition(
+            ui_labels.MAIN_WIN['prog_name'],
+            self.robo.name, self.robo.nl,
+            self.robo.nj, self.robo.structure,
+            self.robo.is_floating, self.robo.is_mobile
+        )
+        if dialog.ShowModal() == wx.ID_OK:
+            result = dialog.get_values()
+            new_robo = Robot(
+                name=result['name'],
+                NL=result['num_links'],
+                NJ=result['num_joints'],
+                NF=result['num_frames'],
+                structure=result['structure'],
+                is_floating=result['is_floating'],
+                is_mobile=result['is_mobile']
+            )
+            new_robo.set_defaults(base=True)
+            if result['keep_geo']:
+                nf = min(self.robo.NF, new_robo.NF)
+                new_robo.ant[:nf] = self.robo.ant[:nf]
+                new_robo.sigma[:nf] = self.robo.sigma[:nf]
+                new_robo.mu[:nf] = self.robo.mu[:nf]
+                new_robo.gamma[:nf] = self.robo.gamma[:nf]
+                new_robo.alpha[:nf] = self.robo.alpha[:nf]
+                new_robo.theta[:nf] = self.robo.theta[:nf]
+                new_robo.b[:nf] = self.robo.b[:nf]
+                new_robo.d[:nf] = self.robo.d[:nf]
+                new_robo.r[:nf] = self.robo.r[:nf]
+            if result['keep_dyn']:
+                nl = min(self.robo.NL, new_robo.NL)
+                new_robo.Nex[:nl] = self.robo.Nex[:nl]
+                new_robo.Fex[:nl] = self.robo.Fex[:nl]
+                new_robo.FS[:nl] = self.robo.FS[:nl]
+                new_robo.IA[:nl] = self.robo.IA[:nl]
+                new_robo.FV[:nl] = self.robo.FV[:nl]
+                new_robo.MS[:nl] = self.robo.MS[:nl]
+                new_robo.M[:nl] = self.robo.M[:nl]
+                new_robo.J[:nl] = self.robo.J[:nl]
+            if result['keep_joint']:
+                nj = min(self.robo.NJ, new_robo.NJ)
+                new_robo.eta[:nj] = self.robo.eta[:nj]
+                new_robo.k[:nj] = self.robo.k[:nj]
+                new_robo.qdot[:nj] = self.robo.qdot[:nj]
+                new_robo.qddot[:nj] = self.robo.qddot[:nj]
+                new_robo.GAM[:nj] = self.robo.GAM[:nj]
+            if result['keep_base']:
+                new_robo.Z = self.robo.Z
+                new_robo.w0 = self.robo.w0
+                new_robo.wdot0 = self.robo.wdot0
+                new_robo.v0 = self.robo.v0
+                new_robo.vdot0 = self.robo.vdot0
+                new_robo.G = self.robo.G
+            new_robo.set_defaults(joint=True)
+            self.robo = new_robo
+            self.robo.directory = filemgr.get_folder_path(self.robo.name)
+            self.feed_data()
+        dialog.Destroy()
+
     def OnOpen(self, event):
         if self.changed:
             dialog_res = wx.MessageBox(
@@ -853,8 +854,11 @@ class MainFrame(wx.Frame):
         )
         if dialog.ShowModal() == wx.ID_OK:
             frames, trig_subs = dialog.GetValues()
-            geometry.direct_geometric(self.robo, frames, trig_subs)
-            self.model_success('trm')
+            model_symo = geometry.direct_geometric(
+                self.robo, frames, trig_subs
+            )
+            out_file_path = self.prompt_file_save(model_symo)
+            self.model_success(out_file_path)
         dialog.Destroy()
 
     def OnFastGeometricModel(self, event):
@@ -863,8 +867,9 @@ class MainFrame(wx.Frame):
         )
         if dialog.ShowModal() == wx.ID_OK:
             i, j = dialog.GetValues()
-            geometry.direct_geometric_fast(self.robo, i, j)
-            self.model_success('fgm')
+            model_symo = geometry.direct_geometric_fast(self.robo, i, j)
+            out_file_path = self.prompt_file_save(model_symo)
+            self.model_success(out_file_path)
         dialog.Destroy()
 
     def OnIgmPaul(self, event):
@@ -875,8 +880,9 @@ class MainFrame(wx.Frame):
         )
         if dialog.ShowModal() == wx.ID_OK:
             lst_T, n = dialog.get_values()
-            invgeom.igm_Paul(self.robo, lst_T, n)
-            self.model_success('igm_paul')
+            model_symo = invgeom.igm_paul(self.robo, lst_T, n)
+            out_file_path = self.prompt_file_save(model_symo)
+            self.model_success(out_file_path)
         dialog.Destroy()
 
     def OnIgmPieper(self, event):
@@ -887,9 +893,10 @@ class MainFrame(wx.Frame):
         )
         if dialog.ShowModal() == wx.ID_OK:
             lst_T, n = dialog.get_values()
-            pieper.igm_pieper(self.robo, lst_T, n)
-            self.model_success('igm_pieper')
-            dialog.Destroy()
+            model_symo = pieper.igm_pieper(self.robo, lst_T, n)
+            out_file_path = self.prompt_file_save(model_symo)
+            self.model_success(out_file_path)
+        dialog.Destroy()
 
     def OnConstraintGeoEq(self, event):
         pass
@@ -900,8 +907,9 @@ class MainFrame(wx.Frame):
         )
         if dialog.ShowModal() == wx.ID_OK:
             n, i, j = dialog.get_values()
-            kinematics.jacobian(self.robo, n, i, j)
-            self.model_success('jac')
+            model_symo = kinematics.jacobian(self.robo, n, i, j)
+            out_file_path = self.prompt_file_save(model_symo)
+            self.model_success(out_file_path)
         dialog.Destroy()
 
     def OnDeterminant(self, event):
@@ -909,23 +917,30 @@ class MainFrame(wx.Frame):
             ui_labels.MAIN_WIN['prog_name'], self.robo
         )
         if dialog.ShowModal() == wx.ID_OK:
-            kinematics.jacobian_determinant(self.robo, *dialog.get_values())
-            self.model_success('det')
+            model_symo = kinematics.jacobian_determinant(
+                self.robo, *dialog.get_values()
+            )
+            out_file_path = self.prompt_file_save(model_symo)
+            self.model_success(out_file_path)
         dialog.Destroy()
 
     def OnCkel(self, event):
-        if kinematics.kinematic_constraints(self.robo) == tools.FAIL:
-            self.message_warning('There are no loops')
+        model_symo = kinematics.kinematic_constraints(self.robo)
+        if model_symo == tools.FAIL:
+            self.message_warning("There are no loops")
         else:
-            self.model_success('ckel')
+            out_file_path = self.prompt_file_save(model_symo)
+            self.model_success(out_file_path)
 
     def OnVelocities(self, event):
-        kinematics.velocities(self.robo)
-        self.model_success('vlct')
+        model_symo = kinematics.velocities(self.robo)
+        out_file_path = self.prompt_file_save(model_symo)
+        self.model_success(out_file_path)
 
     def OnAccelerations(self, event):
-        kinematics.accelerations(self.robo)
-        self.model_success('aclr')
+        model_symo = kinematics.accelerations(self.robo)
+        out_file_path = self.prompt_file_save(model_symo)
+        self.model_success(out_file_path)
 
     def OnJpqp(self, event):
         model_symo = kinematics.jdot_qdot(self.robo)

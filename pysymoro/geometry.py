@@ -525,3 +525,5 @@ def direct_geometric(robo, frames, trig_subs):
         symo.write_line()
     symo.file_close()
     return symo
+
+

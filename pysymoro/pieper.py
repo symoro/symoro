@@ -283,7 +283,7 @@ def _look_for_case_tree(robo,symo):
 
 def igm_pieper(robo, T_ref, n):
     symo = symbolmgr.SymbolManager()
-    symo.file_open(robo, 'igm_pieper')
+    symo.file_open(robo, 'pieper')
     symo.write_params_table(robo, 'Inverse Geometrix Model for frame %s' % n)
     _pieper_solve(robo, symo)
     symo.file_close()

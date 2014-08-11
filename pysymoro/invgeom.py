@@ -167,7 +167,7 @@ def loop_solve(robo, symo, know=None):
             l[0] = len(l[4])
 
 
-def igm_Paul(robo, T_ref, n):
+def igm_paul(robo, T_ref, n):
     if isinstance(T_ref, list):
         T_ref = Matrix(4, 4, T_ref)
     symo = symbolmgr.SymbolManager()

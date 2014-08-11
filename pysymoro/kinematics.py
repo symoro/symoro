@@ -201,10 +201,6 @@ def _kinematic_loop_constraints(robo, symo, proj=None):
                 extend_W(J, row, W_c, indx_c, chi)
     W_a, W_p = Matrix(W_a), Matrix(W_p)
     W_ac, W_pc, W_c = Matrix(W_ac), Matrix(W_pc), Matrix(W_c)
-    # print is for debug purpose
-#    print W_a
-#    print W_p
-#    print W_ac, W_pc, W_c
     return W_a, W_p, W_ac, W_pc, W_c
 
 
@@ -285,8 +281,10 @@ def accelerations(robo):
     return symo
 
 
-#very simial to comute_vel_acc
 def jdot_qdot(robo):
+    """
+    Similar to compute_vel_acc.
+    """
     symo = symbolmgr.SymbolManager(None)
     symo.file_open(robo, 'jpqp')
     symo.write_params_table(robo, 'JdotQdot')
