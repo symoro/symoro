@@ -12,6 +12,8 @@ interface on the screen for the SYMORO package.
 
 
 import os
+import re
+import shutil
 from collections import OrderedDict
 
 import wx
@@ -747,6 +749,41 @@ class MainFrame(wx.Frame):
         )
         self.message_info(msg)
 
+    def prompt_file_save(self, model_symo):
+        """
+        Prompt a file dialog box and save the file.
+        """
+        # get the old file name
+        old_file_path = model_symo.file_out.name
+        old_fname = os.path.split(old_file_path)[1][:-4]
+        # get extension
+        pattern = re.compile('([\s\w-]*)[_]([a-z]*)')
+        match = re.match(pattern, old_fname)
+        extension = match.group(2).strip()
+        # create file dialog
+        dialog = wx.FileDialog(
+            self,
+            message="Provide a new file name",
+            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+            defaultFile=old_fname,
+            defaultDir=self.robo.directory
+        )
+        # get the new file name if wx.ID_OK
+        if not dialog.ShowModal() == wx.ID_CANCEL:
+            new_fname = dialog.GetFilename()
+            # add extension based on model type
+            match = re.match(pattern, new_fname)
+            if match:
+                if not match.group(2).strip() == extension:
+                    new_fname = new_fname + "_" + extension
+            else:
+                new_fname = new_fname + "_" + extension
+            # add txt extension
+            new_fname = new_fname + ".txt"
+            new_file_path = os.path.join(dialog.GetDirectory(), new_fname)
+            # perform move operation
+            shutil.move(old_file_path, new_file_path)
+
     def OnOpen(self, event):
         if self.changed:
             dialog_res = wx.MessageBox(
@@ -789,7 +826,7 @@ class MainFrame(wx.Frame):
         dialog = wx.FileDialog(
             self,
             message="Save PAR file",
-            style=wx.FD_SAVE,
+            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
             defaultFile=self.robo.name+'.par',
             defaultDir=self.robo.directory,
             wildcard='*.par'
@@ -887,27 +924,28 @@ class MainFrame(wx.Frame):
         self.model_success('jpqp')
 
     def OnInverseDynamic(self, event):
-        self.robo.compute_idym()
+        model_symo = self.robo.compute_idym()
         self.model_success('idm')
 
     def OnInertiaMatrix(self, event):
-        self.robo.compute_inertiamatrix()
+        model_symo = self.robo.compute_inertiamatrix()
         self.model_success('inm')
 
     def OnCentrCoriolGravTorq(self, event):
-        self.robo.compute_pseudotorques()
+        model_symo = self.robo.compute_pseudotorques()
         self.model_success('ccg')
 
     def OnDirectDynamicModel(self, event):
-        self.robo.compute_ddym()
+        model_symo = self.robo.compute_ddym()
         self.model_success('ddm')
+        self.prompt_file_save(model_symo)
 
     def OnBaseInertialParams(self, event):
         baseparams.base_inertial_parameters(self.robo)
         self.model_success('regp')
 
     def OnDynIdentifModel(self, event):
-        self.robo.compute_dynidenmodel()
+        model_symo = self.robo.compute_dynidenmodel()
         self.model_success('dim')
 
     def OnVisualisation(self, event):
