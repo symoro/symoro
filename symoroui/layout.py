@@ -660,28 +660,34 @@ class MainFrame(wx.Frame):
         self.SetMenuBar(menu_bar)
 
     def message_error(self, message):
-        wx.MessageDialog(
-            None,
-            message,
-            'Error',
-            wx.OK | wx.ICON_ERROR
-        ).ShowModal()
+        dlg = wx.MessageDialog(
+            parent=None,
+            message=message,
+            caption='Error',
+            style=wx.OK | wx.ICON_ERROR
+        )
+        dlg.ShowModal()
+        dlg.Destroy()
 
     def message_warning(self, message):
-        wx.MessageDialog(
-            None,
-            message,
-            'Error',
-            wx.OK | wx.ICON_WARNING
-        ).ShowModal()
+        dlg = wx.MessageDialog(
+            parent=None,
+            message=message,
+            caption='Warning',
+            style=wx.OK | wx.ICON_WARNING
+        )
+        dlg.ShowModal()
+        dlg.Destroy()
 
     def message_info(self, message):
-        wx.MessageDialog(
-            None,
-            message,
-            'Information',
-            wx.OK | wx.ICON_INFORMATION
-        ).ShowModal()
+        dlg = wx.MessageDialog(
+            parent=None,
+            message=message,
+            caption='Information',
+            style=wx.OK | wx.ICON_INFORMATION
+        )
+        dlg.ShowModal()
+        dlg.Destroy()
 
     def model_success(self, out_file_path):
         msg = ("The output of the computed model has been saved at:\n")
@@ -970,6 +976,12 @@ class MainFrame(wx.Frame):
         model_symo, base_robo = self.robo.compute_baseparams()
         out_file_path = self.prompt_file_save(model_symo)
         self.model_success(out_file_path)
+        parfile.writepar(base_robo)
+        msg = ("A new robot with the Base Inertial Parameters was\n")
+        msg = msg + ("created and the corresponding PAR file is ")
+        msg = msg + ("saved at:\n\n")
+        msg = msg + base_robo.par_file_path
+        self.message_info(msg)
 
     def OnDynIdentifModel(self, event):
         model_symo = self.robo.compute_dynidenmodel()

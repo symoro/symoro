@@ -121,8 +121,11 @@ class Robot(object):
         """  k - joint stiffness"""
         self.k = [0 for j in numj]
 
-    def set_par_file_path(self, path):
-        self.par_file_path = path
+    def set_par_file_path(self):
+        self.par_file_path = filemgr.get_file_path(self)
+
+    def set_directory(self):
+        self.directory = filemgr.get_folder_path(self.name)
 
     def set_defaults(self, joint=False, geom=False, base=False):
         # joint params
@@ -345,7 +348,10 @@ class Robot(object):
             base_robo, title, inert=True, equations=False
         )
         symo.file_close()
-        # save a new robot with base params
+        # set new name for robot with base params
+        base_robo.name = base_robo.name + "_base"
+        base_robo.set_directory()
+        base_robo.set_par_file_path()
         return symo, base_robo
 
     def compute_dynidenmodel(self):
