@@ -743,15 +743,20 @@ class MainFrame(wx.Frame):
             wx.OK | wx.ICON_INFORMATION
         ).ShowModal()
 
-    def model_success(self, model_name):
-        msg = 'The model has been saved in %s_%s.txt' % (
-            os.path.join(self.robo.directory, self.robo.name), model_name
-        )
+    def model_success(self, out_file_path):
+        msg = ("The output of the computed model has been saved at:\n")
+        msg = msg + out_file_path
         self.message_info(msg)
 
     def prompt_file_save(self, model_symo):
         """
         Prompt a file dialog box and save the file.
+
+        Args:
+            model_symo: An instance of SymbolManager.
+        Returns:
+            A string indicating the location (file path) where the
+            output file is saved.
         """
         # get the old file name
         old_file_path = model_symo.file_out.name
@@ -763,7 +768,7 @@ class MainFrame(wx.Frame):
         # create file dialog
         dialog = wx.FileDialog(
             self,
-            message="Provide a new file name",
+            message="Rename output file",
             style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
             defaultFile=old_fname,
             defaultDir=self.robo.directory
@@ -783,6 +788,9 @@ class MainFrame(wx.Frame):
             new_file_path = os.path.join(dialog.GetDirectory(), new_fname)
             # perform move operation
             shutil.move(old_file_path, new_file_path)
+            return new_file_path
+        else:
+            return old_file_path
 
     def OnOpen(self, event):
         if self.changed:
@@ -920,33 +928,41 @@ class MainFrame(wx.Frame):
         self.model_success('aclr')
 
     def OnJpqp(self, event):
-        kinematics.jdot_qdot(self.robo)
-        self.model_success('jpqp')
+        model_symo = kinematics.jdot_qdot(self.robo)
+        out_file_path = self.prompt_file_save(model_symo)
+        self.model_success(out_file_path)
 
     def OnInverseDynamic(self, event):
         model_symo = self.robo.compute_idym()
-        self.model_success('idm')
+        out_file_path = self.prompt_file_save(model_symo)
+        self.model_success(out_file_path)
 
     def OnInertiaMatrix(self, event):
         model_symo = self.robo.compute_inertiamatrix()
-        self.model_success('inm')
+        out_file_path = self.prompt_file_save(model_symo)
+        self.model_success(out_file_path)
 
     def OnCentrCoriolGravTorq(self, event):
         model_symo = self.robo.compute_pseudotorques()
-        self.model_success('ccg')
+        out_file_path = self.prompt_file_save(model_symo)
+        self.model_success(out_file_path)
 
     def OnDirectDynamicModel(self, event):
         model_symo = self.robo.compute_ddym()
-        self.model_success('ddm')
-        self.prompt_file_save(model_symo)
+        out_file_path = self.prompt_file_save(model_symo)
+        self.model_success(out_file_path)
 
     def OnBaseInertialParams(self, event):
-        baseparams.base_inertial_parameters(self.robo)
-        self.model_success('regp')
+        model_symo, base_robo = baseparams.base_inertial_parameters(
+            self.robo
+        )
+        out_file_path = self.prompt_file_save(model_symo)
+        self.model_success(out_file_path)
 
     def OnDynIdentifModel(self, event):
         model_symo = self.robo.compute_dynidenmodel()
-        self.model_success('dim')
+        out_file_path = self.prompt_file_save(model_symo)
+        self.model_success(out_file_path)
 
     def OnVisualisation(self, event):
         dialog = ui_definition.DialogVisualisation(

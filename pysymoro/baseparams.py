@@ -73,7 +73,7 @@ def base_inertial_parameters(robo_orig):
     title = robo.name + ' grouped inertia parameters'
     symo.write_params_table(robo, title, inert=True, equations=False)
     symo.file_close()
-    return robo, symo.sydi
+    return symo, robo
 
 
 def vec_mut_J(v, u):
