@@ -22,13 +22,13 @@ if os.name is 'nt':
     bin_scripts = ['symoro-bin.py']
 else:
     bin_scripts = ['symoro-bin']
-bin_scripts = map(apply_folder_join, bin_scripts)    
+bin_scripts = map(apply_folder_join, bin_scripts)
 
 
 setup(
     name='symoro',
-    version='0.1alpha',
-    description='SYmoblic MOdelling of RObots software',
+    version='0.2',
+    description='SYmoblic MOdelling of RObots software package',
     url='http://github.com/symoro/symoro',
     scripts=bin_scripts,
     packages=find_packages(),
