@@ -38,15 +38,16 @@ class Robot(object):
     Also provides different representations of parameters."""
     def __init__(
         self, name, NL=0, NJ=0, NF=0, is_floating=False,
-        structure=TREE, is_mobile=False
+        structure=TREE, is_mobile=False, directory=None,
+        par_file_path=None
     ):
         # member variables:
         """  name of the robot: string"""
         self.name = name
         """ directory name"""
-        self.directory = filemgr.get_folder_path(name)
+        self.directory = self.set_directory(directory)
         """ PAR file path"""
-        self.par_file_path = filemgr.get_file_path(self)
+        self.par_file_path = self.set_par_file_path(par_file_path)
         """ whether the base frame is floating: bool"""
         self.is_floating = is_floating
         """ whether the robot is a mobile robot"""
@@ -121,11 +122,21 @@ class Robot(object):
         """  k - joint stiffness"""
         self.k = [0 for j in numj]
 
-    def set_par_file_path(self):
-        self.par_file_path = filemgr.get_file_path(self)
+    def set_par_file_path(self, path):
+        if path is None or not os.path.isabs(path):
+            par_file_path = filemgr.get_file_path(self)
+        else:
+            file_path = path
+        self.par_file_path = file_path
+        return file_path
 
-    def set_directory(self):
-        self.directory = filemgr.get_folder_path(self.name)
+    def set_directory(self, path):
+        if path is None or not os.path.isdir(path):
+            directory = filemgr.get_folder_path(self.name)
+        else:
+            directory = path
+        self.directory = directory
+        return directory
 
     def set_defaults(self, joint=False, geom=False, base=False):
         # joint params
@@ -350,8 +361,8 @@ class Robot(object):
         symo.file_close()
         # set new name for robot with base params
         base_robo.name = base_robo.name + "_base"
-        base_robo.set_directory()
-        base_robo.set_par_file_path()
+        file_path = filemgr.get_file_path(base_robo)
+        base_robo.set_par_file_path(file_path)
         return symo, base_robo
 
     def compute_dynidenmodel(self):

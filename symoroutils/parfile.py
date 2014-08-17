@@ -127,12 +127,17 @@ def readpar(robo_name, file_path):
         flag: indicates if any errors accured. (tools.FAIL)
     """
     with open(file_path, 'r') as f:
-        #initialize the Robot instance
         f.seek(0)
         d = {}
         is_floating = False
         is_mobile = False
         for line in f.readlines():
+            # check for robot name
+            name_pattern = r"\(\*.*Robotname.*=.*\'([\s\w-]*)\'.*\*\)"
+            match = re.match(name_pattern, line)
+            if match:
+                robo_name = match.group(1).strip()
+            # check for joint numbers, link numbers, type
             for s in ('NJ', 'NL', 'Type'):
                 match = re.match(r'^%s.*=([\d\s]*)(\(\*.*)?' % s, line)
                 if match:
@@ -149,14 +154,16 @@ def readpar(robo_name, file_path):
         if len(d) < 2:
             return None, tools.FAIL
         NF = d['NJ']*2 - d['NL']
+        #initialize the Robot instance
         robo = robot.Robot(
             name=robo_name,
             NL=d['NL'], NJ=d['NJ'], NF=NF,
-            is_floating=is_floating,
             structure=tools.TYPES[d['Type']],
-            is_mobile=is_mobile
+            is_floating=is_floating,
+            is_mobile=is_mobile,
+            directory=os.path.dirname(file_path),
+            par_file_path=file_path
         )
-        robo.directory = os.path.dirname(file_path)
         # fitting the data
         acc_line = ''
         key = ''
