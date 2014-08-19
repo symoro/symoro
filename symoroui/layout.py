@@ -847,21 +847,54 @@ class MainFrame(wx.Frame):
         self.changed = False
 
     def OnSaveAs(self, event):
-        dialog = wx.FileDialog(
+        result_msg = "The PAR file has been saved at:\n"
+        # prompt dialog box for new robot name
+        txtdlg = wx.TextEntryDialog(
             self,
-            message="Save PAR file",
-            style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
-            defaultFile=self.robo.name+'.par',
-            defaultDir=self.robo.directory,
-            wildcard='*.par'
+            caption="Save As New Robot",
+            message="Enter a name for the new robot:",
+            style=wx.OK | wx.CANCEL
         )
-        if dialog.ShowModal() == wx.ID_CANCEL:
-            return tools.FAIL
-        self.robo.directory = dialog.GetDirectory()
-        self.robo.name = dialog.GetFilename()[:-4]
-        parfile.writepar(self.robo)
-        self.widgets['name'].SetLabel(self.robo.name)
-        self.changed = False
+        if txtdlg.ShowModal() == wx.ID_OK and \
+            str(txtdlg.GetValue()).strip():
+            # when OK button and user input isn't an empty string
+            # save as new robot
+            self.robo.name = str(txtdlg.GetValue()).strip()
+            self.robo.set_directory()
+            self.robo.set_par_file_path()
+            parfile.writepar(self.robo)
+            self.widgets['name'].SetLabel(self.robo.name)
+            self.changed = False
+            result_msg = result_msg + self.robo.par_file_path
+            self.message_info(result_msg)
+        else:
+            # prompt message box
+            msg = "Do you want to save the PAR file with a new name?"
+            msgdlg = wx.MessageDialog(
+                self,
+                message=msg,
+                style=wx.YES_NO | wx.YES_DEFAULT
+            )
+            if msgdlg.ShowModal() == wx.ID_NO:
+                return tools.FAIL
+            else:
+                # prompt file dialog
+                filedlg = wx.FileDialog(
+                    self,
+                    message="Save PAR file",
+                    style=wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT,
+                    defaultDir=self.robo.directory,
+                    defaultFile=self.robo.par_file_name,
+                    wildcard='*.par'
+                )
+                if filedlg.ShowModal() == wx.ID_CANCEL:
+                    return tools.FAIL
+                self.robo.set_directory(filedlg.GetDirectory())
+                self.robo.set_par_file_path(filedlg.GetPath())
+                parfile.writepar(self.robo)
+                self.changed = False
+                result_msg = result_msg + self.robo.par_file_path
+                self.message_info(result_msg)
 
     def OnTransformationMatrix(self, event):
         dialog = ui_geometry.DialogTrans(

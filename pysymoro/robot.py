@@ -122,21 +122,27 @@ class Robot(object):
         """  k - joint stiffness"""
         self.k = [0 for j in numj]
 
-    def set_par_file_path(self, path):
+    def set_par_file_path(self, path=None):
         if path is None or not os.path.isabs(path):
-            par_file_path = filemgr.get_file_path(self)
+            file_path = filemgr.get_file_path(self)
         else:
             file_path = path
         self.par_file_path = file_path
         return file_path
 
-    def set_directory(self, path):
+    def set_directory(self, path=None):
         if path is None or not os.path.isdir(path):
             directory = filemgr.get_folder_path(self.name)
         else:
             directory = path
         self.directory = directory
         return directory
+
+    @property
+    def par_file_name(self):
+        """Return the PAR file name."""
+        head, tail = os.path.split(self.par_file_path)
+        return tail.strip()
 
     def set_defaults(self, joint=False, geom=False, base=False):
         # joint params

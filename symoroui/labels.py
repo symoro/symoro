@@ -176,7 +176,7 @@ FILE_MENU = OrderedDict(
     m_new="&New",
     m_open="&Open",
     m_save="&Save",
-    m_save_as="Save &As",
+    m_save_as="Save &As New Robot",
     m_pref="Preferences -- (unavailable)",
     m_exit="E&xit"
 )
