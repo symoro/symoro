@@ -473,6 +473,7 @@ class MainFrame(wx.Frame):
         geom_menu = menu_lst[1][0]
         kin_menu = menu_lst[2][0]
         dyn_menu = menu_lst[3][0]
+        iden_menu = menu_lst[4][0]
         # geom_menu - get menu items
         idx = len(geom_menu.GetMenuItems()) - 1
         m_geom_constraint = geom_menu.FindItemByPosition(idx)
@@ -482,6 +483,9 @@ class MainFrame(wx.Frame):
         # dyn_menu - get menu items
         idx = len(dyn_menu.GetMenuItems()) - 1
         m_ddym = dyn_menu.FindItemByPosition(idx)
+        # iden_menu - get menu items
+        idx = len(iden_menu.GetMenuItems()) - 1
+        m_base_inertial_params = iden_menu.FindItemByPosition(idx)
         # set direct dynamic model status
         if self.robo.is_mobile or \
             (self.robo.structure is tools.CLOSED_LOOP):
@@ -493,10 +497,16 @@ class MainFrame(wx.Frame):
             constraint_enable = False
         else:
             constraint_enable = True
+        # set base inertial params status
+        if self.robo.is_floating or self.robo.is_mobile:
+            base_enable = False
+        else:
+            base_enable = True
         # enable/disable menu items
         m_ddym.Enable(ddym_enable)
         m_geom_constraint.Enable(constraint_enable)
         m_kin_constraint.Enable(constraint_enable)
+        m_base_inertial_params.Enable(base_enable)
         menu_bar.UpdateMenus()
 
     def create_menu(self):
@@ -624,6 +634,11 @@ class MainFrame(wx.Frame):
         menu_bar.Append(dyn_menu, ui_labels.MAIN_MENU['dyn_menu'])
         # menu item - identification
         iden_menu = wx.Menu()
+        m_dyn_iden_model = wx.MenuItem(
+            iden_menu, wx.ID_ANY, ui_labels.IDEN_MENU['m_dyn_iden_model']
+        )
+        self.Bind(wx.EVT_MENU, self.OnDynIdentifModel, m_dyn_iden_model)
+        iden_menu.AppendItem(m_dyn_iden_model)
         m_base_inertial_params = wx.MenuItem(
             iden_menu, wx.ID_ANY,
             ui_labels.IDEN_MENU['m_base_inertial_params']
@@ -632,11 +647,6 @@ class MainFrame(wx.Frame):
             wx.EVT_MENU, self.OnBaseInertialParams, m_base_inertial_params
         )
         iden_menu.AppendItem(m_base_inertial_params)
-        m_dyn_iden_model = wx.MenuItem(
-            iden_menu, wx.ID_ANY, ui_labels.IDEN_MENU['m_dyn_iden_model']
-        )
-        self.Bind(wx.EVT_MENU, self.OnDynIdentifModel, m_dyn_iden_model)
-        iden_menu.AppendItem(m_dyn_iden_model)
         # TODO: uncomment lines below to include Energy Identification
         # Model
         #m_energy_iden_model = wx.MenuItem(
