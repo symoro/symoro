@@ -49,6 +49,21 @@ def skew(vec):
     ])
 
 
+def skew2vec(mat):
+    """
+    Return a 3x1 vector from 3x3 skew-symmetric matrix.
+
+    Args:
+        mat: A 3x3 skew-symmetric matrix (Matrix)
+    Returns:
+        A 3x1 vector (Matrix)
+    """
+    vec0 = mat[2, 1]
+    vec1 = mat[0, 2]
+    vec2 = mat[1, 0]
+    return Matrix([vec0, vec1, vec2])
+
+
 def l2str(list_var, spacing=8):
     """Converts a list into string, that will be
     written into the text table.
