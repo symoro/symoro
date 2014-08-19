@@ -163,6 +163,15 @@ def compute_composite_inertia(
         output parameters.
     """
     i = robo.ant[j]
+    # update inertia3, ms, mass from inertia in order to have the
+    # intermediate variables
+    comp_inertia3[i] = composite_inertia[i][3:, 3:]
+    comp_ms[i] = tools.skew2vec(composite_inertia[i][3:, 0:3])
+    comp_mass[i] = composite_inertia[i][0, 0]
+    comp_inertia3[j] = composite_inertia[j][3:, 3:]
+    comp_ms[j] = tools.skew2vec(composite_inertia[j][3:, 0:3])
+    comp_mass[j] = composite_inertia[j][0, 0]
+    # actual computation
     i_ms_j_c = antRj[j] * comp_ms[j]
     i_ms_j_c = symo.mat_replace(i_ms_j_c, 'AS', j)
     expr1 = antRj[j] * comp_inertia3[j]
