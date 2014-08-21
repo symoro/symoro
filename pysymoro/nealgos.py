@@ -180,11 +180,16 @@ def compute_composite_inertia(
     expr2 = symo.mat_replace(expr2, 'AJA', j)
     expr3 = tools.skew(antPj[j]) * tools.skew(i_ms_j_c)
     expr3 = symo.mat_replace(expr3, 'PAS', j)
-    comp_inertia3[i] += expr2 - (expr3 + expr3.transpose()) + \
+    i_comp_inertia3_j = expr2 - (expr3 + expr3.transpose()) + \
         (comp_mass[j] * tools.skew(antPj[j]) * \
         tools.skew(antPj[j]).transpose())
-    comp_ms[i] = comp_ms[i] + i_ms_j_c + (antPj[j] * comp_mass[j])
-    comp_mass[i] = comp_mass[i] + comp_mass[j]
+    i_comp_inertia3_j = symo.mat_replace(i_comp_inertia3_j, 'JJI', j)
+    comp_inertia3[i] = comp_inertia3[i] + i_comp_inertia3_j
+    i_comp_ms_j = i_ms_j_c + (antPj[j] * comp_mass[j])
+    i_comp_ms_j = symo.mat_replace(i_comp_ms_j, 'MSJI', j)
+    comp_ms[i] = comp_ms[i] + i_comp_ms_j
+    i_comp_mass_j = symo.replace(comp_mass[j], 'MJI', j)
+    comp_mass[i] = comp_mass[i] + i_comp_mass_j
     composite_inertia[i] = inertia_spatial(
         comp_inertia3[i], comp_ms[i], comp_mass[i]
     )
@@ -339,8 +344,10 @@ def compute_star_terms(
     expr3 = symo.mat_replace(expr3, 'GX', j)
     expr4 = expr3 * jTant[j]
     expr4 = symo.mat_replace(expr4, 'TKT', j, symmet=True)
+    expr5 = jTant[j].transpose() * alpha
+    expr5 = symo.mat_replace(expr5, 'ALJI', j)
     star_inertia[i] = star_inertia[i] + expr4
-    star_beta[i] = star_beta[i] - (jTant[j].transpose() * alpha)
+    star_beta[i] = star_beta[i] - expr5
 
 
 def compute_joint_accel(
