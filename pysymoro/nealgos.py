@@ -661,6 +661,8 @@ def composite_inverse_dynmodel(robo, symo):
             robo, symo, j, grandVp,
             composite_inertia, composite_beta, react_wrench
         )
+    # second forward recursion still - to make the output pretty
+    for j in xrange(1, robo.NL):
         # compute torque
         compute_torque(robo, symo, j, jaj, react_wrench, torque)
 
