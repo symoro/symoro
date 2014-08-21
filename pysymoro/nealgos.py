@@ -634,6 +634,10 @@ def composite_inverse_dynmodel(robo, symo):
         )
     # second backward recursion - compute composite term
     for j in reversed(xrange(0, robo.NL)):
+        replace_composite_terms(
+            symo, composite_inertia, composite_beta, j,
+            composite_inertia, composite_beta, replace=True
+        )
         if j == 0:
             continue
         compute_composite_inertia(
@@ -642,10 +646,6 @@ def composite_inverse_dynmodel(robo, symo):
         )
         compute_composite_beta(
             robo, symo, j, jTant, zeta, composite_inertia, composite_beta
-        )
-        replace_composite_terms(
-            symo, composite_inertia, composite_beta, robo.ant[j],
-            composite_inertia, composite_beta, replace=True
         )
     # compute base acceleration : this returns the correct value for
     # fixed base and floating base robots
@@ -736,6 +736,10 @@ def flexible_inverse_dynmodel(robo, symo):
         )
     # second backward recursion - compute star terms
     for j in reversed(xrange(first_link, robo.NL)):
+        replace_star_terms(
+            symo, star_inertia, star_beta, j,
+            star_inertia, star_beta
+        )
         if j == first_link:
             continue
         # set composite flag to false when flexible
@@ -759,10 +763,6 @@ def flexible_inverse_dynmodel(robo, symo):
                 robo, symo, j, jaj, jTant, gamma, tau,
                 h_inv, jah, star_inertia, star_beta, flex=True
             )
-        replace_star_terms(
-            symo, star_inertia, star_beta, robo.ant[j],
-            star_inertia, star_beta
-        )
     # compute base acceleration : this returns the correct value for
     # fixed base and floating base robots
     compute_base_accel(
@@ -855,6 +855,10 @@ def direct_dynmodel(robo, symo):
         )
     # second backward recursion - compute star terms
     for j in reversed(xrange(first_link, robo.NL)):
+        replace_star_terms(
+            symo, star_inertia, star_beta, j,
+            star_inertia, star_beta, replace=True
+        )
         if j == 0:
             continue
         compute_tau(robo, symo, j, jaj, star_beta, tau)
@@ -864,10 +868,6 @@ def direct_dynmodel(robo, symo):
         )
         if j == first_link:
             continue
-        replace_star_terms(
-            symo, star_inertia, star_beta, robo.ant[j],
-            star_inertia, star_beta, replace=True
-        )
     # compute base acceleration : this returns the correct value for
     # fixed base and floating base robots
     compute_base_accel(
