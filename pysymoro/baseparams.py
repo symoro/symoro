@@ -48,7 +48,7 @@ def base_inertial_parameters(robo, symo):
             compute_lambda(robo, symo, j, antRj, antPj, lam)
             group_param_rot(robo, symo, j, lam)
             # special grouping
-            group_param_rot_spec(robo, symo, j, lam, antRj)
+            group_param_rot_spec(robo, symo, j, lam, antRj, antPj)
             pass
         elif robo.sigma[j] == 1:
             # general grouping
@@ -161,7 +161,7 @@ def group_param_rot(robo, symo, j, lam):
     robo.put_inert_param(Kj, j)
 
 
-def group_param_rot_spec(robo, symo, j, lam, antRj):
+def group_param_rot_spec(robo, symo, j, lam, antRj, antPj):
     """Internal function. Groups inertia parameters according to the
     special rule for a rotational joint.
 
@@ -172,6 +172,9 @@ def group_param_rot_spec(robo, symo, j, lam, antRj):
     chainj = robo.chain(j)
     r1, r2, orthog = Transform.find_r12(robo, chainj, antRj, j)
     kRj, all_paral = Transform.kRj(robo, antRj, r1, chainj)
+    r1_Px_j, r1_Py_j, r1_Pz_j = Transform.kPj(
+        robo, antPj, antRj, r1, chainj
+    )
     Kj = robo.get_inert_param(j)
     to_replace = {0, 1, 2, 4, 5, 6, 7}
     if Transform.z_paral(kRj):
@@ -181,7 +184,9 @@ def group_param_rot_spec(robo, symo, j, lam, antRj):
         Kj[4] = 0   # YZ
         to_replace -= {0, 1, 2, 4}
     joint_axis = antRj[chainj[-1]].col(2)
-    if all_paral and robo.G.norm() == sympy.Abs(joint_axis.dot(robo.G)):
+    if all_paral and \
+        (robo.G.norm() == sympy.Abs(joint_axis.dot(robo.G))) and \
+        (r1_Px_j == 0) and (r1_Py_j == 0):
         Kj[6] = 0   # MX
         Kj[7] = 0   # MY
         to_replace -= {6, 7}

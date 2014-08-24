@@ -83,6 +83,20 @@ class Transform():
         return T, all_paral
 
     @classmethod
+    def kPj(self, robo, antPj, antRj, k, chainj):
+        T = eye(4)
+        for i in chainj:
+            if i > k:
+                kTj = eye(4)
+                kTj[0:3, 0:3] = antRj[i]
+                kTj[0:3, 3:] = antPj[i]
+                T = kTj * T
+        Px = T[0, 3]
+        Py = T[1, 3]
+        Pz = T[2, 3]
+        return Px, Py, Pz
+
+    @classmethod
     def find_r12(self, robo, chainj, antRj, j):
         r1 = robo.NL
         r2 = robo.NL
