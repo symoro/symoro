@@ -385,16 +385,16 @@ def compute_link_accel(robo, symo, j, jTant, zeta, grandVp):
     grandVp[j][3:, 0] = symo.mat_replace(grandVp[j][3:, 0], 'WP', j)
 
 
-def write_numerical_inverse(symo, inertia, symmet=False):
+def write_numerical_base_acc(symo, inertia, beta_wrench, symmet=False):
     """
-    Write the inverse for the inertia matrix (6x6) to be computed
-    numerically using numpy in the output file.
+    Write the base acceleration (6x1) vector to be computed numerically
+    using numpy in the output file.
     """
     # write strating comments
-    symo.write_line("# NUMERICAL INVERSION OF INERTIA MATRIX - START")
+    symo.write_line("# SOLVE NUMERICALLY FOR BASE ACCELERATION - START")
     symo.write_line("# REQUIRES numpy")
     # setup matrix numMJE0
-    symo.write_line("# setup matrix in numpy format")
+    symo.write_line("# setup numMJE0 matrix in numpy format")
     symo.write_equation('numMJE0', 'numpy.zeros((6, 6))')
     for i in xrange(inertia.rows):
         for j in xrange(inertia.cols):
@@ -403,42 +403,50 @@ def write_numerical_inverse(symo, inertia, symmet=False):
                     'numMJE0[{row}, {col}]'.format(row=i, col=j),
                     str(inertia[i, j])
                 )
-    # numInvMJE0 = numpy.linalg.inv(numMJE0)
-    symo.write_line("# invert matrix")
-    symo.write_line(
-        "# In Matlab this can be performed without matrix inverse"
-    )
-    symo.write_line("# VP0 = numMJE0 \ numBETA0")
-    symo.write_equation('numInvMJE0', 'numpy.linalg.pinv(numMJE0)')
-    # assign elements of the inverted matrix
-    symo.write_line("# assign each element of the inverted (symmetric)")
-    symo.write_line("# matrix to be compatible with future computation")
-    for i in xrange(inertia.rows):
-        for j in xrange(inertia.cols):
-            if symmet and i < j:
-                continue
+    # setup matrix numVBE0
+    symo.write_line("# setup numVBE0 matrix in numpy format")
+    symo.write_equation('numVBE0', 'numpy.zeros((6, 1))')
+    for i in xrange(beta_wrench.rows):
+        if beta_wrench[i, 0] != 0:
             symo.write_equation(
-                'InvMJE{row}{col}0'.format(row=i+1, col=j+1),
-                'numInvMJE0[{row}, {col}]'.format(row=i, col=j)
+                'numVBE0[{row}, 0]'.format(row=i),
+                str(beta_wrench[i, 0])
             )
+    # numVP0 = numpy.linalg.solve(numMJE0, numVBE0)
+    symo.write_line("# compute solution")
+    symo.write_line("# In Matlab use")
+    symo.write_line("# numVP0 = numMJE0 \ numVBE0")
+    symo.write_equation(
+        'numVP0',
+        'numpy.linalg.solve(numMJE0, numVBE0)'
+    )
+    # assign elements of the computed solution vector
+    symo.write_line("# assign each element of the computed solution")
+    symo.write_line("# vector to be compatible with future computation")
+    for i in xrange(beta_wrench.rows):
+        idx = i + 1
+        vp_sym = 'VP{row}0'.format(row=idx)
+        if i > 2:
+            idx = idx - 3
+            vp_sym = 'WP{row}0'.format(row=idx)
+        symo.write_equation(vp_sym, 'numVP0[{row}, 0]'.format(row=i))
     # write ending comments
-    symo.write_line("# NUMERICAL INVERSION OF INERTIA MATRIX - END")
+    symo.write_line("# SOLVE NUMERICALLY FOR BASE ACCELERATION - END")
 
 
-def get_numerical_inverse_out(inertia, symmet=False):
+def get_numerical_base_acc_out(base_acc):
     """
-    Return the inverse of the matrix as formed by strings.
+    Return the base acceleration as formed by strings.
     """
-    inv_inertia = sympy.zeros(inertia.rows, inertia.cols)
-    for j in xrange(inertia.cols):
-        for i in xrange(inertia.rows):
-            if symmet and i < j:
-                inv_inertia[i, j] = inv_inertia[j, i]
-                continue
-            inv_inertia[i, j] = sympy.var(
-                'InvMJE{row}{col}0'.format(row=i+1, col=j+1)
-            )
-    return inv_inertia
+    base_acc = sympy.zeros(base_acc.rows, base_acc.cols)
+    for i in xrange(base_acc.rows):
+        idx = i + 1
+        vp_sym = 'VP{row}0'.format(row=idx)
+        if i > 2:
+            idx = idx - 3
+            vp_sym = 'WP{row}0'.format(row=idx)
+        base_acc[i, 0] = sympy.var(vp_sym)
+    return base_acc
 
 
 def compute_base_accel(robo, symo, star_inertia, star_beta, grandVp):
@@ -451,13 +459,11 @@ def compute_base_accel(robo, symo, star_inertia, star_beta, grandVp):
     forced = False
     grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
     if robo.is_floating:
-        forced = True
         symo.flushout()
-        write_numerical_inverse(symo, star_inertia[0], symmet=True)
-        inv_base_star_inertia = get_numerical_inverse_out(
-            star_inertia[0], symmet=True
+        write_numerical_base_acc(
+            symo, star_inertia[0], star_beta[0], symmet=True
         )
-        grandVp[0] = inv_base_star_inertia * star_beta[0]
+        grandVp[0] = get_numerical_base_acc_out(grandVp[0])
     grandVp[0][:3, 0] = symo.mat_replace(
         grandVp[0][:3, 0], 'VP', 0, forced=forced
     )
@@ -479,13 +485,11 @@ def compute_base_accel_composite(
     forced = False
     grandVp[0] = Matrix([robo.vdot0 - robo.G, robo.w0])
     if robo.is_floating:
-        forced = True
         symo.flushout()
-        write_numerical_inverse(symo, composite_inertia[0], symmet=True)
-        inv_base_comp_inertia = get_numerical_inverse_out(
-            composite_inertia[0], symmet=True
+        write_numerical_base_acc(
+            symo, composite_inertia[0], composite_beta[0], symmet=True
         )
-        grandVp[0] = inv_base_comp_inertia * composite_beta[0]
+        grandVp[0] = get_numerical_base_acc_out(grandVp[0])
     grandVp[0][:3, 0] = symo.mat_replace(
        grandVp[0][:3, 0], 'VP', 0, forced=forced
     )
