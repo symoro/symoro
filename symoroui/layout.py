@@ -59,7 +59,7 @@ class MainFrame(wx.Frame):
         # load robot
         self.robo = self.load_robot()
         # update fields with data
-        self.feed_data()
+        self.feed_data(defaults=False)
         # configure status bar
         self.statusbar.SetFieldsCount(number=2)
         self.statusbar.SetStatusWidths(widths=[-1, -1])
@@ -365,35 +365,37 @@ class MainFrame(wx.Frame):
         frame_index = int(event.EventObject.Value)
         cmb = self.widgets['ant']
         cmb.SetItems([str(i) for i in range(frame_index)])
-        self.update_geo_params()
+        self.update_geo_params(defaults=False)
 
     def OnLinkChanged(self, event):
         self.update_dyn_params()
 
     def OnJointChanged(self, event):
-        self.update_joint_params()
+        self.update_joint_params(defaults=False)
 
     def update_params(self, index, pars):
         for par in pars:
             widget = self.widgets[par]
             widget.ChangeValue(str(self.robo.get_val(index, par)))
 
-    def update_geo_params(self):
-        self.robo.set_defaults(joint=True, geom=True)
+    def update_geo_params(self, defaults=True):
+        if defaults:
+            self.robo.set_defaults(joint=True, geom=True)
         pars = self._extract_param_names(ui_labels.GEOM_PARAMS)
         index = int(self.widgets['frame'].Value)
         for par in pars[0:3]:
             self.widgets[par].SetValue(str(self.robo.get_val(index, par)))
         self.update_params(index, pars[3:])
-        self.update_joint_params()
+        self.update_joint_params(defaults=defaults)
 
     def update_dyn_params(self):
         pars = self._extract_param_names(ui_labels.DYN_PARAMS)
         index = int(self.widgets['link'].Value)
         self.update_params(index, pars)
 
-    def update_joint_params(self):
-        self.robo.set_defaults(joint=True)
+    def update_joint_params(self, defaults=True):
+        if defaults:
+            self.robo.set_defaults(joint=True)
         pars = self._extract_param_names(ui_labels.JOINT_PARAMS)
         index = int(self.widgets['joint'].Value)
         self.widgets[pars[0]].SetValue(
@@ -426,7 +428,7 @@ class MainFrame(wx.Frame):
             names.append(params[key].name)
         return names
 
-    def feed_data(self):
+    def feed_data(self, defaults=True):
         # Robot Type
         names = [
             ('name', self.robo.name), ('NF', self.robo.nf),
@@ -455,9 +457,9 @@ class MainFrame(wx.Frame):
             cmb = self.widgets[name]
             cmb.SetItems(lst)
             cmb.SetSelection(0)
-        self.update_geo_params()
+        self.update_geo_params(defaults=defaults)
         self.update_dyn_params()
-        self.update_joint_params()
+        self.update_joint_params(defaults=defaults)
         self.update_base_twist_params()
         self.update_z_params()
         self.update_menu()
@@ -840,7 +842,7 @@ class MainFrame(wx.Frame):
                         "While reading file an error occured."
                     )
                 self.robo = new_robo
-                self.feed_data()
+                self.feed_data(defaults=False)
 
     def OnSave(self, event):
         parfile.writepar(self.robo)
