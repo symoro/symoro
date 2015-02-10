@@ -40,7 +40,7 @@ setup(
         'PyOpenGL>=3.0.1b2'
     ],
     dependency_links=[
-        'git+https://github.com/sympy/sympy.git@sympy-0.7.3#egg=sympy-0.7.3',
+        'https://github.com/sympy/sympy/archive/sympy-0.7.3.zip'
     ],
     zip_safe=False
 )
