@@ -30,8 +30,18 @@ setup(
     version='0.2',
     description='SYmoblic MOdelling of RObots software package',
     url='http://github.com/symoro/symoro',
+    licence='MIT',
     scripts=bin_scripts,
     packages=find_packages(exclude=['*.tests', '*.tests.*', 'tests.*', 'tests']),
+    install_requires=[
+        'sympy==0.7.3',
+        'numpy>=1.6.1',
+        'wxPython>=2.8.11',
+        'PyOpenGL>=3.0.1b2'
+    ],
+    dependency_links=[
+        'git+https://github.com/sympy/sympy.git@sympy-0.7.3#egg=sympy-0.7.3',
+    ],
     zip_safe=False
 )
 
