@@ -30,7 +30,7 @@ setup(
     version='0.2',
     description='SYmoblic MOdelling of RObots software package',
     url='http://github.com/symoro/symoro',
-    licence='MIT',
+    license='MIT',
     scripts=bin_scripts,
     packages=find_packages(exclude=['*.tests', '*.tests.*', 'tests.*', 'tests']),
     install_requires=[
