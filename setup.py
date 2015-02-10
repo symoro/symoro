@@ -31,7 +31,7 @@ setup(
     description='SYmoblic MOdelling of RObots software package',
     url='http://github.com/symoro/symoro',
     scripts=bin_scripts,
-    packages=find_packages(),
+    packages=find_packages(exclude=['*.tests', '*.tests.*', 'tests.*', 'tests']),
     zip_safe=False
 )
 
