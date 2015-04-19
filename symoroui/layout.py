@@ -67,7 +67,7 @@ class MainFrame(wx.Frame):
         self.statusbar.SetStatusText(
             text="Location of robot files is {0}".format(
                 filemgr.get_base_path()
-            ), number = 1
+            ), number=1
         )
 
     def load_robot(self):

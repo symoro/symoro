@@ -150,7 +150,9 @@ class Robot(object):
             self._set_joint_defaults()
         # geometric params
         if geom:
-            self._set_geom_defaults()
+            # do nothing
+            #self._set_geom_defaults()
+            pass
         # base params
         if base:
             self._set_base_defaults()
