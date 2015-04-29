@@ -136,7 +136,7 @@ def dynamic_identification_model(robo, symo):
     antRj, antPj = compute_rot_trans(robo, symo)
     # init velocities and accelerations
     w, wdot, vdot, U = compute_vel_acc(
-        robo, symo, antRj, antPj, floating=True
+        robo, symo, antRj, antPj, floating=True, gravity=True
     )
     # virtual robot with only one non-zero parameter at once
     robo_tmp = copy.deepcopy(robo)

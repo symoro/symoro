@@ -116,6 +116,37 @@ def sr400():
     robo.structure = tools.CLOSED_LOOP
     return robo
 
+def SimpleLoop():
+    """Generate Robot instance of RRRR loop"""
+    robo = Robot('SR400', 3, 4, 5, False)
+    robo.ant = [-1, 0, 1, 0, 3, 2]
+    robo.sigma = [0, 0, 0, 0, 0, 2]
+    robo.mu = [0, 1, 0, 0, 0, 0]
+    robo.alpha = [0, 0, 0, 0, 0, 0]
+    d_var = var('D:9')
+    robo.d = [0, 0, d_var[2], d_var[3], d_var[3], d_var[2]]
+    robo.theta = [0] + list(var('th1:5')) + [0]
+    robo.r = [0, 0, 0, 0, 0, 0]
+    robo.b = [0, 0, 0, 0, 0, 0]
+    robo.gamma = [0, 0, 0, 0, 0, 0]
+    robo.structure = tools.CLOSED_LOOP
+    return robo
+
+def SimpleLoop2():
+    """Generate Robot instance of PRRR loop"""
+    robo = Robot('LOL', 3, 4, 5, False)
+    robo.ant = [-1, 0, 0, 2, 3, 1]
+    robo.sigma = [0, 1, 0, 0, 0, 2]
+    robo.mu = [0, 1, 0, 0, 0, 0]
+    robo.alpha = [0, 0, pi/2, 0, 0, pi/2]
+    d_var = var('D:9')
+    robo.d = [0, 0, 0, d_var[3], d_var[3],0]
+    robo.theta = [0, 0] + list(var('th2:5')) + [0]
+    robo.r = [0, var('r'), 0, 0, 0, 0]
+    robo.b = [0, 0, 0, 0, 0, 0]
+    robo.gamma = [0, 0, 0, 0, 0, 0]
+    robo.structure = tools.CLOSED_LOOP
+    return robo
 
 def rx90():
     """Generate Robot instance of RX90"""

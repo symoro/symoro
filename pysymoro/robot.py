@@ -11,24 +11,15 @@ of the robot parametrizaion container and symbol replacer class.
 """
 
 
-import re
 import os
-import copy
-from itertools import combinations
 
-from sympy import sin, cos, sign, pi
-from sympy import Symbol, Matrix, Expr, Integer
-from sympy import Mul, Add, factor, zeros, var, sympify, eye
+from sympy import sin, sign
+from sympy import Matrix, Expr
+from sympy import zeros, var, sympify, eye
 
-from pysymoro import baseparams
-from pysymoro import dyniden
-from pysymoro import inertia
-from pysymoro import nealgos
 from symoroutils import filemgr
-from symoroutils import symbolmgr
-from symoroutils import tools
 from symoroutils.tools import ZERO, ONE, FAIL, OK
-from symoroutils.tools import CLOSED_LOOP, SIMPLE, TREE, TYPES, INT_KEYS
+from symoroutils.tools import CLOSED_LOOP, SIMPLE, TREE, INT_KEYS
 
 
 class Robot(object):
@@ -241,148 +232,6 @@ class Robot(object):
         else:
             return 0
 
-    def compute_idym(self):
-        """
-        Compute the Inverse Dynamic Model of the robot using the
-        recursive Newton-Euler algorithm. Also choose the Newton-Euler
-        algorithm based on the robot type.
-        """
-        symo = symbolmgr.SymbolManager()
-        symo.file_open(self, 'idm')
-        title = "Inverse Dynamic Model using Newton-Euler Algorithm\n"
-        if 1 in self.eta:
-            # with flexible joints
-            title = title + "Robot with flexible joints\n"
-            symo.write_params_table(self, title, inert=True, dynam=True)
-            nealgos.flexible_inverse_dynmodel(self, symo)
-        elif self.is_floating:
-            # with rigid joints and floating base
-            title = title + "Robot with rigid joints and floating base\n"
-            symo.write_params_table(self, title, inert=True, dynam=True)
-            nealgos.composite_inverse_dynmodel(self, symo)
-        elif self.is_mobile:
-            # mobile robot with rigid joints - known base acceleration
-            title = title + "Robot with mobile base (Vdot0 is known)\n"
-            symo.write_params_table(self, title, inert=True, dynam=True)
-            nealgos.mobile_inverse_dynmodel(self, symo)
-        else:
-            # with rigid joints and fixed base
-            title = title + "Robot with rigid joints and fixed base\n"
-            symo.write_params_table(self, title, inert=True, dynam=True)
-            nealgos.fixed_inverse_dynmodel(self, symo)
-        symo.file_close()
-        return symo
-
-    def compute_inertiamatrix(self):
-        """
-        Compute the Inertia Matrix of the robot using the Composite link
-        algorithm.
-        """
-        symo = symbolmgr.SymbolManager()
-        symo.file_open(self, 'inm')
-        title = "Inertia matrix using Composite links algorithm\n"
-        if self.is_floating or self.is_mobile:
-            # with floating or mobile base
-            title = title + "Robot with floating/mobile base\n"
-            symo.write_params_table(self, title, inert=True, dynam=True)
-            inertia.floating_inertia_matrix(self, symo)
-        else:
-            # with fixed base
-            title = title + "Robot with fixed base\n"
-            symo.write_params_table(self, title, inert=True, dynam=True)
-            inertia.fixed_inertia_matrix(self, symo)
-        symo.file_close()
-        return symo
-
-    def compute_ddym(self):
-        """
-        Compute the Direct Dynamic Model of the robot using the
-        recursive Newton-Euler algorithm.
-        """
-        symo = symbolmgr.SymbolManager()
-        symo.file_open(self, 'ddm')
-        title = "Direct Dynamic Model using Newton-Euler Algorithm\n"
-        if self.is_floating:
-            # with floating base
-            title = title + "Robot with floating base\n"
-        else:
-            # with fixed base
-            title = title + "Robot with fixed base\n"
-        symo.write_params_table(self, title, inert=True, dynam=True)
-        nealgos.direct_dynmodel(self, symo)
-        symo.file_close()
-        return symo
-
-    def compute_pseudotorques(self):
-        """
-        Compute Coriolis, Centrifugal, Gravity, Friction and external
-        torques using Newton-Euler algortihm.
-        """
-        pseudo_robo = copy.deepcopy(self)
-        pseudo_robo.qddot = zeros(pseudo_robo.NL, 1)
-        symo = symbolmgr.SymbolManager()
-        symo.file_open(self, 'ccg')
-        title = "Pseudo forces using Newton-Euler Algorithm\n"
-        if 1 in pseudo_robo.eta:
-            # with flexible joints
-            title = title + "Robot with flexible joints\n"
-            symo.write_params_table(self, title, inert=True, dynam=True)
-            nealgos.flexible_inverse_dynmodel(pseudo_robo, symo)
-        elif pseudo_robo.is_floating:
-            # with rigid joints and floating base
-            title = title + "Robot with rigid joints and floating base\n"
-            symo.write_params_table(self, title, inert=True, dynam=True)
-            nealgos.composite_inverse_dynmodel(pseudo_robo, symo)
-        elif pseudo_robo.is_mobile:
-            # mobile robot with rigid joints - known base acceleration
-            title = title + "Robot with mobile base (Vdot0 is known)\n"
-            symo.write_params_table(self, title, inert=True, dynam=True)
-            nealgos.mobile_inverse_dynmodel(pseudo_robo, symo)
-        else:
-            # with rigid joints and fixed base
-            title = title + "Robot with rigid joints and fixed base\n"
-            symo.write_params_table(self, title, inert=True, dynam=True)
-            nealgos.fixed_inverse_dynmodel(pseudo_robo, symo)
-        symo.file_close()
-        return symo
-
-    def compute_baseparams(self):
-        """
-        Compute the Base Inertial Parameters of the robot.
-        """
-        base_robo = copy.deepcopy(self)
-        symo = symbolmgr.SymbolManager()
-        symo.file_open(base_robo, 'regp')
-        title = "Base Inertial Parameters equations"
-        symo.write_params_table(
-            base_robo, title, inert=True, dynam=True
-        )
-        # compute base inertial params
-        baseparams.base_inertial_parameters(base_robo, symo)
-        symo.write_line()
-        title = "Grouped inertial parameters"
-        symo.write_params_table(
-            base_robo, title, inert=True, equations=False
-        )
-        symo.file_close()
-        # set new name for robot with base params
-        base_robo.name = base_robo.name + "_base"
-        file_path = filemgr.get_file_path(base_robo)
-        base_robo.set_par_file_path(file_path)
-        return symo, base_robo
-
-    def compute_dynidenmodel(self):
-        """
-        Compute the Dynamic Identification model of the robot.
-        """
-        symo = symbolmgr.SymbolManager()
-        symo.file_open(self, 'dim')
-        title = "Dynamic Identification Model (Newton-Euler method)"
-        symo.write_params_table(self, title, inert=True, dynam=True)
-        dyniden.dynamic_identification_model(self, symo)
-        symo.file_close()
-        return symo
-
     @property
     def q_vec(self):
         """Generates vector of joint variables
@@ -508,19 +357,23 @@ class Robot(object):
         return self.nf + 1
 
     @property
+    def N_loops(self):
+        return self.nf - self.nj
+
+    @property
     def loop_terminals(self):
         B = self.NJ - self.NL
-        return [(i, i+B) for i in xrange(self.NL, self.NJ)]
+        return [(i, i + B) for i in xrange(self.NL, self.NJ)]
 
     def paral(self, i, j):
         if j is None:
             return False
         elif self.ant[i] == j:
-            return sin(self.alpha[i]) == 0
+            return sin(self.alpha[i]) == ZERO
         elif self.ant[j] == i:
-            return sin(self.alpha[j]) == 0
+            return sin(self.alpha[j]) == ZERO
         elif self.ant[j] == self.ant[i]:
-            return sin(self.alpha[j] - self.alpha[i]) == 0
+            return sin(self.alpha[j] - self.alpha[i]) == ZERO
         else:
             return False
 
@@ -587,10 +440,11 @@ class Robot(object):
             j = self.ant[j]
         return u
 
-    def loop_chain(self, i, j):
+    def loop_chain(self, i, j, add_root=True):
         k = self.common_root(i, j)
         chain = self.chain(i, k)
-        chain.append(k)
+        if add_root:
+            chain.append(k)
         if k != j:
             chain.extend(reversed(self.chain(j, k)))
         return chain

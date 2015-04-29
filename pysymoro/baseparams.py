@@ -14,9 +14,8 @@ inertial parameters.
 import sympy
 from sympy import Matrix
 
-from pysymoro.geometry import compute_rot_trans
-from pysymoro.geometry import Transform
-from symoroutils import symbolmgr
+from pysymoro.geometry import compute_rot_trans, Transform
+from pysymoro.geometry import Z_AXIS
 from symoroutils import tools
 
 
@@ -147,7 +146,7 @@ def group_param_rot(robo, symo, j, lam):
     Kj = robo.get_inert_param(j)
 
     lam03 = lam[j][:, 0] + lam[j][:, 3]
-    lam03 = lam03.applyfunc(symo.C2S2_simp)
+    lam03 = lam03.applyfunc(tools.C2S2_simp)
     for i in (3, 8, 9):
         Kj[i] = symo.replace(Kj[i], inert_names[i], j)
     if robo.ant[j] != -1:
@@ -177,7 +176,7 @@ def group_param_rot_spec(robo, symo, j, lam, antRj, antPj):
     )
     Kj = robo.get_inert_param(j)
     to_replace = {0, 1, 2, 4, 5, 6, 7}
-    if Transform.z_paral(kRj):
+    if kRj.col(2) == Z_AXIS:
         Kj[0] = 0   # XX
         Kj[1] = 0   # XY
         Kj[2] = 0   # XZ
@@ -248,7 +247,7 @@ def group_param_prism_spec(robo, symo, j, antRj, antPj):
     kRj, all_paral = Transform.kRj(robo, antRj, r1, chainj)
     to_replace = {6, 7, 8, 9}
     if r1 < j and j < r2:
-        if Transform.z_paral(kRj):
+        if kRj.col(2) == Z_AXIS:
             Kj[8] = 0   # MZ
             for i in (6, 7):
                 Kj[i] = symo.replace(Kj[i], inert_names[i], j)
@@ -280,7 +279,7 @@ def group_param_prism_spec(robo, symo, j, antRj, antPj):
         Kj[8] = 0   # MZ
         to_replace -= {6, 7, 8}
     #TOD: rewrite
-    dotGa = Transform.sna(antRj[j])[2].dot(robo.G)
+    dotGa = antRj[j].col(2).dot(robo.G)
     if dotGa == tools.ZERO:
         revol_align = robo.ant[robo.ant[j]] == 0 and robo.ant[j] == tools.ZERO
         if robo.ant[j] == 0 or revol_align:

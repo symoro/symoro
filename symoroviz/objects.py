@@ -118,18 +118,21 @@ class JointObject(Frame):
     def draw(self):
         gl.glPushMatrix()
         if self.b:
-            self.draw_rod(self.b)
+            if not self.has_base:
+                self.draw_rod(self.b)
             gl.glTranslatef(0, 0, self.b)
         gl.glRotatef(degrees(self.gamma), 0, 0, 1)
         if self.d:
-            gl.glPushMatrix()
-            gl.glRotatef(90, 0, 1, 0)
-            self.draw_rod(self.d)
-            gl.glPopMatrix()
+            if not self.has_base:
+                gl.glPushMatrix()
+                gl.glRotatef(90, 0, 1, 0)
+                self.draw_rod(self.d)
+                gl.glPopMatrix()
             gl.glTranslatef(self.d, 0, 0)
         gl.glRotatef(degrees(self.alpha), 1, 0, 0)
         if self.r:
-            self.draw_rod(self.r)
+            if not self.has_base:
+                self.draw_rod(self.r)
             gl.glTranslatef(0, 0, self.r)
         gl.glRotatef(degrees(self.theta), 0, 0, 1)
         if self.shift:
@@ -252,14 +255,16 @@ class PrismaticJoint(JointObject):
     def draw(self):
         gl.glPushMatrix()
         if self.b:
-            self.draw_rod(self.b)
+            if not self.has_base:
+                self.draw_rod(self.b)
             gl.glTranslatef(0, 0, self.b)
         gl.glRotatef(degrees(self.gamma), 0, 0, 1)
         if self.d:
-            gl.glPushMatrix()
-            gl.glRotatef(90, 0, 1, 0)
-            self.draw_rod(self.d)
-            gl.glPopMatrix()
+            if not self.has_base:
+                gl.glPushMatrix()
+                gl.glRotatef(90, 0, 1, 0)
+                self.draw_rod(self.d)
+                gl.glPopMatrix()
             gl.glTranslatef(self.d, 0, 0)
         gl.glRotatef(degrees(self.alpha), 1, 0, 0)
         if self.shift:

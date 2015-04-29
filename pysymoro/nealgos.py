@@ -491,7 +491,7 @@ def compute_base_accel_composite(
         )
         grandVp[0] = get_numerical_base_acc_out(grandVp[0])
     grandVp[0][:3, 0] = symo.mat_replace(
-       grandVp[0][:3, 0], 'VP', 0, forced=forced
+        grandVp[0][:3, 0], 'VP', 0, forced=forced
     )
     grandVp[0][3:, 0] = symo.mat_replace(
         grandVp[0][3:, 0], 'WP', 0, forced=forced
@@ -529,7 +529,7 @@ def fixed_inverse_dynmodel(robo, symo):
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
     # init velocities and accelerations
-    w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
+    w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj, gravity=True)
     # init forces vectors
     F = ParamsInit.init_vec(robo)
     N = ParamsInit.init_vec(robo)
@@ -563,7 +563,7 @@ def mobile_inverse_dynmodel(robo, symo):
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
     # init velocities and accelerations
-    w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj)
+    w, wdot, vdot, U = compute_vel_acc(robo, symo, antRj, antPj, gravity=True)
     # init forces vectors
     F = ParamsInit.init_vec(robo)
     N = ParamsInit.init_vec(robo)
@@ -756,7 +756,8 @@ def flexible_inverse_dynmodel(robo, symo):
         if j == first_link:
             continue
         # set composite flag to false when flexible
-        if robo.eta[j]: use_composite = False
+        if robo.eta[j]:
+            use_composite = False
         if use_composite:
             # use composite
             compute_composite_inertia(

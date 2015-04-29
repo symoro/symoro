@@ -11,12 +11,11 @@ solutions for inverse geometric problem using Pieper Method.
 """
 
 
-from sympy import var, sin, cos, eye, atan2, atan, sqrt, pi
-from sympy import Matrix, Symbol, Expr, trigsimp, zeros
+from sympy import var, sin, cos, atan2, atan, sqrt, pi
+from sympy import Matrix, trigsimp, zeros
 from numpy import dot, array
-from numpy.linalg import inv
 
-from pysymoro.geometry import dgm, _rot, _trans_vec, _rot_trans
+from pysymoro.geometry import DGM, _rot, Transform
 from symoroutils import tools
 
 EMPTY = var("EMPTY")
@@ -940,11 +939,11 @@ def solve_position(robo, symo, com_key, X_joints, fc, fs, fr, f0, g):
     if robo.sigma[j] == 0:   # If the joint j is revolute
         robo.r[j] = robo.r[j] + robo.b[robo.ant[j]]
         offset[1] = robo.gamma[robo.ant[j]]
-        T = _rot_trans(axis=z, th=0, p=robo.r[j])
+        T = Transform.create(axis=z, th=0, p=robo.r[j])
     elif robo.sigma[j] == 1:                         # If the joint j is prismatic
         robo.theta[j] = robo.theta[j] + robo.gamma[robo.ant[j]]
         offset[1] = robo.b[robo.ant[j]]
-        T = _rot_trans(axis=z, th=robo.theta[j], p=0)
+        T = Transform.create(axis=z, th=robo.theta[j], p=0)
 
     tc = T*fc
     tc = symo.replace(trigsimp(tc), 'tc', k)
@@ -958,11 +957,11 @@ def solve_position(robo, symo, com_key, X_joints, fc, fs, fr, f0, g):
     if robo.sigma[i] == 0:   # If joint i is revolute
         robo.r[i] = robo.r[i] + robo.b[robo.ant[i]]
         offset[0] = robo.gamma[robo.ant[i]]
-        T = _rot_trans(axis=z, th=0, p=-robo.r[i])
+        T = Transform.create(axis=z, th=0, p=-robo.r[i])
     else:                         # If the joint i is prismatic
         robo.theta[i] = robo.theta[i] + robo.gamma[robo.ant[i]]
         offset[0] = robo.b[robo.ant[i]]
-        T = _rot_trans(axis=z, th=-robo.theta[i], p=0)
+        T = Transform.create(axis=z, th=-robo.theta[i], p=0)
 
     G = T*g
     G = symo.replace(trigsimp(G), 'G')
@@ -1068,9 +1067,9 @@ def solve_orientation_prismatic(robo, symo, X_joints):
     Tji = dgm(robo, symo, j-1, i, fast_form=True, trig_subs=True)
     Tjk = dgm(robo, symo, j, k-1, fast_form=True, trig_subs=True)
 
-    S3N3A3 = _rot_trans(axis=x, th=-robo.alpha[i], p=0)*Ti0*T_GENERAL*T6k   # S3N3A3 = rot(x,-alphai)*rot(z,-gami)*aiTo*SNA
-    S2N2A2 = _rot_trans(axis=x, th=-robo.alpha[j], p=0)*Tji                 # S2N2A2 = iTa(j)*rot(x,-alphaj)
-    S1N1A1 = Tjk*_rot_trans(axis=x, th=-robo.alpha[k], p=0)                 # S1N1A1 = jTa(k)*rot(x,alphak)
+    S3N3A3 = Transform.create(axis=x, th=-robo.alpha[i], p=0)*Ti0*T_GENERAL*T6k   # S3N3A3 = rot(x,-alphai)*rot(z,-gami)*aiTo*SNA
+    S2N2A2 = Transform.create(axis=x, th=-robo.alpha[j], p=0)*Tji                 # S2N2A2 = iTa(j)*rot(x,-alphaj)
+    S1N1A1 = Tjk*Transform.create(axis=x, th=-robo.alpha[k], p=0)                 # S1N1A1 = jTa(k)*rot(x,alphak)
 
     S3N3A3 = Matrix([ S3N3A3[:3, :3] ])
     S2N2A2 = Matrix([ S2N2A2[:3, :3] ])
@@ -1128,9 +1127,9 @@ def solve_position_prismatic(robo, symo, pieper_joints):
     Tji = dgm(robo, symo, j-1, i, fast_form=True, trig_subs=True)
     Tjk = dgm(robo, symo, j, k-1, fast_form=True, trig_subs=True)
 
-    S3N3A3P3 = _rot_trans(axis=z, th=-robo.theta[i], p=0)*_rot_trans(axis=x, th=-robo.alpha[i], p=-robo.d[i])*Ti0*T_GENERAL*T6k # S3N3A3 = rot(z,-thetai)*Trans(x,-di)*rot(x,-alphai)*a(i)To*SNAP*6Tk
-    S2N2A2P2 = _rot_trans(axis=z, th=-robo.theta[j], p=0)*_rot_trans(axis=x, th=-robo.alpha[j], p=-robo.d[j])*Tji               # S2N2A2 = rot(z,-thetaj)*Trans(x,-dj)*rot(x,-alphaj)*a(j)Ti
-    S1N1A1P1 = Tjk*_rot_trans(axis=x, th=robo.alpha[k], p=robo.d[k])*_rot_trans(axis=z, th=robo.theta[k], p=0)                  # S1N1A1 = jTa(k)*rot(x,alphak)*Trans(x,dk)*rot(z,thetak)
+    S3N3A3P3 = Transform.create(axis=z, th=-robo.theta[i], p=0)*Transform.create(axis=x, th=-robo.alpha[i], p=-robo.d[i])*Ti0*T_GENERAL*T6k # S3N3A3 = rot(z,-thetai)*Trans(x,-di)*rot(x,-alphai)*a(i)To*SNAP*6Tk
+    S2N2A2P2 = Transform.create(axis=z, th=-robo.theta[j], p=0)*Transform.create(axis=x, th=-robo.alpha[j], p=-robo.d[j])*Tji               # S2N2A2 = rot(z,-thetaj)*Trans(x,-dj)*rot(x,-alphaj)*a(j)Ti
+    S1N1A1P1 = Tjk*Transform.create(axis=x, th=robo.alpha[k], p=robo.d[k])*Transform.create(axis=z, th=robo.theta[k], p=0)                  # S1N1A1 = jTa(k)*rot(x,alphak)*Trans(x,dk)*rot(z,thetak)
 
     S2N2A2 = array( S2N2A2P2[:3, :3] )
     P3 = array( S3N3A3P3[:3, 3] )

@@ -7,12 +7,12 @@
 
 """This module contains the Symbol Manager tools."""
 
-import itertools
+
 import os
 
 from sympy import sin, cos
 from sympy import Symbol, Matrix, Expr
-from sympy import Mul, Add, factor, var, sympify
+from sympy import var, sympify
 
 from symoroutils import filemgr
 from symoroutils import tools
@@ -33,120 +33,10 @@ class SymbolManager(object):
         self.order_list = sydi.keys()
         """keeps the order of variables to be compute"""
 
-    def simp(self, sym):
-        sym = factor(sym)
-        new_sym = tools.ONE
-        for expr in Mul.make_args(sym):
-            if expr.is_Pow:
-                expr, pow_val = expr.args
-            else:
-                pow_val = 1
-            expr = self.C2S2_simp(expr)
-            expr = self.CS12_simp(expr, silent=True)
-            new_sym *= expr**pow_val
-        return new_sym
-
-    def C2S2_simp(self, sym):
-        """
-        Example
-        =======
-        >> print C2S2_simp(sympify("-C**2*RL + S*(D - RL*S)"))
-        D*S - RL
-        """
-        if not sym.is_Add:
-            repl_dict = {}
-            for term in sym.atoms(Add):
-                repl_dict[term] = self.C2S2_simp(term)
-            sym = sym.xreplace(repl_dict)
-            return sym
-        names, short_form = tools.trignometric_info(sym)
-        for name in names:
-            if short_form:
-                cos_term, sin_term = tools.cos_sin_syms(name)
-            else:
-                cos_term, sin_term = cos(name), sin(name)
-            sym = self.try_opt(
-                tools.ONE, None, sin_term**2, cos_term**2, sym
-            )
-        return sym
-
-    def CS12_simp(self, sym, silent=False):
-        """
-        Example
-        =======
-        >> print SymbolManager().CS12_simp(sympify("C2*C3 - S2*S3"))
-        C23 = C2*C3 - S2*S3
-        C23
-        >> print SymbolManager().CS12_simp(sympify("C2*S3*R + S2*C3*R"))
-        S23 = C2*S3 + S2*C3
-        R*S23
-        """
-        if not sym.is_Add:
-            repl_dict = {}
-            for term in sym.atoms(Add):
-                repl_dict[term] = self.CS12_simp(term)
-            sym = sym.xreplace(repl_dict)
-            return sym
-        names, short_form = tools.trignometric_info(sym)
-        names = list(names)
-        if short_form:
-            names.sort()
-        sym2 = sym
-        for n1, n2 in itertools.combinations(names, 2):
-            if short_form:
-                C1, S1 = tools.cos_sin_syms(n1)
-                C2, S2 = tools.cos_sin_syms(n2)
-                np1, nm1 = tools.get_pos_neg(n1)
-                np2, nm2 = tools.get_pos_neg(n2)
-                n12 = tools.ang_sum(np1, np2, nm1, nm2)
-                nm12 = tools.ang_sum(np1, nm2, nm1, np2)
-                C12, S12 = tools.cos_sin_syms(n12)
-                C1m2, S1m2 = tools.cos_sin_syms(nm12)
-            else:
-                C1, S1 = cos(n1), sin(n1)
-                C2, S2 = cos(n2), sin(n2)
-                C12, S12 = cos(n1+n2), sin(n1+n2)
-                C1m2, S1m2 = cos(n1-n2), sin(n1-n2)
-            sym2 = self.try_opt(S12, S1m2, S1*C2, C1*S2, sym2, silent)
-            sym2 = self.try_opt(C12, C1m2, C1*C2, -S1*S2, sym2, silent)
-        if sym2 != sym:
-            return self.CS12_simp(sym2, silent)
-        else:
-            return sym
-
-    def try_opt(self, A, Am, B, C, old_sym, silent=False):
-        """Replaces B + C by A or B - C by Am.
-        Chooses the best option.
-        """
-        Bcfs = tools.get_max_coef_list(old_sym, B)
-        Ccfs = tools.get_max_coef_list(old_sym, C)
-        if Bcfs != [] and Ccfs != []:
-            Res = old_sym
-            Res_tmp = Res
-            for coef in Bcfs:
-                Res_tmp += A*coef - B*coef - C*coef
-                if tools.sym_less(Res_tmp, Res):
-                    Res = Res_tmp
-            if tools.sym_less(Res, old_sym) and Am is None:
-                if not A.is_number and not silent:
-                    self.add_to_dict(A, B + C)
-                return Res
-            elif Am is not None:
-                Res2 = old_sym
-                Res_tmp = Res2
-                for coef in Bcfs:
-                    Res_tmp += Am*coef - B*coef + C*coef
-                    if tools.sym_less(Res_tmp, Res2):
-                        Res2 = Res_tmp
-                if tools.sym_less(Res2, Res) and tools.sym_less(Res2, old_sym):
-                    if not Am.is_number and not silent:
-                        self.add_to_dict(Am, B - C)
-                    return Res2
-                elif tools.sym_less(Res, old_sym):
-                    if not A.is_number and not silent:
-                        self.add_to_dict(A, B + C)
-                    return Res
-        return old_sym
+    def clear(self):
+        self.revdi.clear()
+        self.sydi.clear()
+        self.order_list = []
 
     def add_to_dict(self, new_sym, old_sym):
         """Internal function.
@@ -162,7 +52,7 @@ class SymbolManager(object):
             self.order_list.append(new_sym)
             self.write_equation(new_sym, old_sym)
 
-    def trig_replace(self, M, angle, name):
+    def trig_replace(self, M):
         """Replaces trigonometric expressions cos(x)
         and sin(x) by CX and SX
 
@@ -180,16 +70,26 @@ class SymbolManager(object):
         The cos(x) and sin(x) will be replaced by CX and SX,
         where X is the name and x is the angle
         """
-        if not isinstance(angle, Expr) or angle.is_number:
-            return M
-        cos_sym, sin_sym = tools.cos_sin_syms(name)
-        sym_list = [(cos_sym, cos(angle)), (sin_sym, sin(angle))]
+        all_cos = M.atoms(cos)
+        all_sin = M.atoms(sin)
         subs_dict = {}
-        for sym, sym_old in sym_list:
-            if -1 in Mul.make_args(sym_old):
-                sym_old = -sym_old
-            subs_dict[sym_old] = sym
-            self.add_to_dict(sym, sym_old)
+
+        def create_var(f):
+            if isinstance(f, cos):
+                name = 'C'
+            elif isinstance(f, sin):
+                name = 'S'
+            syms = f.atoms(Symbol)
+            for s in syms:
+                name += '_%s' % s
+            return var(name)
+
+        for func in all_cos | all_sin:
+            if func not in self.revdi:
+                subs_dict[func] = create_var(func)
+                self.add_to_dict(subs_dict[func], func)
+            else:
+                subs_dict[func] = self.revdi[func]
         for i1 in xrange(M.shape[0]):
             for i2 in xrange(M.shape[1]):
                 M[i1, i2] = M[i1, i2].subs(subs_dict)
@@ -372,25 +272,25 @@ class SymbolManager(object):
         if equations:
             self.write_line('Equations:')
 
-    def unknown_sep(self, eq, known):
-        """If there is a sum inside trigonometric function and
-        the atoms are not the subset of 'known',
-        this function will replace the trigonometric symbol bu sum,
-        trying to separate known and unknown terms
-        """
-        if not isinstance(eq, Expr) or eq.is_number:
-            return eq
-        while True:
-            res = False
-            trigs = eq.atoms(sin, cos)
-            for trig in trigs:
-                args = trig.args[0].atoms()
-                if args & known and not args <= known and trig in self.sydi:
-                    eq = eq.subs(trig, self.sydi[trig]).expand()
-                    res = True
-            if not res:
-                break
-        return eq
+#    def unknown_sep(self, eq, known):
+#        """If there is a sum inside trigonometric function and
+#        the atoms are not the subset of 'known',
+#        this function will replace the trigonometric symbol bu sum,
+#        trying to separate known and unknown terms
+#        """
+#        if not isinstance(eq, Expr) or eq.is_number:
+#            return eq
+#        while True:
+#            res = False
+#            trigs = eq.atoms(sin, cos)
+#            for trig in trigs:
+#                args = trig.args[0].atoms()
+#                if args & known and not args <= known and trig in self.sydi:
+#                    eq = eq.subs(trig, self.sydi[trig]).expand()
+#                    res = True
+#            if not res:
+#                break
+#        return eq
 
     def write_equation(self, A, B):
         """Writes the equation A = B into the output
@@ -619,7 +519,9 @@ class SymbolManager(object):
         -This function must be called only after the model that
             computes symbols in to_return have been generated.
         """
-        exec self.gen_func_string(name, to_return, args)
+        s = self.gen_func_string(name, to_return, args)
+        print s
+        exec s
         return eval('%s' % name)
 
 

@@ -34,13 +34,10 @@ setup(
     scripts=bin_scripts,
     packages=find_packages(exclude=['*.tests', '*.tests.*', 'tests.*', 'tests']),
     install_requires=[
-        'sympy==0.7.3',
+        'sympy>=0.7.3',
         'numpy>=1.6.1',
         'wxPython>=2.8.11',
         'PyOpenGL>=3.0.1b2'
-    ],
-    dependency_links=[
-        'https://github.com/sympy/sympy/archive/sympy-0.7.3.zip'
     ],
     zip_safe=False
 )

@@ -9,20 +9,21 @@
 This module of SYMORO package provides symbolic
 solutions for inverse geompetric problem fro robots with a simple geometry.
 """
-from copy import deepcopy
+
 from heapq import heapify, heappop
 from itertools import combinations
 
 from sympy import var, sin, cos, atan2, sqrt, pi
-from sympy import Matrix, Symbol, Expr, eye
-from pysymoro.geometry import DGM, Transform
-from symoroutils.tools import ZERO, ONE, simplify, get_coeffs
-from symoroutils import tools
+from sympy import Matrix, Symbol, Expr
+from pysymoro.geometry import TransformChain
+from symoroutils.tools import ZERO, ONE
+from symoroutils import symbolmgr
 
 EMPTY = var("EMPTY")
 T_GENERAL = Matrix([var("s1,n1,a1,p1"), var("s2,n2,a2,p2"),
                     var("s3,n3,a3,p3"), [0, 0, 0, 1]])
 
+#TODO: revamp the notation, remove trigsimp
 theta1, theta2, rho = var("theta1, theta2, rho")
 
 C1 = cos(theta1)
@@ -33,167 +34,93 @@ C12 = cos(theta1 + theta2)
 S12 = sin(theta1 + theta2)
 
 
-def separate(eq, args):
-    res = ZERO
-    for arg in args:
-        eq, eq2 = eq.as_independent(arg, as_Add=True)
-        res += eq2
-    return res, eq
+def trigsimp(A):
+    return A
 
 
-def unfold_angle_sum(eq, thetas):
-    """If there is a sum inside trigonometric function and
-    the atoms are not the subset of 'known',
-    this function will replace the trigonometric symbol bu sum,
-    trying to separate known and unknown terms
-    """
-    assert isinstance(eq, Expr)
-    sin_list = eq.atoms(sin)
-    for trig in sin_list:
-        args = trig.args[0]
-        if args.atoms() & thetas and args.atoms() - thetas:
-            x, y = separate(args, thetas)
-            eq = eq.subs(trig, sin(x)*cos(y) + cos(x)*sin(y))
-    sin_list = eq.atoms(cos)
-    for trig in sin_list:
-        args = trig.args[0]
-        if args.atoms() & thetas and args.atoms() - thetas:
-            x, y = separate(args, thetas)
-            eq = eq.subs(trig, cos(x)*cos(y) - sin(x)*sin(y))
-    return eq
-
-
-def replace_EMPTY(T, T_sym):
+def replace_EMPTY(T, tr_list):
+    T_sym = tr_list.to_matrix(simplify=True)
     for e1 in xrange(4):
         for e2 in xrange(4):
             if T[e1, e2].has(EMPTY):
                 T[e1, e2] = T_sym[e1, e2]
 
 
-def loop_solve(robo, symo, knowns=None):
+def loop_solve(robo, symo, know=None):
     # TODO: rewrite; Add parallelogram detection
-    if knowns is None:
-        knowns = set(robo.q_active)
-    else:
-        knowns = set(knowns)
+    q_vec = [robo.get_q(i) for i in xrange(robo.NF)]
     loops = []
+    if know is None:
+        know = robo.q_active
+        # set(q for i, q in enumerate(q_vec) if robo.mu[i] == 1)
     for i, j in robo.loop_terminals:
-        k = robo.common_root(i, j)
-        q_loop = set(robo.get_q_chain(i, k) + robo.get_q_chain(j, k))
-        know_ij = knowns & q_loop
-        unknow_ij = q_loop - knowns
-        loops.append([len(unknow_ij), j, i, know_ij, unknow_ij])
+        chain = robo.loop_chain(i, j)
+        know_ij = set(q_vec[i] for i in chain if q_vec[i] in know)
+        unknow_ij = set(q_vec[i] for i in chain if q_vec[i] not in know)
+        loops.append([len(unknow_ij), i, j, know_ij, unknow_ij])
     while loops:
         heapify(loops)
         loop = heappop(loops)
-        found = paul_solve(robo, symo, eye(4), *loop[1:4])
+        res_know = paul_solve(robo, symo, eye(4), *loop[1:4])
         for l in loops:
+            found = l[4] & res_know
             l[3] |= found
             l[4] -= found
             l[0] = len(l[4])
 
 
-#TODO: to think about it
-#The problem is that we must separate different
-#constants in case if n==root or not (the same for m)
-def simplify_robot(robo, chain, root):
-    simp_robo = deepcopy(robo)
-    # separate constants for initial frame
-    n = chain[0]
-    m = chain[-1]
-
-    if simp_robo.sigma[n] == 0:
-        simp_robo.theta[n] = ZERO
-    elif simp_robo.sigma[n] == 1:
-        simp_robo.r[n] = ZERO
-    if n == root:
-        Tnz = Transform.frame_inv(simp_robo, n)
-    else:
-        Tnz = Transform.frame(simp_robo, n)
-    print "####################"
-    if simp_robo.sigma[n] == 0:
-        simp_robo.theta[n] = robo.theta[n]
-        simp_robo.r[n] = ZERO
-    elif simp_robo.sigma[n] == 1:
-        simp_robo.theta[n] = ZERO
-        simp_robo.r[n] = robo.r[n]
-    else:
-        simp_robo.theta[n] = ZERO
-        simp_robo.r[n] = ZERO
-    simp_robo.b[n] = ZERO
-    simp_robo.gamma[n] = ZERO
-    simp_robo.d[n] = ZERO
-    simp_robo.alpha[n] = ZERO
-
-    # separate constants for the terminal frame
-    if simp_robo.sigma[m] == 0:
-        if m != root:
-            Tem = Transform.create(p=-simp_robo.r[m])
-        else:
-            Tem = Transform.create(th=simp_robo.theta[m])
-        simp_robo.r[m] = ZERO
-    elif simp_robo.sigma[m] == 1:
-        if m != root:
-            Tem = Transform.create(th=-simp_robo.theta[m])
-        else:
-            Tem = Transform.create(th=simp_robo.theta[m])
-        simp_robo.theta[m] = ZERO
-    else:
-        if m != root:
-            Tem = Transform.frame_inv(simp_robo, m)
-        else:
-            Tem = Transform.frame(simp_robo, m)
-        simp_robo.r[m] = ZERO
-        simp_robo.theta[m] = ZERO
-        simp_robo.b[m] = ZERO
-        simp_robo.gamma[m] = ZERO
-        simp_robo.d[m] = ZERO
-        simp_robo.alpha[m] = ZERO
-    return simp_robo, Tnz, Tem
+def igm_paul(robo, T_ref, n):
+    if isinstance(T_ref, list):
+        T_ref = Matrix(4, 4, T_ref)
+    symo = symbolmgr.SymbolManager()
+    symo.file_open(robo, 'igm')
+    symo.write_params_table(robo, 'Inverse Geometric Model for frame %s' % n)
+    paul_solve(robo, symo, T_ref, 0, n)
+    symo.file_close()
+    return symo
 
 
-def paul_solve(robo, symo, nTm, n, m, known_vars=set()):
-    chain = robo.loop_chain(m, n, add_root=False)
-    root = robo.common_root(m, n)
+def paul_solve(robo, symo, nTm, n, m, known_vars=None):
+    chain = robo.loop_chain(m, n)
     th_all = set()
     r_all = set()
     # Create the set of all knowns symbols
     for i in chain:
-        if i > 0 and i != root:
-            if robo.sigma[i] == 0 and robo.theta[i] not in known_vars:
-                assert(isinstance(robo.theta[i], Expr))
+        if i >= 0:
+            if robo.sigma[i] == 0 and isinstance(robo.theta[i], Expr):
                 th_all.add(robo.theta[i])
-            if robo.sigma[i] == 1 and robo.r[i] not in known_vars:
-                assert(isinstance(robo.r[i], Expr))
+            if robo.sigma[i] == 1 and isinstance(robo.r[i], Expr):
                 r_all.add(robo.r[i])
     solver = Solver(symo, th_all, r_all)
-    #TODO: finish constant separation
-    #simp_robo, Tnz, Tem = simplify_robot(robo, n, m, root)
-    #dgm = DGM(simp_robo, symo)
-    dgm = DGM(robo, symo)
-    Td = nTm.copy()
-    if nTm.has(EMPTY):
-        Tfull = DGM.compute(robo, symo, n, m)
-        replace_EMPTY(Td, Tfull)
+    prev_unknowns_size = solver.unknowns_size
     while not solver.is_solved:
-        prev_unknowns_size = solver.unknowns_size
-
-        #Td = Tnz * Td * Tem
-        for k in reversed(chain + [root]):
-            Tleft = dgm.transform(k, m)
-            Tright = dgm.transform(k, n)*Td
+        tr_list = TransformChain.create(robo, n, m)
+        Td = nTm.copy()
+        replace_EMPTY(Td, tr_list)
+        #bring all the terminal constant transforms on the right side
+        tr_const = tr_list.separate_const_right(solver.unknowns)
+        tr_post = tr_const.inverse()
+        Td = Td * tr_post.to_matrix(simplify=True)
+        tr_pre = TransformChain()
+        while tr_list.data:
+            print "ITERATION"
+            tr_const = tr_list.separate_const_left(solver.unknowns)
+            assert isinstance(tr_pre, TransformChain)
+            tr_pre = tr_const.inverse() + tr_pre
+            assert isinstance(tr_pre, TransformChain)
+            Tleft = tr_list.to_matrix(simplify=True)
+            Tright = tr_pre.to_matrix(simplify=True)*Td
             M_eq = Tleft - Tright
-            while not solver.is_solved:
-                if not solver.solve(list(M_eq[0:3, 0:4])):
-                    break
-            if solver.is_solved:
-                break
+            tr = tr_list.pop(0)
+            tr_pre.insert(0, tr.inv())
+           # if tr.val.atoms(Symbol) - knowns:
+            print "### EQUATIONS ###"
+            for eq in list(M_eq[0:3, 0:4]):
+                print eq
+                print '---'
+            solver.solve(list(M_eq[0:3, 0:4]))
         if prev_unknowns_size == solver.unknowns_size:
-            print "FAIL TO SOLVE"
-            print solver.unknown_th | solver.unknown_r, "ARE STILL UNSOLVED"
             break
-    var_set = th_all | r_all
-    return var_set - solver.unknown_th - solver.unknown_r
 
 
 class Pattern:
@@ -239,15 +166,21 @@ class Pattern:
             return None
 
     def exctract_coeffs(self, equation, var_idx):
-        coeffs = get_coeffs(equation, self.var_lists[var_idx])
-        if coeffs is None:
-            return None
-        for c in coeffs:
-            if not self.is_constant(c):
+        coeffs = []
+        rest = equation
+        for var in self.var_lists[var_idx]:
+            rest, term = rest.as_independent(var, as_Add=True)
+            if term == ZERO:
+                coeffs.append(ZERO)
+                continue
+            c = term.as_coefficient(var)
+            if c is None or not self.is_constant(c):
                 return None
-        if all(x == ZERO for x in coeffs[:-1]):
+            coeffs.append(c)
+        #constant term
+        if not self.is_constant(rest):
             return None
-        coeffs[-1] = -coeffs[-1]
+        coeffs.append(-rest)
         for i in self.negative_coeffs:
             coeffs[i] = -coeffs[i]
         return coeffs
@@ -328,27 +261,24 @@ class Solver:
             ths, rs = self.retrieve_unknowns(equation)
             if len(ths | rs) > 2 or len(ths | rs) == 0 or len(rs) > 1:
                 continue
-#            collect_terms = []
-#            if len(rs) == 1:
-#                q, = rs
-#                collect_terms.append(q)
-#            if len(ths) == 2:
-#                q1, q2 = ths
-#                collect_terms.append(cos(q1))
-#                collect_terms.append(cos(q2))
-#                collect_terms.append(sin(q1))
-#                collect_terms.append(sin(q2))
-#                collect_terms.append(cos(q1+q2))
-#                collect_terms.append(sin(q1+q2))
-#            elif len(ths) == 1:
-#                q, = ths
-#                collect_terms.append(cos(q))
-#                collect_terms.append(sin(q))
-
-            equation = tools.simplify(equation)
-            equation = unfold_angle_sum(equation, ths)
-            equation = equation.expand()
-#            equation = equation.collect(collect_terms)
+            collect_terms = []
+            if len(rs) == 1:
+                q, = rs
+                collect_terms.append(q)
+            if len(ths) == 2:
+                q1, q2 = ths
+                collect_terms.append(cos(q1))
+                collect_terms.append(cos(q2))
+                collect_terms.append(sin(q1))
+                collect_terms.append(sin(q2))
+                collect_terms.append(cos(q1+q2))
+                collect_terms.append(sin(q1+q2))
+            elif len(ths) == 1:
+                q, = ths
+                collect_terms.append(cos(q))
+                collect_terms.append(sin(q))
+            #equation = equation.expand()
+            equation = equation.collect(collect_terms)
             equation_candidates.append((ths, rs, equation))
         return equation_candidates
 
@@ -385,9 +315,6 @@ class Solver:
             th, = ths
             coeffs = self.patt[3].match(eq1, eq2, th1=th)
             if coeffs:
-                #TODO maybe do it more elegantly
-                if coeffs[2] == ZERO and coeffs[5] == ZERO:
-                    return False
                 _solve_type_3(self.symo, coeffs, th)
                 self.unknown_th.remove(th)
                 print "TYPE 3"
@@ -433,9 +360,7 @@ class Solver:
             if not coeffs:  # try the other way around
                 th1, th2 = th2, th1
                 coeffs = self.patt[8].match(eq1, eq2, th1=th1, th2=th2)
-            #TODO: think about this additional type of constraints
-
-            if coeffs and coeffs[0]*coeffs[1] != ZERO:
+            if coeffs:
                 _solve_type_8(self.symo, coeffs, th1, th2)
                 self.unknown_th.remove(th1)
                 self.unknown_th.remove(th2)
@@ -474,7 +399,8 @@ class Solver:
         return thetas, rs
 
     def is_constant(self, equation):
-        assert isinstance(equation, Expr)
+        if not isinstance(equation, Expr):
+            return True
         eq_syms = equation.atoms(Symbol)
         for var_sym in (theta1, theta2, rho):
             if var_sym in eq_syms:
@@ -492,8 +418,8 @@ def _solve_type_1(symo, coeffs, r):
     """
     X, Y = coeffs
     symo.write_line("# X*r = Y".format(r))
-    X = symo.replace(simplify(X), 'X', r)
-    Y = symo.replace(simplify(Y), 'Y', r)
+    X = symo.replace(trigsimp(X), 'X', r)
+    Y = symo.replace(trigsimp(Y), 'Y', r)
     symo.add_to_dict(r, Y/X)
 
 
@@ -503,27 +429,27 @@ def _solve_type_2(symo, coeffs, th):
     """
     X, Y, Z = coeffs
     symo.write_line("# X*sin({0}) + Y*cos({0}) = Z".format(th))
-    X = symo.replace(simplify(X), 'X', th)
-    Y = symo.replace(simplify(Y), 'Y', th)
-    Z = symo.replace(simplify(Z), 'Z', th)
+    X = symo.replace(trigsimp(X), 'X', th)
+    Y = symo.replace(trigsimp(Y), 'Y', th)
+    Z = symo.replace(trigsimp(Z), 'Z', th)
     YPS = var('YPS%s' % th)
     if X == ZERO and Y != ZERO:
         C = symo.replace(Z/Y, 'C', th)
-        symo.add_to_dict(YPS, (ONE, -ONE))
+        symo.add_to_dict(YPS, (ONE, - ONE))
         symo.add_to_dict(th, atan2(YPS*sqrt(1-C**2), C))
     elif X != ZERO and Y == ZERO:
         S = symo.replace(Z/X, 'S', th)
-        symo.add_to_dict(YPS, (ONE, -ONE))
+        symo.add_to_dict(YPS, (ONE, - ONE))
         symo.add_to_dict(th, atan2(S, YPS*sqrt(1-S**2)))
     elif Z == ZERO:
         symo.add_to_dict(YPS, (ONE, ZERO))
         symo.add_to_dict(th, atan2(-Y, X) + YPS*pi)
     else:
-        DENOM = symo.replace(X**2 + Y**2, 'DENOM', th)
-        DELTA = symo.replace(DENOM - Z**2, 'DELTA', th)
-        symo.add_to_dict(YPS, (ONE, -ONE))
-        S = symo.replace((X*Z + YPS * Y * sqrt(DELTA))/DENOM, 'S', th)
-        C = symo.replace((Y*Z - YPS * X * sqrt(DELTA))/DENOM, 'C', th)
+        B = symo.replace(X**2 + Y**2, 'B', th)
+        D = symo.replace(B - Z**2, 'D', th)
+        symo.add_to_dict(YPS, (ONE, - ONE))
+        S = symo.replace((X*Z + YPS * Y * sqrt(D))/B, 'S', th)
+        C = symo.replace((Y*Z - YPS * X * sqrt(D))/B, 'C', th)
         symo.add_to_dict(th, atan2(S, C))
 
 
@@ -535,12 +461,12 @@ def _solve_type_3(symo, coeffs, th):
     X1, Y1, Z1, X2, Y2, Z2 = coeffs
     symo.write_line("# X1*sin({0}) + Y1*cos({0}) = Z1".format(th))
     symo.write_line("# X2*sin({0}) + Y2*cos({0}) = Z2".format(th))
-    X1 = symo.replace(simplify(X1), 'X1', th)
-    Y1 = symo.replace(simplify(Y1), 'Y1', th)
-    Z1 = symo.replace(simplify(Z1), 'Z1', th)
-    X2 = symo.replace(simplify(X2), 'X2', th)
-    Y2 = symo.replace(simplify(Y2), 'Y2', th)
-    Z2 = symo.replace(simplify(Z2), 'Z2', th)
+    X1 = symo.replace(trigsimp(X1), 'X1', th)
+    Y1 = symo.replace(trigsimp(Y1), 'Y1', th)
+    Z1 = symo.replace(trigsimp(Z1), 'Z1', th)
+    X2 = symo.replace(trigsimp(X2), 'X2', th)
+    Y2 = symo.replace(trigsimp(Y2), 'Y2', th)
+    Z2 = symo.replace(trigsimp(Z2), 'Z2', th)
     if X1 == ZERO and Y2 == ZERO:
         symo.add_to_dict(th, atan2(Z2/X2, Z1/Y1))
     elif X2 == ZERO and Y1 == ZERO:
@@ -560,10 +486,10 @@ def _solve_type_4(symo, coeffs, th, r):
     X1, Y1, X2, Y2 = coeffs
     symo.write_line("# X1*sin({0})*{1} = Y1".format(th, r))
     symo.write_line("# X2*cos({0})*{1} = Y2".format(th, r))
-    X1 = symo.replace(simplify(X1), 'X1', th)
-    Y1 = symo.replace(simplify(Y1), 'Y1', th)
-    X2 = symo.replace(simplify(X2), 'X2', th)
-    Y2 = symo.replace(simplify(Y2), 'Y2', th)
+    X1 = symo.replace(trigsimp(X1), 'X1', th)
+    Y1 = symo.replace(trigsimp(Y1), 'Y1', th)
+    X2 = symo.replace(trigsimp(X2), 'X2', th)
+    Y2 = symo.replace(trigsimp(Y2), 'Y2', th)
     YPS = var('YPS%s' % r)
     symo.add_to_dict(YPS, (ONE, - ONE))
     symo.add_to_dict(r, YPS*sqrt((Y1/X1)**2 + (Y2/X2)**2))
@@ -578,12 +504,12 @@ def _solve_type_5(symo, coeffs, th, r):
     X1, Y1, Z1, X2, Y2, Z2 = coeffs
     symo.write_line("# X1*sin({0}) = Y1*{1} + Z1".format(th, r))
     symo.write_line("# X2*cos({0}) = Y2*{1} + Z2".format(th, r))
-    X1 = symo.replace(simplify(X1), 'X1', th)
-    Y1 = symo.replace(simplify(Y1), 'Y1', th)
-    Z1 = symo.replace(simplify(Z1), 'Z1', th)
-    X2 = symo.replace(simplify(X2), 'X2', th)
-    Y2 = symo.replace(simplify(Y2), 'Y2', th)
-    Z2 = symo.replace(simplify(Z2), 'Z2', th)
+    X1 = symo.replace(trigsimp(X1), 'X1', th)
+    Y1 = symo.replace(trigsimp(Y1), 'Y1', th)
+    Z1 = symo.replace(trigsimp(Z1), 'Z1', th)
+    X2 = symo.replace(trigsimp(X2), 'X2', th)
+    Y2 = symo.replace(trigsimp(Y2), 'Y2', th)
+    Z2 = symo.replace(trigsimp(Z2), 'Z2', th)
     V1 = symo.replace(Z1/X1, 'V1', r)
     W1 = symo.replace(Y1/X1, 'W1', r)
     V2 = symo.replace(Z2/X2, 'V2', r)
@@ -603,12 +529,12 @@ def _solve_type_6(symo, coeffs, th_1, th_2):
     symo.write_line(s.format(th_1, th_2))
     s = "# V*sin({0}) - W*cos({0}) = X*sin({1}) - Y*cos({1}) + Z2"
     symo.write_line(s.format(th_1, th_2))
-    V = symo.replace(simplify(V), 'V', th_2)
-    W = symo.replace(simplify(W), 'W', th_2)
-    X = symo.replace(simplify(X), 'X', th_2)
-    Y = symo.replace(simplify(Y), 'Y', th_2)
-    Z1 = symo.replace(simplify(Z1), 'Z1', th_2)
-    Z2 = symo.replace(simplify(Z2), 'Z2', th_2)
+    V = symo.replace(trigsimp(V), 'V', th_2)
+    W = symo.replace(trigsimp(W), 'W', th_2)
+    X = symo.replace(trigsimp(X), 'X', th_2)
+    Y = symo.replace(trigsimp(Y), 'Y', th_2)
+    Z1 = symo.replace(trigsimp(Z1), 'Z1', th_2)
+    Z2 = symo.replace(trigsimp(Z2), 'Z2', th_2)
     B1 = symo.replace(2*(Z1*Y + Z2*X), 'B1', th_2)
     B2 = symo.replace(2*(Z1*X - Z2*Y), 'B2', th_2)
     B3 = symo.replace(V**2 + W**2 - X**2 - Y**2 - Z1**2 - Z2**2, 'B3', th_2)
@@ -628,12 +554,12 @@ def _solve_type_7(symo, coeffs, th_1, th_2):
     symo.write_line(s.format(th_1, th_2))
     s = "# V*sin({0}) - W*cos({0}) = X*sin({1}) - Y*cos({1}) + Z2"
     symo.write_line(s.format(th_1, th_2))
-    V = symo.replace(simplify(V), 'V', th_2)
-    W = symo.replace(simplify(W), 'W', th_2)
-    X = symo.replace(simplify(X), 'X', th_2)
-    Y = symo.replace(simplify(Y), 'Y', th_2)
-    Z1 = symo.replace(simplify(Z1), 'Z1', th_2)
-    Z2 = symo.replace(simplify(Z2), 'Z2', th_2)
+    V = symo.replace(trigsimp(V), 'V', th_2)
+    W = symo.replace(trigsimp(W), 'W', th_2)
+    X = symo.replace(trigsimp(X), 'X', th_2)
+    Y = symo.replace(trigsimp(Y), 'Y', th_2)
+    Z1 = symo.replace(trigsimp(Z1), 'Z1', th_2)
+    Z2 = symo.replace(trigsimp(Z2), 'Z2', th_2)
     B1 = symo.replace(2*(Z1*Y + Z2*X), 'B1', th_2)
     B2 = symo.replace(2*(Z1*X - Z2*Y), 'B2', th_2)
     B3 = symo.replace(V**2 + W**2 - X**2 - Y**2 - Z1**2 - Z2**2, 'B3', th_2)
@@ -651,10 +577,10 @@ def _solve_type_8(symo, coeffs, th_1, th_2):
     X, Y, Z1, Z2 = coeffs
     symo.write_line("# X*cos({0}) + Y*cos({0} + {1}) = Z1".format(th_1, th_2))
     symo.write_line("# X*sin({0}) + Y*sin({0} + {1}) = Z2".format(th_1, th_2))
-    X = symo.replace(simplify(X), 'X', th_2)
-    Y = symo.replace(simplify(Y), 'Y', th_2)
-    Z1 = symo.replace(simplify(Z1), 'Z1', th_2)
-    Z2 = symo.replace(simplify(Z2), 'Z2', th_2)
+    X = symo.replace(trigsimp(X), 'X', th_2)
+    Y = symo.replace(trigsimp(Y), 'Y', th_2)
+    Z1 = symo.replace(trigsimp(Z1), 'Z1', th_2)
+    Z2 = symo.replace(trigsimp(Z2), 'Z2', th_2)
     Cj = symo.replace((Z1**2 + Z2**2 - X**2 - Y**2) / (2*X*Y), 'C', th_2)
     YPS = var('YPS%s' % th_2)
     symo.add_to_dict(YPS, (ONE, -ONE))
@@ -679,5 +605,11 @@ def _solve_square(symo, coeffs, x):
     YPS = var('YPS%s' % x)
     symo.add_to_dict(YPS, (ONE, -ONE))
     symo.add_to_dict(x, (-B + YPS*sqrt(Delta))/(2*A))
+
+
+
+
+
+
 
 

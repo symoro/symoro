@@ -14,12 +14,16 @@ from wx.glcanvas import GLCanvas
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
 
-from numpy import sin, cos, radians, pi, inf, nan
-
-from sympy import Expr
+import numpy as np
+from numpy import sin, cos, pi
+#from numpy import inf, nan
+#from numpy import random, array, dot
+from numpy.linalg import pinv, norm
+from sympy import Expr, zeros
 
 from pysymoro.invgeom import loop_solve
-from pysymoro.geometry import dgm
+from pysymoro.geometry import DGM
+from pysymoro.kinematics import kin_loop_constr
 from symoroutils import samplerobots
 from symoroutils import symbolmgr
 from symoroutils import tools
@@ -58,7 +62,7 @@ class VizGlCanvas(GLCanvas):
         self.jnt_objs = []
         self.construct_hierarchy()
         self.dgms = {}
-        self.l_solver = None
+        self.W = None
 
     def OnEraseBackground(self, event):
         # Do nothing, to avoid flashing on MSW.
@@ -74,12 +78,12 @@ class VizGlCanvas(GLCanvas):
         Then uses those sizes to determine the reference
         numbers which are used all over the class.
         """
-        minv = inf
+        minv = np.inf
         for jnt in self.jnt_objs[1:]:
             dist = max(abs(jnt.r), abs(jnt.d))
             if dist < minv and dist != 0:
                 minv = dist
-        if minv == inf:
+        if minv == np.inf:
             minv = 1.
         self.length = 0.4 * minv
         for jnt in self.jnt_objs:
@@ -139,14 +143,9 @@ class VizGlCanvas(GLCanvas):
         self.representation(expanded=True)
 
     def OnSize(self, event):
-        size = self.size = self.GetClientSize()
-        if self.GetContext():
-            self.SetCurrent()
-            gl.glViewport(0, 0, size.width, size.height)
-            #gl.glMatrixMode(gl.GL_PROJECTION)
-            #gl.glLoadIdentity()
-            #gl.gluPerspective(40.0, size.width/size.height, 1.0, 100.0)
-            #gl.glMatrixMode(gl.GL_MODELVIEW)
+        #if self.GetContext():
+            #self.SetCurrent()
+        self.setup_viewport()
         event.Skip()
 
     def OnMouseDown(self, evt):
@@ -160,23 +159,30 @@ class VizGlCanvas(GLCanvas):
     def OnMouseMotion(self, evt):
         if evt.Dragging():
             x, y = evt.GetPosition()
-            dx, dy = x - self.lastx, y - self.lasty
+            if hasattr(self, 'lastx'):
+                dx, dy = x - self.lastx, y - self.lasty
+            else:
+                dx, dy = 0, 0
             self.lastx, self.lasty = x, y
             if evt.LeftIsDown() and evt.RightIsDown():
                 # zoom
                 self.distance *= 1 + 2 * float(dy) / self.size.height
             else:
                 coef = self.distance / self.length * \
-                    sin(radians(self.fov/2.0))
-                if evt.RightIsDown():
+                    sin(np.radians(self.fov/2.0))
+                if evt.LeftIsDown():
                     # rotate
                     self.hor_angle += dx * (coef / self.size.width)
                     self.ver_angle += dy * (coef / self.size.height)
                     self.ver_angle = max(min(pi/2, self.ver_angle), -pi/2)
-                elif evt.LeftIsDown():
+                elif evt.RightIsDown():
                     # translate
-                    self.cen_x -= dx * (coef / self.size.width)
+                    C = cos(self.hor_angle)
+                    S = sin(self.hor_angle)
+                    self.cen_x -= dx * (coef / self.size.width) * C
                     self.cen_x = max(min(pi/2, self.cen_x), -pi/2)
+                    self.cen_y += dx * (coef / self.size.width) * S
+                    self.cen_y = max(min(pi/2, self.cen_y), -pi/2)
                     self.cen_z += dy * (coef / self.size.height)
                     self.cen_z = max(min(pi/2, self.cen_z), -pi/2)
             self.CameraTransformation()
@@ -189,7 +195,7 @@ class VizGlCanvas(GLCanvas):
                 self.dgms[i] = self.dgm_for_frame(self.robo.ant[i])
             else:
                 symo = symbolmgr.SymbolManager(sydi=self.pars_num)
-                T = dgm(self.robo, symo, 0, i, fast_form=True, trig_subs=True)
+                T = DGM.compute(self.robo, symo, 0, i, fast_form=True)
                 self.dgms[i] = symo.gen_func('dgm_generated', T, self.q_sym)
         return self.dgms[i]
 
@@ -198,12 +204,12 @@ class VizGlCanvas(GLCanvas):
         min_error = 99999999
         min_sln = None
         for sln in slns:
-            if nan in sln:
+            if np.nan in sln:
                 continue
             error = 0
             for j, (qp, sigma) in enumerate(qs_pas):
                 if sigma == 0:
-                    error += atan2(sin(qp-sln[j]), cos(qp-sln[j]))**2
+                    error += np.atan2(sin(qp-sln[j]), cos(qp-sln[j]))**2
                 else:
                     error += (qp - sln[j])**2
             if error < min_error:
@@ -216,25 +222,73 @@ class VizGlCanvas(GLCanvas):
     def solve(self):
         if self.robo.structure != tools.CLOSED_LOOP:
             return
-        if self.l_solver is None:
+        if self.W is None:
             self.generate_loop_fcn()
-        qs_act = []
-        qs_pas = []
-        for sym in self.q_sym:
-            if sym in self.q_act_sym:
-                qs_act.append(self.jnt_dict[sym].q)
-            elif sym in self.q_pas_sym:
-                i = self.jnt_dict[sym].index
-                if i < self.robo.NL:
-                    qs_pas.append((self.jnt_dict[sym].q, self.robo.sigma[i]))
-        self.find_solution(qs_act, qs_pas)
+#        solved = False
+#        for j in xrange(5):
+#            if j > 0:
+#                for sym in self.q_pas_sym:
+#                    if isinstance(self.jnt_dict[sym], RevoluteJoint):
+#                        self.jnt_dict[sym].q = np.random.rand()*6 - 3
+        for i in xrange(25):
+            if self.loop_iter():
+#                solved = True
+                break
+#            if solved:
+#                break
+
+    def loop_iter(self):
+        q = [self.jnt_dict[x].q for x in self.q_sym]
+        #find jacobian
+        J = np.array(self.W(q))
+        nRows = J.shape[0]
+        #find error
+        Err = np.zeros(nRows)
+        for (i, j), rows in self.kin_rows.iteritems():
+            T = np.array(self.Tloop[i, j](q))
+            dX = [T[0, 3], T[1, 3], T[2, 3]]
+            dX.append((T[2, 1] - T[1, 2])/2)
+            dX.append((T[0, 2] - T[2, 0])/2)
+            dX.append((T[1, 0] - T[0, 1])/2)
+            for r, dst in rows:
+                Err[dst] = (dX[r])
+        if max(np.abs(Err)) < 1e-6:
+            return True
+
+        #modify variables
+        dq = np.dot(pinv(J, rcond=1e-8), (Err))
+        dqmax = max(np.abs(dq))
+        thresh = 0.5
+        if dqmax > thresh:
+            dq *= thresh/dqmax
+        for i, delta in enumerate(dq):
+            sym = self.q_pas_sym[i]
+            self.jnt_dict[sym].q += delta
+        if dqmax < 1e-5:
+            return True
+        else:
+            return False
 
     def generate_loop_fcn(self):
         symo = symbolmgr.SymbolManager(sydi=self.pars_num)
-        loop_solve(self.robo, symo)
-        self.l_solver = symo.gen_func(
-            'IGM_gen', self.q_pas_sym, self.q_act_sym
-        )
+        res = kin_loop_constr(self.robo, symo, proj=[0]*self.robo.N_loops)
+        W_a, W_p, W_ac, W_pc, W_c, self.kin_rows = res
+        W1 = W_p.row_join(zeros(W_p.shape[0], W_c.shape[1]))
+        W2 = W_pc.row_join(W_c)
+        W = W1.col_join(W2)
+        self.W = symo.gen_func('KC_gen', W, self.q_sym)
+        self.Tloop = {}
+        for i, j in self.kin_rows:
+            symo = symbolmgr.SymbolManager(sydi=self.pars_num)
+            T = DGM.compute(self.robo, symo, i, j, fast_form=True)
+            self.Tloop[i, j] = symo.gen_func(
+                'T%s%s_gen' % (i, j), T, self.q_sym
+            )
+
+#        loop_solve(self.robo, symo)
+#        self.l_solver = symo.gen_func(
+#            'IGM_gen', self.q_pas_sym, self.q_act_sym
+#        )
 
     def centralize_to_frame(self, index):
         q_vec = [self.jnt_dict[sym].q for sym in self.q_sym]
@@ -339,8 +393,7 @@ class VizGlCanvas(GLCanvas):
         """
         Check if current index value corresponds to a terminal link.
         """
-        if index in range(self.robo.NL) and \
-            not index in self.robo.ant:
+        if index in range(self.robo.NL) and not index in self.robo.ant:
             # when index value is present in the list of links (for
             # closed-loop case) and not present in the list of
             # antecedent values
@@ -401,11 +454,18 @@ class VizGlCanvas(GLCanvas):
         gl.glEnable(gl.GL_LIGHT1)
         gl.glColorMaterial(gl.GL_FRONT, gl.GL_DIFFUSE)
         gl.glEnable(gl.GL_COLOR_MATERIAL)
+        self.setup_viewport()
+
+    def setup_viewport(self):
+        self.size = self.GetClientSize()
+        W, H = self.size
+        gl.glViewport(0, 0, W, H)
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
-        glu.gluPerspective(40.0, 1., 0.2, 200.0)
+        glu.gluPerspective(40.0, float(W)/H, 0.2, 100.0)
         gl.glMatrixMode(gl.GL_MODELVIEW)
         self.CameraTransformation()
+        self.Refresh(False)
 
 
 class MainWindow(wx.Frame):
@@ -414,7 +474,7 @@ class MainWindow(wx.Frame):
     ):
         super(MainWindow, self).__init__(
             parent, identifier, prefix + ': Robot representation',
-            style=wx.DEFAULT_FRAME_STYLE | wx.FULL_REPAINT_ON_RESIZE
+            style=wx.DEFAULT_FRAME_STYLE  #  | wx.FULL_REPAINT_ON_RESIZE
         )
         self.robo = robo
         self.params_dict = params if params is not None else {}
@@ -423,7 +483,7 @@ class MainWindow(wx.Frame):
             self, robo, self.params_dict, size=(600, 600)
         )
         self.p = wx.lib.scrolledpanel.ScrolledPanel(self, -1)
-        self.p.SetMinSize((350,650))
+        self.p.SetMinSize((350, 650))
         self.init_ui()
         self.p.SetupScrolling()
         self.update_spin_controls()
@@ -444,12 +504,12 @@ class MainWindow(wx.Frame):
             chk_exploded, pos=(0, 0), flag=wx.ALIGN_CENTER_VERTICAL
         )
         # joint size slider
-        self.slr_joint_size = wx.Slider(self.p, minValue=1, maxValue=100)
+        self.slr_joint_size = wx.Slider(self.p, minValue=1, maxValue=100, size=(120, 22))
         self.slr_joint_size.SetValue(100*self.canvas.length)
         self.slr_joint_size.Bind(wx.EVT_SCROLL, self.OnSliderChanged)
         grd_szr_control.Add(
             wx.StaticText(self.p, label="Joint Size"),
-            pos=(1, 0), flag=wx.ALIGN_CENTER
+            pos=(1, 0), flag=wx.ALIGN_CENTER,
         )
         grd_szr_control.Add(
             self.slr_joint_size, pos=(2, 0), flag=wx.ALIGN_CENTER
@@ -487,7 +547,7 @@ class MainWindow(wx.Frame):
         # home position button
         btn_home = wx.Button(self.p, label="Default Position")
         btn_home.Bind(wx.EVT_BUTTON, self.OnHomePosition)
-        grd_szr_control.Add(btn_home, pos=(7,0), flag=wx.ALIGN_CENTER)
+        grd_szr_control.Add(btn_home, pos=(7, 0), flag=wx.ALIGN_CENTER)
         # break/make loop radio buttons
         if self.robo.structure == tools.CLOSED_LOOP:
             choice_list = ['Break Loops', 'Make Loops']
@@ -499,30 +559,21 @@ class MainWindow(wx.Frame):
                 self.rbx_loops, pos=(8, 0), flag=wx.ALIGN_CENTER
             )
         # help text
-        move_help = """
-        To Translate:
-        Left button +
-        move mouse
+        move_help = "Rotate: Left button\n\n"
+        move_help += "Translate: Right button\n\n"
+        move_help += "Zoom: Left and Right buttons"
 
-        To Rotate:
-        Right button +
-        move mouse
-
-        To Zoom:
-        Left and Right
-        button + move
-        mouse
-        """
         grd_szr_control.Add(
             wx.StaticText(self.p, label=move_help),
-            pos=(9,0), flag=wx.ALIGN_LEFT
+            pos=(9, 0), flag=wx.ALIGN_LEFT
         )
         # joint variables box
         self.spin_ctrls = {}
         grd_szr_joints = wx.GridBagSizer(hgap=10, vgap=10)
         p_index = 0
         for sym in self.canvas.q_sym:
-            if sym == 0: continue
+            if sym == 0:
+                continue
             jnt = self.canvas.jnt_dict[sym]
             if isinstance(jnt, RevoluteJoint):
                 label = 'th'
@@ -600,7 +651,18 @@ class MainWindow(wx.Frame):
         self.canvas.OnDraw()
 
     def OnFindRandom(self, evt):
-        pass
+        robo = self.robo
+        for i in xrange(1, robo.nj):
+            sym = robo.get_q(i)
+            print i, sym, robo.sigma[i], robo.mu[i]
+            if robo.sigma[i] == 0:
+                self.canvas.jnt_dict[sym].q = np.random.rand()*6 - 3
+            elif robo.sigma[i] == 1:
+                self.canvas.jnt_dict[sym].q = np.random.rand() + 0.5
+        if self.solve_loops:
+            self.canvas.solve()
+        self.update_spin_controls()
+        self.canvas.OnDraw()
 
     def OnHomePosition(self, evt):
         self.canvas.centralize_to_frame(0)
