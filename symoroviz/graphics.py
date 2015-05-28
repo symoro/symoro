@@ -9,7 +9,7 @@ from math import atan2
 
 import wx
 import wx.lib.agw.floatspin as FS
-from wx.glcanvas import GLCanvas
+from wx.glcanvas import GLCanvas, GLContext
 
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
@@ -48,6 +48,7 @@ class VizGlCanvas(GLCanvas):
         self.Bind(wx.EVT_RIGHT_UP, self.OnMouseUp)
         self.Bind(wx.EVT_MOTION, self.OnMouseMotion)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
+        self.context = GLContext(self)
         self.size = self.GetClientSize()
         self.hor_angle = self.ver_angle = 0
         self.cen_x = self.cen_y = self.cen_z = 0
@@ -298,7 +299,7 @@ class VizGlCanvas(GLCanvas):
         self.Refresh(False)
 
     def OnPaintAll(self, event):
-        self.SetCurrent()
+        self.SetCurrent(self.context)
         if not self.init:
             self.InitGL()
             self.init = 1
@@ -435,11 +436,11 @@ class VizGlCanvas(GLCanvas):
 
     def InitGL(self):
         # set viewing projection
-        mat_specular = (1.0, 1.0, 1.0, 1.0)
+        mat_specular = (0.1, 0.1, 0.1, 0.2)
         light_position = (.3, .3, 0.5, 0.0)
         light_position1 = (-0.3, 0.3, 0.5, 0.0)
         diffuseMaterial = (1., 1., 1., 1.0)
-        ambientMaterial = (0.5, .5, .5, 1.0)
+        ambientMaterial = (0.8, .8, .8, 1.0)
         gl.glClearColor(1.0, 1.0, 1.0, 1.0)
         gl.glShadeModel(gl.GL_SMOOTH)
         gl.glEnable(gl.GL_DEPTH_TEST)
@@ -459,6 +460,7 @@ class VizGlCanvas(GLCanvas):
     def setup_viewport(self):
         self.size = self.GetClientSize()
         W, H = self.size
+        self.SetCurrent(self.context)
         gl.glViewport(0, 0, W, H)
         gl.glMatrixMode(gl.GL_PROJECTION)
         gl.glLoadIdentity()
