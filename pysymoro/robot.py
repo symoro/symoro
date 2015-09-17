@@ -589,9 +589,9 @@ class Robot(object):
         exceptional from the ones set in the ctor.
         """
         for j in xrange(1, self.NF):
-            if self.sigma[j] == 0:
+            if self.sigma[j] == 0 and self.theta[j].is_number:
                 self.theta[j] = var('th{0}'.format(j))
-            elif self.sigma[j] == 1:
+            elif self.sigma[j] == 1 and self.r[j].is_number:
                 self.r[j] = var('r{0}'.format(j))
             elif self.sigma[j] == 2:
                 self.mu[j] = 0
