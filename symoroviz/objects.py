@@ -161,7 +161,7 @@ class JointObject(Frame):
 
     def draw_end(self):
         if self.has_end:
-            gl.glColor3f(0.0, 0.0, 1.0)
+            gl.glColor3f(0.2, 0.7, 0.0)
             gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.sph_vertices)
             gl.glNormalPointer(gl.GL_FLOAT, 0, self.sph_normals)
             gl.glDrawElements(
