@@ -28,12 +28,12 @@ class Frame(object):
     def draw_frame(self):
         if self.show_frame:
             gl.glPushMatrix()
-            # z-axis (joint axis) - red
-            gl.glColor3f(1, 0, 0)
+            # z-axis (joint axis) - blue
+            gl.glColor3f(0, 0, 1)
             self.draw_arrow()
-            # x-axis - green
+            # x-axis - red
             gl.glRotatef(90, 0, 1, 0)
-            gl.glColor3f(0, 1, 0)
+            gl.glColor3f(1, 0, 0)
             self.draw_arrow()
             gl.glPopMatrix()
 
@@ -164,7 +164,7 @@ class JointObject(Frame):
 
     def draw_end(self):
         if self.has_end:
-            gl.glColor3f(0.0, 0.0, 1.0)
+            gl.glColor3f(0.2, 0.7, 0)
             gl.glVertexPointer(3, gl.GL_FLOAT, 0, self.sph_vertices)
             gl.glNormalPointer(gl.GL_FLOAT, 0, self.sph_normals)
             gl.glDrawElements(
