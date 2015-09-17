@@ -135,17 +135,6 @@ class Robot(object):
         head, tail = os.path.split(self.par_file_path)
         return tail.strip()
 
-    def set_defaults(self, joint=False, geom=False, base=False):
-        # joint params
-        if joint:
-            self._set_joint_defaults()
-        # geometric params
-        if geom:
-            self._set_geom_defaults()
-        # base params
-        if base:
-            self._set_base_defaults()
-
     def put_val(self, j, name, val):
         try:
             if isinstance(val, str) or isinstance(val, unicode):
@@ -560,43 +549,45 @@ class Robot(object):
                 params.append(self.get_val(j, h))
         return params
 
-    def _set_joint_defaults(self):
+    def set_joint_defaults(self):
         """
         Set default values for joint parameters for those exceptional
         from the ones set in the ctor.
         """
         for j in xrange(1, self.NJ):
-            try:
-                if self.sigma[j] == 2:
-                    self.qdot[j] = 0
-                    self.qddot[j] = 0
-                    self.GAM[j] = 0
-                else:
-                    self.qdot[j] = var('QP{0}'.format(j))
-                    self.qddot[j] = var('QDP{0}'.format(j))
-                    self.GAM[j] = var('GAM{0}'.format(j))
-            except IndexError:
-                # just ignore exception
-                pass
-            if self.eta[j] == 1:
-                self.k[j] = var('k{0}'.format(j))
-            else:
-                self.k[j] = 0
-
-    def _set_geom_defaults(self):
+            self.set_joint_defaults(self, j)
+            
+    def reset_joint(self, j):
+        if self.sigma[j] == 2:
+            self.qdot[j] = 0
+            self.qddot[j] = 0
+            self.GAM[j] = 0
+        else:
+            self.qdot[j] = var('QP{0}'.format(j))
+            self.qddot[j] = var('QDP{0}'.format(j))
+            self.GAM[j] = var('GAM{0}'.format(j))
+        if self.eta[j] == 1:
+            self.k[j] = var('k{0}'.format(j))
+        else:
+            self.k[j] = 0
+    
+    def set_geom_defaults(self):
         """
         Set default values for geometric parameters for those
         exceptional from the ones set in the ctor.
         """
         for j in xrange(1, self.NF):
-            if self.sigma[j] == 0 and self.theta[j].is_number:
-                self.theta[j] = var('th{0}'.format(j))
-            elif self.sigma[j] == 1 and self.r[j].is_number:
-                self.r[j] = var('r{0}'.format(j))
-            elif self.sigma[j] == 2:
-                self.mu[j] = 0
+            self.reset_geom(j)
+            
+    def reset_geom(self, j):
+        if self.sigma[j] == 0:
+            self.theta[j] = var('th{0}'.format(j))
+        elif self.sigma[j] == 1:
+            self.r[j] = var('r{0}'.format(j))
+        elif self.sigma[j] == 2:
+            self.mu[j] = 0
 
-    def _set_base_defaults(self):
+    def set_base_defaults(self):
         """
         Set default values for base parameters for those exceptional
         from the ones set in the ctor.
