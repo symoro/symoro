@@ -555,7 +555,7 @@ class Robot(object):
         from the ones set in the ctor.
         """
         for j in xrange(1, self.NJ):
-            self.set_joint_defaults(self, j)
+            self.reset_joint(j)
             
     def reset_joint(self, j):
         if self.sigma[j] == 2:
