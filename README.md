@@ -14,7 +14,7 @@ published in the AIM 2014 conference.
 Requirements
 ------------
 + python (>= 2.7, &nbsp;&nbsp; 3.* is not supported)
-+ sympy (== 0.7.3)
++ sympy (>= 0.7.6)
 + numpy (>= 1.6.1)
 + wxPython (>= 2.8.12)
 + PyOpenGL (>= 3.0.1b2)
