@@ -24,20 +24,20 @@ def cart_pole():
     robo = Robot('CartPole', 2, 2, 2, False)
     robo.ant = (-1, 0, 1)
     robo.sigma = (0, 1, 0)
-    robo.alpha = (0, pi/2, pi/2)
+    robo.alpha = (0, pi / 2, pi / 2)
     robo.d = (0, 0, 0)
-    robo.theta = (0, pi/2, var('th2'))
+    robo.theta = (0, pi / 2, var('th2'))
     robo.r = (0, var('r1'), 0)
     robo.b = (0, 0, 0)
     robo.gamma = (0, 0, 0)
     robo.structure = tools.SIMPLE
-    robo.num = range(0, 3)
-    robo.Nex = [zeros(3, 1) for i in robo.num]
-    robo.Fex = [zeros(3, 1) for i in robo.num]
-    robo.FS = [0 for i in robo.num]
-    robo.IA = [0 for i in robo.num]
+    robo.num = list(range(0, 3))
+    robo.Nex = [zeros(3, 1)] * len(robo.num)
+    robo.Fex = [zeros(3, 1)] * len(robo.num)
+    robo.FS = [0] * len(robo.num)
+    robo.IA = [0] * len(robo.num)
     robo.FV = [var('FV{0}'.format(i)) for i in robo.num]
-    robo.MS = [zeros(3, 1) for i in robo.num]
+    robo.MS = [zeros(3, 1)] * len(robo.num)
     robo.MS[1][0] = var('MX2')
     robo.M = [var('M{0}'.format(i)) for i in robo.num]
     robo.GAM = [var('GAM{0}'.format(i)) for i in robo.num]
@@ -71,11 +71,11 @@ def planar2r():
     robo.d = [0, 0, var('L1')]
     robo.theta = [0, var('q1'), var('q2')]
     robo.r = [0, 0, 0]
-    robo.num = range(0, 3)
-    robo.Nex = [zeros(3, 1) for i in robo.num]
-    robo.Fex = [zeros(3, 1) for i in robo.num]
-    robo.FS = [0 for i in robo.num]
-    robo.IA = [0 for i in robo.num]
+    robo.num = list(range(0, 3))
+    robo.Nex = [zeros(3, 1)] * len(robo.num)
+    robo.Fex = [zeros(3, 1)] * len(robo.num)
+    robo.FS = [0] * len(robo.num)
+    robo.IA = [0] * len(robo.num)
     robo.FV = [var('FV{0}'.format(i)) for i in robo.num]
     robo.MS = [Matrix(var('MX{0}, MY{0}, MZ{0}'.format(i))) for i in robo.num]
     robo.M = [var('M{0}'.format(i)) for i in robo.num]
@@ -134,10 +134,10 @@ def rx90():
     robo.wdot0 = zeros(3, 1)
     robo.v0 = zeros(3, 1)
     robo.vdot0 = zeros(3, 1)
-    num = range(0, 7)
+    num = list(range(0, 7))
     robo.qdot = [var('QP{0}'.format(i)) for i in num]
     robo.qddot = [var('QDP{0}'.format(i)) for i in num]
-    robo.Nex= [zeros(3, 1) for i in num]
+    robo.Nex= [zeros(3, 1)] * len(num)
     robo.Nex[-1] = Matrix(var('CX{0}, CY{0}, CZ{0}'.format(robo.NJ)))
     robo.Fex = [zeros(3, 1) for i in num]
     robo.Fex[-1] = Matrix(var('FX{0}, FY{0}, FZ{0}'.format(robo.NJ)))
@@ -156,6 +156,3 @@ def rx90():
     ]
     robo.G = Matrix([0, 0, var('G3')])
     return robo
-
-
-

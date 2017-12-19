@@ -9,7 +9,7 @@ import OpenGL.GL as gl
 
 from numpy import degrees, identity, array
 
-from primitives import Primitives
+from .primitives import Primitives
 
 
 class Frame(object):

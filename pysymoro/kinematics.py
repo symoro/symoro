@@ -4,6 +4,8 @@
 # This file is part of the OpenSYMORO project. Please see
 # https://github.com/symoro/symoro/blob/master/LICENCE for the licence.
 
+from __future__ import print_function
+
 
 """
 This module of SYMORO package computes the kinematic models.
@@ -141,7 +143,7 @@ def _jac_inv(robo, symo, n, i, j):
     det = _jac_det(robo, symo, J=J)
     Jinv = J.adjugate()
     if det == tools.ZERO:
-        print 'Matrix is singular!'
+        print('Matrix is singular!')
     else:
         Jinv = Jinv/det
     Jinv = Jinv.applyfunc(symo.simp)
@@ -189,8 +191,8 @@ def _kinematic_loop_constraints(robo, symo, proj=None):
             Jj, L = _jac(robo, symo, j, k, j, chj)
         chi.extend(chj)
         J = Ji.row_join(-Jj)
-        for row in xrange(6):
-            if all(J[row, col] == tools.ZERO for col in xrange(len(chi))):
+        for row in range(6):
+            if all(J[row, col] == tools.ZERO for col in range(len(chi))):
                 continue
             elif J[row, chi.index(i)] == tools.ZERO:
                 extend_W(J, row, W_a, indx_a, chi)
@@ -225,7 +227,7 @@ def compute_vel_acc(
         first_link = 0
     #init auxilary matrix
     U = ParamsInit.init_u(robo)
-    for j in xrange(first_link, robo.NL):
+    for j in range(first_link, robo.NL):
         if j == 0:
             w[j] = symo.mat_replace(w[j], 'W', j)
             wdot[j] = symo.mat_replace(wdot[j], 'WP', j)
@@ -260,7 +262,7 @@ def velocities(robo):
     antRj, antPj = compute_rot_trans(robo, symo)
     w = ParamsInit.init_w(robo)
     v = ParamsInit.init_v(robo)
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         jRant = antRj[j].T
         qdj = Z_AXIS * robo.qdot[j]
         _omega_ij(robo, j, jRant, w, qdj)
@@ -292,7 +294,7 @@ def jdot_qdot(robo):
     w = ParamsInit.init_w(robo)
     wdot, vdot = ParamsInit.init_wv_dot(robo, gravity=False)
     U = ParamsInit.init_u(robo)
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         jRant = antRj[j].T
         qdj = Z_AXIS * robo.qdot[j]
         qddj = Z_AXIS * tools.ZERO

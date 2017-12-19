@@ -396,8 +396,8 @@ def write_numerical_base_acc(symo, inertia, beta_wrench, symmet=False):
     # setup matrix numMJE0
     symo.write_line("# setup numMJE0 matrix in numpy format")
     symo.write_equation('numMJE0', 'numpy.zeros((6, 6))')
-    for i in xrange(inertia.rows):
-        for j in xrange(inertia.cols):
+    for i in range(inertia.rows):
+        for j in range(inertia.cols):
             if inertia[i, j] != 0:
                 symo.write_equation(
                     'numMJE0[{row}, {col}]'.format(row=i, col=j),
@@ -406,7 +406,7 @@ def write_numerical_base_acc(symo, inertia, beta_wrench, symmet=False):
     # setup matrix numVBE0
     symo.write_line("# setup numVBE0 matrix in numpy format")
     symo.write_equation('numVBE0', 'numpy.zeros((6, 1))')
-    for i in xrange(beta_wrench.rows):
+    for i in range(beta_wrench.rows):
         if beta_wrench[i, 0] != 0:
             symo.write_equation(
                 'numVBE0[{row}, 0]'.format(row=i),
@@ -423,7 +423,7 @@ def write_numerical_base_acc(symo, inertia, beta_wrench, symmet=False):
     # assign elements of the computed solution vector
     symo.write_line("# assign each element of the computed solution")
     symo.write_line("# vector to be compatible with future computation")
-    for i in xrange(beta_wrench.rows):
+    for i in range(beta_wrench.rows):
         idx = i + 1
         vp_sym = 'VP{row}0'.format(row=idx)
         if i > 2:
@@ -439,7 +439,7 @@ def get_numerical_base_acc_out(base_acc):
     Return the base acceleration as formed by strings.
     """
     base_acc = sympy.zeros(base_acc.rows, base_acc.cols)
-    for i in xrange(base_acc.rows):
+    for i in range(base_acc.rows):
         idx = i + 1
         vp_sym = 'VP{row}0'.format(row=idx)
         if i > 2:
@@ -537,14 +537,14 @@ def fixed_inverse_dynmodel(robo, symo):
     Njnt = ParamsInit.init_vec(robo)
     # init torque list
     torque = ParamsInit.init_scalar(robo)
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         compute_dynamic_wrench(robo, symo, j, w, wdot, U, vdot, F, N)
-    for j in reversed(xrange(1, robo.NL)):
+    for j in reversed(range(1, robo.NL)):
         compute_joint_wrench(
             robo, symo, j, antRj, antPj, vdot,
             F, N, Fjnt, Njnt, Fex, Nex
         )
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         compute_joint_torque(robo, symo, j, Fjnt, Njnt, torque)
 
 
@@ -571,14 +571,14 @@ def mobile_inverse_dynmodel(robo, symo):
     Njnt = ParamsInit.init_vec(robo)
     # init torque list
     torque = ParamsInit.init_scalar(robo)
-    for j in xrange(0, robo.NL):
+    for j in range(0, robo.NL):
         compute_dynamic_wrench(robo, symo, j, w, wdot, U, vdot, F, N)
-    for j in reversed(xrange(0, robo.NL)):
+    for j in reversed(range(0, robo.NL)):
         compute_joint_wrench(
             robo, symo, j, antRj, antPj, vdot,
             F, N, Fjnt, Njnt, Fex, Nex
         )
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         compute_joint_torque(robo, symo, j, Fjnt, Njnt, torque)
 
 
@@ -613,7 +613,7 @@ def composite_inverse_dynmodel(robo, symo):
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
     # first forward recursion
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         # compute spatial inertia matrix for use in backward recursion
         grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
         # set jaj vector
@@ -626,7 +626,7 @@ def composite_inverse_dynmodel(robo, symo):
         # compute j^S_i : screw transformation matrix
         compute_screw_transform(robo, symo, j, antRj, antPj, jTant)
     # first forward recursion (still)
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         # compute j^gamma_j : gyroscopic acceleration (6x1)
         compute_gamma(robo, symo, j, antRj, antPj, w, wi, gamma)
         # compute j^beta_j : external+coriolis+centrifugal wrench (6x1)
@@ -634,7 +634,7 @@ def composite_inverse_dynmodel(robo, symo):
         # compute j^zeta_j : relative acceleration (6x1)
         compute_zeta(robo, symo, j, gamma, jaj, zeta)
     # first backward recursion - initialisation step
-    for j in reversed(xrange(0, robo.NL)):
+    for j in reversed(range(0, robo.NL)):
         if j == 0:
             # compute spatial inertia matrix for base
             grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
@@ -644,7 +644,7 @@ def composite_inverse_dynmodel(robo, symo):
             symo, grandJ, beta, j, composite_inertia, composite_beta
         )
     # second backward recursion - compute composite term
-    for j in reversed(xrange(0, robo.NL)):
+    for j in reversed(range(0, robo.NL)):
         replace_composite_terms(
             symo, composite_inertia, composite_beta, j,
             composite_inertia, composite_beta, replace=True
@@ -664,7 +664,7 @@ def composite_inverse_dynmodel(robo, symo):
         robo, symo, composite_inertia, composite_beta, grandVp
     )
     # second forward recursion
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         # compute j^Vdot_j : link acceleration
         compute_link_accel(robo, symo, j, jTant, zeta, grandVp)
         # compute j^F_j : reaction wrench
@@ -673,7 +673,7 @@ def composite_inverse_dynmodel(robo, symo):
             composite_inertia, composite_beta, react_wrench
         )
     # second forward recursion still - to make the output pretty
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         # compute torque
         compute_torque(robo, symo, j, jaj, react_wrench, torque)
 
@@ -715,7 +715,7 @@ def flexible_inverse_dynmodel(robo, symo):
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
     # first forward recursion
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         # compute spatial inertia matrix for use in backward recursion
         grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
         # set jaj vector
@@ -738,7 +738,7 @@ def flexible_inverse_dynmodel(robo, symo):
     # decide first link
     first_link = 0 if robo.is_floating else 1
     # first backward recursion - initialisation step
-    for j in reversed(xrange(first_link, robo.NL)):
+    for j in reversed(range(first_link, robo.NL)):
         if j == first_link and robo.is_floating:
             # compute spatial inertia matrix for base
             grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
@@ -748,7 +748,7 @@ def flexible_inverse_dynmodel(robo, symo):
             symo, grandJ, beta, j, star_inertia, star_beta
         )
     # second backward recursion - compute star terms
-    for j in reversed(xrange(first_link, robo.NL)):
+    for j in reversed(range(first_link, robo.NL)):
         replace_star_terms(
             symo, star_inertia, star_beta, j,
             star_inertia, star_beta
@@ -782,7 +782,7 @@ def flexible_inverse_dynmodel(robo, symo):
         robo, symo, star_inertia, star_beta, grandVp
     )
     # second forward recursion
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         if robo.eta[j]:
             # when flexible
             # compute qddot_j : joint acceleration
@@ -838,7 +838,7 @@ def direct_dynmodel(robo, symo):
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
     # first forward recursion
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         # compute spatial inertia matrix for use in backward recursion
         grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
         # set jaj vector
@@ -857,7 +857,7 @@ def direct_dynmodel(robo, symo):
     # decide first link
     first_link = 0 if robo.is_floating else 1
     # first backward recursion - initialisation step
-    for j in reversed(xrange(first_link, robo.NL)):
+    for j in reversed(range(first_link, robo.NL)):
         if j == first_link and robo.is_floating:
             # compute spatial inertia matrix for base
             grandJ[j] = inertia_spatial(robo.J[j], robo.MS[j], robo.M[j])
@@ -867,7 +867,7 @@ def direct_dynmodel(robo, symo):
             symo, grandJ, beta, j, star_inertia, star_beta
         )
     # second backward recursion - compute star terms
-    for j in reversed(xrange(first_link, robo.NL)):
+    for j in reversed(range(first_link, robo.NL)):
         replace_star_terms(
             symo, star_inertia, star_beta, j,
             star_inertia, star_beta, replace=True
@@ -887,7 +887,7 @@ def direct_dynmodel(robo, symo):
         robo, symo, star_inertia, star_beta, grandVp
     )
     # second forward recursion
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         # compute qddot_j : joint acceleration
         compute_joint_accel(
             robo, symo, j, jaj, jTant, h_inv, jah, gamma,

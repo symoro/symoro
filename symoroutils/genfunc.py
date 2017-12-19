@@ -19,8 +19,8 @@ def convert_mat_matlab(to_return):
     sym_list = convert_to_list(to_return, keep_const=True)
     res = []
     sym_iter = iter(sym_list)
-    for i in xrange(to_return.shape[0]):
-        for j in xrange(to_return.shape[1]):
+    for i in range(to_return.shape[0]):
+        for j in range(to_return.shape[1]):
             res.append(str(sym_iter.next()))
             res.append(',')
         res[-1] = ';'
@@ -121,8 +121,8 @@ def gen_fbody_matlab(symo, name, to_return, args, ret_name=''):
         rows, cols = to_return.shape
         func_body.insert(0, '%sRESULT=zeros(%s,%s);\n' % (space, rows, cols))
         form_str = space + 'RESULT(%s,%s)=%s;\n'
-        for i in xrange(rows):
-            for j in xrange(cols):
+        for i in range(rows):
+            for j in range(cols):
                 s = to_return[i, j]
                 if s in symo.sydi:
                     item = form_str % (i + 1, j + 1, symo.sydi[s])
@@ -135,7 +135,7 @@ def gen_fbody_matlab(symo, name, to_return, args, ret_name=''):
     else:
         item = '%sRESULT=[%s];\n' % (space * folded, to_ret_str)
         func_body.append(item)
-    for f in xrange(folded-1, 0, -1):
+    for f in range(folded-1, 0, -1):
         func_body.append('%send\n' % (space * f))
     func_body.append('end\n')
     func_body.insert(0, glob_item + '\n')

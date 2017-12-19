@@ -65,8 +65,8 @@ def _pieper_solve(robo, symo):
         [bool_fail, bool_prism, bool_spherical] = bools
         if sum(bool_fail) == len(bool_fail):
             return
-        X_joints = [X_joints_all[x:x+3] for x in xrange(0, len(X_joints_all), 3)]
-        pieper_joints = [pieper_joints_all[x:x+3] for x in xrange(0, len(pieper_joints_all), 3)]
+        X_joints = [X_joints_all[x:x+3] for x in range(0, len(X_joints_all), 3)]
+        pieper_joints = [pieper_joints_all[x:x+3] for x in range(0, len(pieper_joints_all), 3)]
         for i in range(len(pieper_branches)):
             symo.write_line("# Solution for branch {0} :".format(i+1))
             symo.write_line("#============================= \r\n\r\n")

@@ -86,7 +86,7 @@ def l2str(list_var, spacing=8):
     """
     ret_str = ''
     for i in list_var:
-        ret_str += str(i) + ' '*(spacing-len(str(i)))
+        ret_str += str(i) + ' ' * max(1, (spacing - len(str(i))))
     return ret_str
 
 
@@ -105,22 +105,14 @@ def get_trig_couple_names(sym):
 
 
 def get_max_coef_mul(sym, x_term):
-    k, ex = x_term.as_coeff_Mul()
-    coef = sym / k
-    pow_x = ex.as_powers_dict()
-    pow_c = coef.as_powers_dict()
-    pow_c[-1] = 0
-    for j, pow_j in pow_x.iteritems():
-        num_j = -j
-        if j in pow_c and pow_c[j] >= pow_j:
-            pow_c[j] -= pow_j
-        elif num_j in pow_c and pow_c[num_j] >= pow_j:
-            pow_c[num_j] -= pow_j
-            if pow_j % 2:
-                pow_c[-1] += 1
+    pow_x = x_term.as_powers_dict()
+    pow_c = sym.as_powers_dict()
+    for x, pow_j in pow_x.items():
+        if x in pow_c and pow_c[x] >= pow_j:
+            pow_c[x] -= pow_j
         else:
             return ZERO
-    return Mul.fromiter(c**p for c, p in pow_c.iteritems())
+    return Mul.fromiter(c**p for c, p in pow_c.items())
 
 
 def get_max_coef_list(sym, x_term):

@@ -39,10 +39,10 @@ def base_inertial_parameters(robo, symo):
     symo.sydi : dictionary
         Dictionary with the information of all the sybstitution
     """
-    lam = [0 for i in xrange(robo.NL)]
+    lam = [0] * robo.NL
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
-    for j in reversed(xrange(1, robo.NL)):
+    for j in reversed(range(1, robo.NL)):
         if robo.sigma[j] == 0:
             # general grouping
             compute_lambda(robo, symo, j, antRj, antPj, lam)
@@ -88,7 +88,7 @@ def vec_mut_MS(v, P):
 
     Returns : Matrix 6x1
     """
-    U = - tools.skew(v)*tools.skew(P)
+    U = -tools.skew(v) * tools.skew(P)
     return Matrix([2*U[0, 0], U[0, 1] + U[1, 0], U[0, 2] + U[2, 0],
                    2*U[1, 1], U[1, 2] + U[2, 1], 2*U[2, 2]])
 
@@ -117,13 +117,13 @@ def compute_lambda(robo, symo, j, antRj, antPj, lam):
     """
     lamJJ_list = []
     lamJMS_list = []
-    for e1 in xrange(3):
-        for e2 in xrange(e1, 3):
+    for e1 in range(3):
+        for e2 in range(e1, 3):
             u = vec_mut_J(antRj[j][:, e1], antRj[j][:, e2])
             if e1 != e2:
                 u += vec_mut_J(antRj[j][:, e2], antRj[j][:, e1])
             lamJJ_list.append(u.T)
-    for e1 in xrange(3):
+    for e1 in range(3):
         v = vec_mut_MS(antRj[j][:, e1], antPj[j])
         lamJMS_list.append(v.T)
     lamJJ = Matrix(lamJJ_list).T  # , 'LamJ', j)
@@ -207,7 +207,7 @@ def group_param_fix(robo, symo, j, lam):
     robo is the output paramete
     """
     Kj = robo.get_inert_param(j)
-    for i in xrange(10):
+    for i in range(10):
         Kj[i] = symo.replace(Kj[i], inert_names[i], j)
     if robo.ant[j] != -1:
         Kant = robo.get_inert_param(robo.ant[j])
@@ -225,7 +225,7 @@ def group_param_prism(robo, symo, j, antRj):
     robo is the output paramete
     """
     Kj = robo.get_inert_param(j)
-    for i in xrange(6):
+    for i in range(6):
         Kj[i] = symo.replace(Kj[i], inert_names[i], j)
     robo.put_inert_param(Kj, j)
     if robo.ant[j] != -1:

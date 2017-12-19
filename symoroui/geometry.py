@@ -14,6 +14,28 @@ geometric model calculations.
 import wx
 
 
+def transpose_16(l):
+    """Transpose a 16-element list representing a 4x4 matrix"""
+    return [
+        l[0],
+        l[4],
+        l[8],
+        l[12],
+        l[1],
+        l[5],
+        l[9],
+        l[13],
+        l[2],
+        l[6],
+        l[10],
+        l[14],
+        l[3],
+        l[7],
+        l[11],
+        l[15],
+    ]
+
+
 class DialogTrans(wx.Dialog):
     """Creates the dialog box for transformation matrix selection."""
     def __init__(self, prefix, nf, parent=None):
@@ -175,6 +197,7 @@ class DialogPaul(wx.Dialog):
         #input
         grid = wx.GridBagSizer(hgap=15, vgap=15)
         names = ['S', 'N', 'A', 'P']
+        widgets_row_order = []
         for i, name in enumerate(names):
             check_box = wx.CheckBox(self, wx.ID_ANY,
                                     label='   ' + name, name=name)
@@ -190,9 +213,12 @@ class DialogPaul(wx.Dialog):
                 cmb.SetSelection(4)
                 cmb.Bind(wx.EVT_COMBOBOX, self.OnComboBox)
                 grid.Add(cmb, pos=(j, i))
+                widgets_row_order.append(cmb)
             label = wx.StaticText(self,
                                   label=(' 1' if i == 3 else ' 0'), id=12 + i)
             grid.Add(label, pos=(4, i))
+            widgets_row_order.append(label)
+        self.widgets_t = transpose_16(widgets_row_order)
         main_sizer.Add(grid, 0, wx.ALIGN_CENTER | wx.LEFT | wx.RIGHT, 35)
         main_sizer.AddSpacer(20)
         #buttons
@@ -227,12 +253,13 @@ class DialogPaul(wx.Dialog):
 
     def get_values(self):
         lst = []
-        for i in range(16):
-            widget = self.FindWindowById(i)
+        for widget in self.widgets_t:
             if isinstance(widget, wx.ComboBox):
                 lst.append(widget.Value)
-            else:
+            elif isinstance(widget, wx.StaticText):
                 lst.append(widget.LabelText)
+            else:
+                raise Exception('General error')
         return lst, int(self.cmb.Value)
 
 

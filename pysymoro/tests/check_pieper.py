@@ -27,7 +27,7 @@ class TestIGM(unittest.TestCase):
 ##        T = geometry.dgm(robo, self.symo, 0, robo.nf,
 ##                         fast_form=True, trig_subs=True)
 ##        f06 = self.symo.gen_func('DGM_generated1', T, robo.q_vec)
-##        for x in xrange(100):
+##        for x in range(100):
 ##            arg = random.normal(size=robo.nj)
 ##            Ttest = f06(arg)
 ##            solution = igm_f(Ttest)

@@ -317,7 +317,7 @@ class FloatingRobot(object):
             two, it makes sure list index 1 corresponds to link 1 and so
             on.
         """
-        return xrange(self.num_links + 1)
+        return range(self.num_links + 1)
 
     @property
     def joint_nums(self):
@@ -332,7 +332,7 @@ class FloatingRobot(object):
             two, it makes sure list index 1 corresponds to joint 1, list
             index 2 to joint 2 and so on.
         """
-        return xrange(self.num_joints + 1)
+        return range(self.num_joints + 1)
 
     @property
     def frame_nums(self):
@@ -346,7 +346,7 @@ class FloatingRobot(object):
             frame as well. This also makes the list index 1 correspond
             to frame 1 and so on.
         """
-        return xrange(self.num_frames + 1)
+        return range(self.num_frames + 1)
 
     @property
     def q_vec(self):

@@ -11,116 +11,114 @@ of the robot parametrizaion container and symbol replacer class.
 """
 
 
-import re
 import os
 import copy
-from itertools import combinations
 
-from sympy import sin, cos, sign, pi
-from sympy import Symbol, Matrix, Expr, Integer
-from sympy import Mul, Add, factor, zeros, var, sympify, eye
+from sympy import sin, sign
+from sympy import Matrix, Expr
+from sympy import zeros, var, sympify, eye
 
-from pysymoro import baseparams
-from pysymoro import dyniden
-from pysymoro import inertia
-from pysymoro import nealgos
+from . import baseparams
+from . import dyniden
+from . import inertia
+from . import nealgos
 from symoroutils import filemgr
 from symoroutils import symbolmgr
-from symoroutils import tools
-from symoroutils.tools import ZERO, ONE, FAIL, OK
-from symoroutils.tools import CLOSED_LOOP, SIMPLE, TREE, TYPES, INT_KEYS
+from symoroutils.tools import FAIL, OK
+from symoroutils.tools import TREE, INT_KEYS
 
 
 class Robot(object):
     """Container of the robot parametric description.
+
     Responsible for low-level geometric transformation
     and direct geometric model generation.
-    Also provides different representations of parameters."""
+    Also provides different representations of parameters.
+    """
     def __init__(
         self, name, NL=0, NJ=0, NF=0, is_floating=False,
         structure=TREE, is_mobile=False, directory=None,
         par_file_path=None
     ):
-        # member variables:
-        """  name of the robot: string"""
+        # Name of the robot: string.
         self.name = name
-        """ directory name"""
+        # Directory name.
         self.directory = self.set_directory(directory)
-        """ PAR file path"""
+        # PAR file path.
         self.par_file_path = self.set_par_file_path(par_file_path)
-        """ whether the base frame is floating: bool"""
+        # Whether the base frame is floating: bool.
         self.is_floating = is_floating
-        """ whether the robot is a mobile robot"""
+        # Whether the robot is a mobile robot: bool.
         self.is_mobile = is_mobile
-        """  number of links: int"""
+        # Number of links: int.
         self.nl = NL
-        """  number of joints: int"""
+        # Number of joints: int.
         self.nj = NJ
-        """  number of frames: int"""
+        # Number of frames: int.
         self.nf = NF
-        """ type of robot's structure"""
+        # Type of robot structure.
         self.structure = structure
-        """  joint type: list of int"""
-        self.sigma = [0 for i in xrange(NF + 1)]
-        """  index of antecedent joint: list of int"""
-        self.ant = range(-1, self.NF - 1)
-        """actuated, if 1, then the joint is actuated"""
-        self.mu = [1 for i in xrange(NF + 1)]
-        """  geometrical parameter: list of var"""
-        self.theta = [0] + [var('th%s' % (i+1)) for i in xrange(NF)]
-        """  geometrical parameter: list of var"""
-        self.r = [0 for i in xrange(NF + 1)]
-        """  geometrical parameter: list of var"""
-        self.alpha = [0 for i in xrange(NF + 1)]
-        """  geometrical parameter: list of var"""
-        self.d = [0 for i in xrange(NF + 1)]
-        """  geometrical parameter: list of var"""
-        self.gamma = [0 for i in xrange(NF + 1)]
-        """  geometrical parameter: list of var"""
-        self.b = [0 for i in xrange(NF + 1)]
-        """ transformation from reference frame to zero frame"""
+        # Joint type: list of int.
+        self.sigma = [0] * (NF + 1)
+        # Index of antecedent joint: list of int.
+        self.ant = list(range(-1, self.NF - 1))
+        # Actuated, if 1, then the joint is actuated.
+        self.mu = [1] * (NF + 1)
+        # Geometrical parameter: list of var.
+        self.theta = [0] + [var('th{}'.format(i + 1)) for i in range(NF)]
+        # Geometrical parameter: list of var.
+        self.r = [0] * (NF + 1)
+        # Geometrical parameter: list of var.
+        self.alpha = [0] * (NF + 1)
+        # Geometrical parameter: list of var.
+        self.d = [0] * (NF + 1)
+        # Geometrical parameter: list of var.
+        self.gamma = [0] * (NF + 1)
+        # Geometrical parameter: list of var.
+        self.b = [0] * (NF + 1)
+        # Transformation from reference frame to zero frame.
         self.Z = eye(4)
-        num = range(self.NL)
-        numj = range(self.NJ)
-        """  base angular velocity: 3x1 matrix"""
+        num = list(range(self.NL))
+        numj = list(range(self.NJ))
+        # Base angular velocity: 3x1 matrix.
         self.w0 = zeros(3, 1)
-        """  base angular acceleration: 3x1 matrix"""
+        # Base angular acceleration: 3x1 matrix.
         self.wdot0 = zeros(3, 1)
-        """  base linear velocity: 3x1 matrix"""
+        # Base linear velocity: 3x1 matrix.
         self.v0 = zeros(3, 1)
-        """  base linear acceleration: 3x1 matrix"""
+        # Base linear acceleration: 3x1 matrix.
         self.vdot0 = zeros(3, 1)
-        """  joint speed: list of var"""
+        # Joint speed: list of var.
         self.qdot = [var('QP{0}'.format(i)) for i in numj]
-        """  joint acceleration: list of var"""
+        # Joint acceleration: list of var.
         self.qddot = [var('QDP{0}'.format(i)) for i in numj]
-        """  external moment of link: list of 3x1 matrix"""
+        # External moment of link: list of 3x1 matrix.
         self.Nex = [zeros(3, 1) for i in num]
         self.Nex[-1] = Matrix(var('CX{0}, CY{0}, CZ{0}'.format(self.NL - 1)))
-        """  external force of link: list of 3x1 matrix"""
+        # External force of link: list of 3x1 matrix.
         self.Fex = [zeros(3, 1) for i in num]
         self.Fex[-1] = Matrix(var('FX{0}, FY{0}, FZ{0}'.format(self.NL - 1)))
-        """  dry friction coefficient: list of ver"""
-        self.FS = [var('FS{0}'.format(i)) for i in num]
-        """  joint actuator inertia: list of var"""
-        self.IA = [var('IA{0}'.format(i)) for i in num]
-        """  viscous friction coefficient: list of var"""
-        self.FV = [var('FV{0}'.format(i)) for i in num]
-        """  first momentum of link: list of 3x1 matrix"""
+        # Dry friction coefficient: list of var.
+        self.FS = [var('FS{}'.format(i)) for i in num]
+        # Joint actuator inertia: list of var.
+        self.IA = [var('IA{}'.format(i)) for i in num]
+        # Viscous friction coefficient: list of var.
+        self.FV = [var('FV{}'.format(i)) for i in num]
+        # First momentum of link: list of 3x1 matrix.
         self.MS = [Matrix(var('MX{0}, MY{0}, MZ{0}'.format(i))) for i in num]
-        """  mass of link: list of var"""
-        self.M = [var('M{0}'.format(i)) for i in num]
-        """  joint torques: list of var"""
-        self.GAM = [var('GAM{0}'.format(i)) for i in numj]
-        """  inertia tensor of link: list of 3x3 matrix"""
+        # Mass of link: list of var.
+        self.M = [var('M{}'.format(i)) for i in num]
+        # Joint torques: list of var.
+        self.GAM = [var('GAM{}'.format(i)) for i in numj]
+        # Inertia tensor of link: list of 3x3 matrix.
         J_str = 'XX{0},XY{0},XZ{0},XY{0},YY{0},YZ{0},XZ{0},YZ{0},ZZ{0}'
         self.J = [Matrix(3, 3, var(J_str.format(i))) for i in num]
-        """  gravity vector: 3x1 matrix"""
+        # Gravity vector: 3x1 matrix.
         self.G = Matrix([0, 0, var('GZ')])
-        """  eta - rigid or flexible"""
-        self.eta = [0 for j in numj]
-        """  k - joint stiffness"""
-        self.k = [0 for j in numj]
+        # eta - rigid or flexible.
+        self.eta = [0] * self.NJ
+        # k - joint stiffness.
+        self.k = [0] * self.NJ
 
     def set_par_file_path(self, path=None):
         if path is None or not os.path.isabs(path):
@@ -140,20 +138,20 @@ class Robot(object):
 
     @property
     def par_file_name(self):
-        """Return the PAR file name."""
+        """Return the PAR file name"""
         head, tail = os.path.split(self.par_file_path)
         return tail.strip()
 
     def set_defaults(self, joint=False, geom=False, base=False):
-        # joint params
+        # Joint parameters.
         if joint:
             self._set_joint_defaults()
-        # geometric params
+        # Geometric parameters.
         if geom:
             # do nothing
             #self._set_geom_defaults()
             pass
-        # base params
+        # Base parameters.
         if base:
             self._set_base_defaults()
 
@@ -390,7 +388,7 @@ class Robot(object):
         """Generates vector of joint variables
         """
         qs = []
-        for i in xrange(1, self.NJ):
+        for i in range(1, self.NJ):
             if self.sigma[i] != 2:
                 qs.append(self.get_q(i))
         return qs
@@ -404,7 +402,7 @@ class Robot(object):
         """Generates vector of passive joint variables (including cut!)
         """
         q = list()
-        for i in xrange(1, self.NJ):
+        for i in range(1, self.NJ):
             if self.mu[i] == 0:
                 q.append(self.get_q(i))
         return q
@@ -414,7 +412,7 @@ class Robot(object):
         """Generates vector of active joint variables (including cut!)
         """
         q = list()
-        for i in xrange(1, self.NJ):
+        for i in range(1, self.NJ):
             if self.mu[i] == 1:
                 q.append(self.get_q(i))
         return q
@@ -423,19 +421,19 @@ class Robot(object):
     def indx_passive(self):
         """Generates vector of passive joint indices
         """
-        return [i for i in xrange(1, self.NL) if self.mu[i] == 0]
+        return [i for i in range(1, self.NL) if self.mu[i] == 0]
 
     @property
     def indx_active(self):
         """Generates vector of active joint indices
         """
-        return [i for i in xrange(1, self.NL) if self.mu[i] == 1]
+        return [i for i in range(1, self.NL) if self.mu[i] == 1]
 
     @property
     def indx_cut(self):
         """Generates vector of cut joint indices
         """
-        return range(self.NL, self.NJ)
+        return list(range(self.NL, self.NJ))
 
     def fric_v(self, j):
         """Fluid friction torque
@@ -512,7 +510,7 @@ class Robot(object):
     @property
     def loop_terminals(self):
         B = self.NJ - self.NL
-        return [(i, i+B) for i in xrange(self.NL, self.NJ)]
+        return [(i, i + B) for i in range(self.NL, self.NJ)]
 
     def paral(self, i, j):
         if j is None:
@@ -531,8 +529,7 @@ class Robot(object):
 
         Parameters
         ==========
-        j: int
-            Joint index.
+        j: int, Joint index.
 
         Returns
         =======
@@ -557,14 +554,14 @@ class Robot(object):
             name - brief name for cos and sin abbreviation
         """
         angs = []
-        if j not in xrange(self.NF):
+        if j not in range(self.NF):
             return angs
         if type(self.theta[j]) != int and not self.theta[j].is_number:
             angs.append((self.theta[j], j))
         if type(self.alpha[j]) != int and not self.alpha[j].is_number:
-            angs.append((self.alpha[j], 'A%s' % j))
+            angs.append((self.alpha[j], 'A{}'.format(j)))
         if type(self.gamma[j]) != int and not self.gamma[j].is_number:
-            angs.append((self.gamma[j], 'G%s' % j))
+            angs.append((self.gamma[j], 'G{}'.format(j)))
         return angs
 
     def chain(self, j, k=0):
@@ -620,7 +617,7 @@ class Robot(object):
             j = self.ant[j]
 
     def get_inert_param(self, j):
-        """Returns 10-vector of inertia paremeters of link j.
+        """Returns 10-vector of inertia parameters of link j.
 
         Parameters
         ==========
@@ -713,7 +710,7 @@ class Robot(object):
         Set default values for joint parameters for those exceptional
         from the ones set in the ctor.
         """
-        for j in xrange(1, self.NJ):
+        for j in range(1, self.NJ):
             try:
                 if self.sigma[j] == 2:
                     self.qdot[j] = 0
@@ -736,7 +733,7 @@ class Robot(object):
         Set default values for geometric parameters for those
         exceptional from the ones set in the ctor.
         """
-        for j in xrange(1, self.NF):
+        for j in range(1, self.NF):
             if self.sigma[j] == 0:
                 self.theta[j] = var('th{0}'.format(j))
             elif self.sigma[j] == 1:
@@ -758,8 +755,6 @@ class Robot(object):
             # Z matrix
             for i in range(0, 3):
                 for j in range(0, 3):
-                    self.Z[i, j] = var('Zr{0}{1}'.format(i+1, j+1))
+                    self.Z[i, j] = var('Zr{0}{1}'.format(i + 1, j + 1))
             for j in range(0, 3):
-                self.Z[j, 3] = var('Zt{0}'.format(j+1))
-
-
+                self.Z[j, 3] = var('Zt{0}'.format(j + 1))

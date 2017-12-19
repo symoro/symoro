@@ -59,7 +59,7 @@ class ParamsInit(object):
         =======
         list of Matrices numxnum
         """
-        return [zeros(num, num) for i in xrange(robo.NL)]
+        return [zeros(num, num) for i in range(robo.NL)]
 
     @classmethod
     def init_vec(cls, robo, num=3, ext=0):
@@ -79,14 +79,14 @@ class ParamsInit(object):
         =======
         list of Matrices Nx1
         """
-        return [zeros(num, 1) for i in xrange(robo.NL+ext)]
+        return [zeros(num, 1) for i in range(robo.NL+ext)]
 
     @classmethod
     def init_scalar(cls, robo):
         """Generates a list of vars.
         Size of the list is number of links.
         """
-        return [0 for i in xrange(robo.NL)]
+        return [0 for i in range(robo.NL)]
 
     @classmethod
     def init_w(cls, robo):

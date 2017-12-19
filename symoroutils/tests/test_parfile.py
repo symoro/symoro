@@ -33,7 +33,7 @@ class TestParfile(unittest.TestCase):
         l2 = self.orig_robo.get_dynam_head()
         l3 = self.orig_robo.get_ext_dynam_head()
         for name in l3[1:]+l2[1:]+l1[1:]:
-            for i in xrange(1, self.orig_robo.NL):
+            for i in range(1, self.orig_robo.NL):
                 self.assertEqual(self.orig_robo.get_val(i, name),
                                  new_robo.get_val(i, name))
 

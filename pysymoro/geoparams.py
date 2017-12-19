@@ -19,8 +19,7 @@ class GeoParams(object):
         Represent the data structure to hold the geometric parameters.
     """
     def __init__(self, frame, params=None):
-        """
-        Constructor period.
+        """Constructor
 
         Note:
             By default the antecedent is selected as the previous frame
@@ -67,8 +66,7 @@ class GeoParams(object):
         return repr_format
 
     def update_params(self, params):
-        """
-        Update the geometric parameter values.
+        """Update the geometric parameter values
 
         Args:
             params: A dict in which the keys correspond to the list of
@@ -76,19 +74,17 @@ class GeoParams(object):
                 correspond to the values with which the parameters are
                 to be updated.
         """
-        for key, value in params.iteritems():
+        for key, value in params.items():
             if hasattr(self, key):
                 setattr(self, key, value)
             else:
                 raise AttributeError(
-                    "%s is not an attribute of GeoParams" % key
-                )
+                    '{} is not an attribute of GeoParams'.format(key))
         self.tmat.update(params)
 
     @property
     def zunit(self):
-        """
-        Get the unit vector along the z-axis which is the joint axis.
+        """Get the unit vector along the z-axis which is the joint axis
 
         Returns:
             A (3x1) Matrix.
@@ -100,8 +96,7 @@ class GeoParams(object):
 
     @property
     def axisa(self):
-        """
-        Get the joint axis in screw form.
+        """Get the joint axis in screw form
 
         Returns:
             A (6x1) Matrix.
@@ -113,8 +108,7 @@ class GeoParams(object):
 
     @property
     def q(self):
-        """
-        Get the joint variable value.
+        """Get the joint variable value
 
         Returns:
             The value of theta for a revolute joint and in the case of
