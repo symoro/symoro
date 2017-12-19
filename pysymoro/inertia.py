@@ -155,7 +155,7 @@ def fixed_inertia_matrix(robo, symo):
     inertia_a22 = sympy.zeros(robo.nl, robo.nl)
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
-    for j in reversed(xrange(1, robo.NL)):
+    for j in reversed(range(1, robo.NL)):
         replace_composite_terms(
             symo, j, comp_inertia3, comp_ms, comp_mass
         )
@@ -164,7 +164,7 @@ def fixed_inertia_matrix(robo, symo):
                 robo, symo, j, antRj, antPj,
                 aje1, comp_inertia3, comp_ms, comp_mass
             )
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         compute_diagonal_elements(
             robo, symo, j, comp_inertia3, comp_ms,
             comp_mass, forces, moments, inertia_a22
@@ -196,7 +196,7 @@ def floating_inertia_matrix(robo, symo):
     inertia_a22 = sympy.zeros(robo.nl, robo.nl)
     # init transformation
     antRj, antPj = compute_rot_trans(robo, symo)
-    for j in reversed(xrange(0, robo.NL)):
+    for j in reversed(range(0, robo.NL)):
         replace_composite_terms(
             symo, j, comp_inertia3, comp_ms, comp_mass
         )
@@ -205,7 +205,7 @@ def floating_inertia_matrix(robo, symo):
                 robo, symo, j, antRj, antPj,
                 aje1, comp_inertia3, comp_ms, comp_mass
             )
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         compute_diagonal_elements(
             robo, symo, j, comp_inertia3, comp_ms,
             comp_mass, forces, moments, inertia_a22
@@ -227,7 +227,7 @@ def floating_inertia_matrix(robo, symo):
     )
     # setup inertia_a12 in Matrix form
     a12mat = sympy.zeros(6, robo.NL)
-    for j in xrange(1, robo.NL):
+    for j in range(1, robo.NL):
         a12mat[:, j] = inertia_a12[j]
     a12mat = a12mat[:, 1:]
     # setup the complete inertia matrix

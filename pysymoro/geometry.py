@@ -480,14 +480,14 @@ def compute_rot_trans(robo, symo):
     #init transformation
     antRj = ParamsInit.init_mat(robo)
     antPj = ParamsInit.init_vec(robo)
-    for j in xrange(robo.NL):
+    for j in range(robo.NL):
         compute_transform(robo, symo, j, antRj, antPj)
     return antRj, antPj
 
 
 #TODO: validate for different structures
 def direct_geometric_fast(robo, i, j):
-    """Computes trensformation matrix iTj.
+    """Computes transformation matrix iTj.
 
     Parameters
     ==========
@@ -512,7 +512,7 @@ def direct_geometric_fast(robo, i, j):
 
 
 def direct_geometric(robo, frames, trig_subs):
-    """Computes trensformation matrix iTj.
+    """Computes transformation matrix iTj.
 
     Parameters
     ==========
@@ -533,9 +533,9 @@ def direct_geometric(robo, frames, trig_subs):
     symo.file_open(robo, 'trm')
     symo.write_params_table(robo, 'Direct Geometric model')
     for i, j in frames:
-        symo.write_line('Tramsformation matrix %s T %s' % (i, j))
+        symo.write_line('Transformation matrix {} T {}'.format(i, j))
         T = dgm(robo, symo, i, j, fast_form=False, trig_subs=trig_subs)
-        symo.mat_replace(T, 'T%sT%s' % (i, j), forced=True, skip=1)
+        symo.mat_replace(T, 'T{}T{}'.format(i, j), forced=True, skip=1)
         symo.write_line()
     symo.file_close()
     return symo

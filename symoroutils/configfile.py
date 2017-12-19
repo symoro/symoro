@@ -8,8 +8,13 @@
 """Setup, read, write a config file, folder for SYMORO package."""
 
 
+try:
+    # Python 3 (standard lib) and 2, after `pip install configparser`.
+    from configparser import ConfigParser
+except ImportError:
+    # Python2, standard lib.
+    from ConfigParser import ConfigParser
 import os
-import ConfigParser
 
 
 CONFIG_FILE_NAME = 'settings.conf'
@@ -57,7 +62,7 @@ def save_config(curr_config):
         curr_config: An instance of the `ConfigParser` class.
     """
     make_config_folder()
-    if not isinstance(curr_config, ConfigParser.ConfigParser):
+    if not isinstance(curr_config, ConfigParser):
         raise TypeError(
             "`curr_config` should be an instance of `ConfigParser`"
         )
@@ -74,7 +79,7 @@ def get_config():
     Returns:
         A `ConfigParser` object with the program settings.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     config_file_path = get_config_file_path()
     if os.path.exists(config_file_path):
         # check if settings file exists
@@ -103,9 +108,8 @@ def set_last_robot(robo_par_file):
     Args:
         robo_par_file: A string specifying the path to robot's PAR file.
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
     config.add_section('startup')
     config.set('startup', 'last-robot', robo_par_file)
     save_config(config)
-
 

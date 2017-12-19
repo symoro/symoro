@@ -30,15 +30,13 @@ class TestIGM(unittest.TestCase):
         nTm = Matrix(4, 4, 12 * [invgeom.EMPTY] + [0, 0, 0, 1])
         nTm[0, 3], nTm[1, 3] = var('p1, p2')
         invgeom._paul_solve(robo, self.symo, nTm, 0, robo.nf)
-        self.symo.gen_func_string('IGM_gen', robo.q_vec,
-                                  var('p1, p2'), syntax='matlab')
         igm_f = self.symo.gen_func('IGM_gen', robo.q_vec,
                                    var('p1, p2'))
         T = geometry.dgm(robo, self.symo, 0, robo.nf,
                          fast_form=True, trig_subs=True)
         f06 = self.symo.gen_func('DGM_generated1', (T[0, 3], T[1, 3]),
                                  robo.q_vec)
-        for x in xrange(100):
+        for x in range(100):
             arg = random.normal(size=robo.nj)
             Ttest = f06(arg)
             solution = igm_f(Ttest)
@@ -51,14 +49,12 @@ class TestIGM(unittest.TestCase):
         #robo.gamma[6] = var('G6')  # invgeom.T_GENERAL
         nTm = invgeom.T_GENERAL
         invgeom._paul_solve(robo, self.symo, nTm, 0, robo.nf)
-        self.symo.gen_func_string('IGM_gen', robo.q_vec,
-                                  invgeom.T_GENERAL, syntax='matlab')
         igm_f = self.symo.gen_func('IGM_gen', robo.q_vec,
                                    invgeom.T_GENERAL)
         T = geometry.dgm(robo, self.symo, 0, robo.nf,
                          fast_form=True, trig_subs=True)
         f06 = self.symo.gen_func('DGM_generated1', T, robo.q_vec)
-        for x in xrange(100):
+        for x in range(100):
             arg = random.normal(size=robo.nj)
             Ttest = f06(arg)
             solution = igm_f(Ttest)
@@ -75,7 +71,7 @@ class TestIGM(unittest.TestCase):
         T = geometry.dgm(self.robo, self.symo, 9, 10,
                          fast_form=True, trig_subs=True)
         t_loop = self.symo.gen_func('DGM_generated1', T, self.robo.q_vec)
-        for x in xrange(10):
+        for x in range(10):
             arg = random.normal(size=6)
             solution = l_solver(arg)
             for q in solution:

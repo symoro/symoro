@@ -79,7 +79,7 @@ def _extract_vals(robo, key, line):
 
 def _write_par_list(robo, f, key, N0, N):
     f.write('{0} = {{{1}'.format(key, robo.get_val(N0, key)))
-    for i in xrange(N0 + 1, N):
+    for i in range(N0 + 1, N):
         f.write(',{0}'.format(robo.get_val(i, key)))
     f.write('}\n')
 

@@ -27,7 +27,7 @@ def get_symbol(symbol, name, index, element=''):
 
 def vec_replace_wrapper(symo, vec, symbol, name, index, forced=False):
     new_vec = sympy.zeros(vec.rows, 1)
-    for idx in xrange(vec.rows):
+    for idx in range(vec.rows):
         sym = get_symbol(symbol, name, index, idx+1)
         new_vec[idx] = symo.replace(vec[idx], sym, forced=forced)
     return new_vec
@@ -146,11 +146,11 @@ def dynamic_identification_model(robo, symo):
     # start link number
     is_fixed = False if robo.is_floating or robo.is_mobile else True
     start_link = 0
-    for k in xrange(start_link, robo.NL):
+    for k in range(start_link, robo.NL):
         param_vec = robo.get_inert_param(k)
         F = ParamsInit.init_vec(robo)
         N = ParamsInit.init_vec(robo)
-        for i in xrange(10):
+        for i in range(10):
             if param_vec[i] == tools.ZERO:
                 continue
             # change link names according to current non-zero parameter
@@ -166,7 +166,7 @@ def dynamic_identification_model(robo, symo):
             # init external forces
             Fex = ParamsInit.init_vec(robo)
             Nex = ParamsInit.init_vec(robo)
-            for j in reversed(xrange(1, k + 1)):
+            for j in reversed(range(1, k + 1)):
                 _compute_reaction_wrench(
                     robo_tmp, symo, name, j, antRj, antPj,
                     vdot, F, N, Fjnt, Njnt, Fex, Nex
@@ -176,7 +176,7 @@ def dynamic_identification_model(robo, symo):
                 robo_tmp, symo, name, antRj,antPj,
                 vdot, F, N, Fex, Nex, Fjnt, Njnt
             )
-            for j in xrange(1, k + 1):
+            for j in range(1, k + 1):
                 _compute_joint_torque(robo_tmp, symo, name, j, Fjnt, Njnt)
         # reset all the parameters to zero
         robo_tmp.put_inert_param(sympy.zeros(10, 1), k)

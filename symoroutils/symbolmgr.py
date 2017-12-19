@@ -8,6 +8,7 @@
 """This module contains the Symbol Manager tools."""
 
 import itertools
+from functools import reduce
 import os
 
 from sympy import sin, cos
@@ -16,7 +17,8 @@ from sympy import Mul, Add, factor, var, sympify
 
 from symoroutils import filemgr
 from symoroutils import tools
-from genfunc import gen_fheader_matlab, gen_fbody_matlab
+from .genfunc import gen_fheader_matlab, gen_fbody_matlab
+
 
 class SymbolManager(object):
     """Symbol manager, responsible for symbol replacing, file writing."""
@@ -26,12 +28,12 @@ class SymbolManager(object):
         self.file_out = file_out
         """Output descriptor. Can be None, 'disp', file
         defines the output destination"""
+        # Dictionary. All the substitutions are saved in it.
         self.sydi = dict((k, sydi[k]) for k in sydi)
-        """Dictionary. All the substitutions are saved in it"""
+        # Dictionary. Revers to the self.sydi.
         self.revdi = dict((sydi[k], k) for k in sydi)
-        """Dictionary. Revers to the self.sydi"""
-        self.order_list = sydi.keys()
-        """keeps the order of variables to be compute"""
+        # Keeps the order of variables to be computed.
+        self.order_list = list(sydi.keys())
 
     def simp(self, sym):
         sym = factor(sym)
@@ -50,7 +52,7 @@ class SymbolManager(object):
         """
         Example
         =======
-        >> print C2S2_simp(sympify("-C**2*RL + S*(D - RL*S)"))
+        >> print(C2S2_simp(sympify("-C**2*RL + S*(D - RL*S)")))
         D*S - RL
         """
         if not sym.is_Add:
@@ -74,10 +76,10 @@ class SymbolManager(object):
         """
         Example
         =======
-        >> print SymbolManager().CS12_simp(sympify("C2*C3 - S2*S3"))
+        >> print(SymbolManager().CS12_simp(sympify("C2*C3 - S2*S3")))
         C23 = C2*C3 - S2*S3
         C23
-        >> print SymbolManager().CS12_simp(sympify("C2*S3*R + S2*C3*R"))
+        >> print(SymbolManager().CS12_simp(sympify("C2*S3*R + S2*C3*R")))
         S23 = C2*S3 + S2*C3
         R*S23
         """
@@ -190,8 +192,8 @@ class SymbolManager(object):
                 sym_old = -sym_old
             subs_dict[sym_old] = sym
             self.add_to_dict(sym, sym_old)
-        for i1 in xrange(M.shape[0]):
-            for i2 in xrange(M.shape[1]):
+        for i1 in range(M.shape[0]):
+            for i2 in range(M.shape[1]):
                 M[i1, i2] = M[i1, i2].subs(subs_dict)
         return M
 
@@ -241,10 +243,10 @@ class SymbolManager(object):
         name: string
             denotion of the expression
         index: int or string, optional
-            will be attached to the name. Usualy used for link
-            or joint number. Parameter exists for usage convenience
+            will be attached to the name. Usually used for link
+            or joint number. Parameter exists for usage convenience.
         forced: bool, optional
-            If True, the new symbol will be created even if old symbol
+            If True, the new symbol will be created even if the old symbol
             is a simple expression
         skip: int, optional
             Number of bottom rows of the matrix, which will be skipped.
@@ -275,8 +277,8 @@ class SymbolManager(object):
             form2 = '%02d%02d'
         else:
             form2 = '%d%d'
-        for i2 in xrange(M.shape[1]):
-            for i1 in xrange(M.shape[0] - skip):
+        for i2 in range(M.shape[1]):
+            for i1 in range(M.shape[0] - skip):
                 if symmet and i1 < i2:
                     M[i1, i2] = M[i2, i1]
                     continue
@@ -305,8 +307,8 @@ class SymbolManager(object):
         return expr
 
     def mat_unfold(self, mat):
-        for i in xrange(mat.shape[0]):
-            for j in xrange(mat.shape[1]):
+        for i in range(mat.shape[0]):
+            for j in range(mat.shape[1]):
                 if isinstance(mat[i, j], Expr):
                     mat[i, j] = self.unfold(mat[i, j])
         return mat
@@ -366,7 +368,7 @@ class SymbolManager(object):
             self.write_param('External forces and joint parameters',
                              robo.get_ext_dynam_head(),
                              robo, range(1, robo.NL))
-            self.write_param('Base velicities parameters',
+            self.write_param('Base velocity parameters',
                              robo.get_base_vel_head(),
                              robo, [0, 1, 2])
         if equations:
@@ -405,7 +407,7 @@ class SymbolManager(object):
         self.write_line(str(A) + ' = ' + str(B) + ';')
 
     def write_line(self, line=''):
-        """Writes string data into tha output with new line symbol
+        """Writes string data into the output with new line symbol
 
         Parameters
         ==========
@@ -457,24 +459,24 @@ class SymbolManager(object):
     def gen_fheader(self, name, *args):
         fun_head = []
         fun_head.append('def %s(*args):\n' % name)
-        imp_s_1 = 'from numpy import pi, sin, cos, sign\n'
-        imp_s_2 = 'from numpy import array, arctan2 as atan2, sqrt\n'
-        fun_head.append('    %s' % imp_s_1)
-        fun_head.append('    %s' % imp_s_2)
+        imp_s_1 = '    from numpy import pi, sin, cos, sign\n'
+        imp_s_2 = '    from numpy import array, arctan2 as atan2, sqrt\n'
+        fun_head.append(imp_s_1)
+        fun_head.append(imp_s_2)
         for i, var_list in enumerate(args):
             v_str_list = self.convert_syms(args[i], True)
             fun_head.append('    %s=args[%s]\n' % (v_str_list, i))
         return fun_head
 
     def convert_syms(self, syms, rpl_liter=False):
-        """Converts 'syms' structure to sintactically correct string
+        """Converts 'syms' structure to syntaxically correct string
 
         Parameters
         ==========
         syms: list, Matrix or tuple of them
         rpl_liter: bool
             if true, all literals will be replaced with _
-            It is done to evoid expression like [x, 0] = args[1]
+            It is done to avoid expression like [x, 0] = args[1]
             Because it will cause exception of assigning to literal
         """
         if isinstance(syms, tuple) or isinstance(syms, list):
@@ -488,7 +490,7 @@ class SymbolManager(object):
             return res
         elif isinstance(syms, Matrix):
             res = '['
-            for i in xrange(syms.shape[0]):
+            for i in range(syms.shape[0]):
                 res += self.convert_syms(list(syms[i, :]), rpl_liter)
                 if i < syms.shape[0] - 1:
                     res += ','
@@ -531,10 +533,10 @@ class SymbolManager(object):
 
     def gen_fbody(self, name, to_return, args):
         """Generates list of string statements of the function that
-        computes symbolf from to_return.  wr_syms are considered to
+        computes symbol from to_return.  wr_syms are considered to
         be known
         """
-         # set of defined symbols
+        # set of defined symbols
         wr_syms = self.extract_syms(args)
         # final symbols to be compute
         syms = self.extract_syms(to_return)
@@ -568,14 +570,14 @@ class SymbolManager(object):
 
     def gen_func_string(self, name, to_return, args, syntax='python'):
         #TODO self, name, toret, *args, **kwargs
-        """ Returns function string. The rest is the same as for
+        """Returns function string. The rest is the same as for
         gen_func
 
-         Parameters
+        Parameters
         ==========
         name: string
             Future function's name, must be different for
-            different fucntions
+            different functions
         to_return: list, Matrix or tuple of them
             Determins the shape of the output and symbols inside it
         *args: any number of lists, Matrices or tuples of them
@@ -602,24 +604,22 @@ class SymbolManager(object):
         """ Returns function that computes what is in to_return
         using args as arguments
 
-         Parameters
+        Parameters
         ==========
         name: string
             Future function's name, must be different for
-            different fucntions
+            different functions
         to_return: list, Matrix or tuple of them
-            Determins the shape of the output and symbols inside it
+            Determines the shape of the output and symbols inside it
         *args: any number of lists, Matrices or tuples of them
-            Determins the shape of the input and symbols
+            Determines the shape of the input and symbols
             names to assigned
 
         Notes
         =====
-        -All unassigned used symbols will be set to '1.0'.
-        -This function must be called only after the model that
+        - All unassigned used symbols will be set to '1.0'.
+        - This function must be called only after the model that
             computes symbols in to_return have been generated.
         """
-        exec self.gen_func_string(name, to_return, args)
-        return eval('%s' % name)
-
-
+        exec(self.gen_func_string(name, to_return, args))
+        return eval('{}'.format(name))

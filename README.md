@@ -13,11 +13,12 @@ published in the AIM 2014 conference.
 
 Requirements
 ------------
-+ python (>= 2.7, &nbsp;&nbsp; 3.* is not supported)
++ python (>= 2.7 or >= 3.4)
 + sympy (== 0.7.3)
 + numpy (>= 1.6.1)
 + wxPython (>= 2.8.12)
 + PyOpenGL (>= 3.0.1b2)
++ ConfigParser for the Python3 version (tested with 3.5.0)
 
 
 Getting Started

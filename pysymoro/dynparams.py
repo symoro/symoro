@@ -28,8 +28,7 @@ class DynParams(object):
     of a link wrt its own frame of reference. MS = transpose([MX MY MZ])
     """
     def __init__(self, link, params=None):
-        """
-        Constructor period.
+        """Constructor
 
         Usage:
         DynParams(link=<link-number>)
@@ -120,8 +119,7 @@ class DynParams(object):
         return repr_format
 
     def update_params(self, params):
-        """
-        Update the dynamic parameter values.
+        """Update the dynamic parameter values
 
         Args:
             params: A dict in which the keys correspond to the list of
@@ -129,13 +127,12 @@ class DynParams(object):
                 correspond to the values with which the parameters are
                 to be updated.
         """
-        for key, value in params.iteritems():
+        for key, value in params.items():
             if hasattr(self, key):
                 setattr(self, key, value)
             else:
                 raise AttributeError(
-                    "%s is not an attribute of DynParams" % key
-                )
+                    '{} is not an attribute of DynParams'.format(key))
 
     def set_to_zero(self):
         """
@@ -200,8 +197,8 @@ class DynParams(object):
         return self.wrench.ang
 
     def _init_inertial_terms(self):
-        """Initialise inertial terms."""
-        for key, term in self._inertial_terms.iteritems():
+        """Initialise inertial terms"""
+        for key, term in self._inertial_terms.items():
             if self.link != 0:
                 value = var(term + str(self.link))
             else:
@@ -209,8 +206,8 @@ class DynParams(object):
             setattr(self, key, value)
 
     def _init_ms_terms(self):
-        """Initialise mass tensor terms and mass of the link."""
-        for key, term in self._ms_terms.iteritems():
+        """Initialise mass tensor terms and mass of the link"""
+        for key, term in self._ms_terms.items():
             if self.link != 0:
                 value = var(term + str(self.link))
             else:
@@ -219,7 +216,7 @@ class DynParams(object):
 
     def _init_fr_terms(self):
         """Initialise rotor inertia and friction parameters."""
-        for key, term in self._fr_terms.iteritems():
+        for key, term in self._fr_terms.items():
             if self.link != 0:
                 value = var(term + str(self.link))
             else:
@@ -228,7 +225,7 @@ class DynParams(object):
 
     def _init_ext_force_terms(self):
         """Initialise external force terms."""
-        for key, term in self._ext_force_terms.iteritems():
+        for key, term in self._ext_force_terms.items():
             if self.link != 0:
                 value = var(term + str(self.link))
             else:

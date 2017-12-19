@@ -66,8 +66,7 @@ class TransformationMatrix(object):
         between any two frames.
     """
     def __init__(self, **kwargs):
-        """
-        Constructor period.
+        """Constructor
 
         Usage:
             >>> # Positional arguments are not allowed.
@@ -92,7 +91,7 @@ class TransformationMatrix(object):
             if len(kwargs) > 1:
                 self._frame_i = int(kwargs['i'])
                 self._frame_j = int(kwargs['j'])
-                if kwargs.has_key('params'):
+                if 'params' in kwargs:
                     self.update(kwargs['params'])
             else:
                 if self._has_frames(kwargs['params']):
@@ -127,84 +126,77 @@ class TransformationMatrix(object):
         return str_format
 
     def __repr__(self):
-        return "T of %d wrt %d" % (self._frame_j, self._frame_i)
+        return 'T of {} wrt {}'.format(self._frame_j, self._frame_i)
 
     @property
     def val(self):
-        """
-        Get the value of the transformation matrix.
+        """Get the value of the transformation matrix
 
         Returns:
             A 4x4 Matrix.
         """
         if not hasattr(self, '_tmat'):
-            raise AttributeError("tmat is yet to be computed")
+            raise AttributeError('tmat is yet to be computed')
         return self._tmat
 
     @property
     def rot(self):
-        """
-        Get the value of the rotation matrix.
+        """Get the value of the rotation matrix
 
         Returns:
             A 3x3 Matrix.
         """
         if not hasattr(self, '_tmat'):
-            raise AttributeError("tmat is yet to be computed")
+            raise AttributeError('tmat is yet to be computed')
         return self._tmat[0:3, 0:3]
 
     @property
     def trans(self):
-        """
-        Get the value of the translation vector.
+        """Get the value of the translation vector
 
         Returns:
             A 3x1 Matrix.
         """
         if not hasattr(self, '_tmat'):
-            raise AttributeError("tmat is yet to be computed")
+            raise AttributeError('tmat is yet to be computed')
         return self._tmat[0:3, 3:4]
 
     @property
     def inv(self):
-        """
-        Get the inverse of the transformation matrix.
+        """Get the inverse of the transformation matrix
 
         Returns:
             A 4x4 Matrix.
         """
         if not hasattr(self, '_tinv'):
-            raise AttributeError("tinv is yet to be computed")
+            raise AttributeError('tinv is yet to be computed')
         return self._tinv
 
     @property
     def inv_rot(self):
-        """
-        Get the inverse of the rotation matrix.
+        """Get the inverse of the rotation matrix
 
         Returns:
             A 3x3 Matrix.
         """
         if not hasattr(self, '_tinv'):
-            raise AttributeError("tinv is yet to be computed")
+            raise AttributeError('tinv is yet to be computed')
         return self._tinv[0:3, 0:3]
 
     @property
     def inv_trans(self):
-        """
-        Get the inverse of the translation vector.
+        """Get the inverse of the translation vector
 
         Returns:
             A 3x1 Matrix.
         """
         if not hasattr(self, '_tinv'):
-            raise AttributeError("tinv is yet to be computed")
+            raise AttributeError('tinv is yet to be computed')
         return self._tinv[0:3, 3:4]
 
     @property
     def s_j_wrt_i(self):
-        """
-        Get the screw form of the transformation matrix.
+        """Get the screw form of the transformation matrix
 
         Returns:
             A 6x6 Matrix.
@@ -213,8 +205,7 @@ class TransformationMatrix(object):
 
     @property
     def s_i_wrt_j(self):
-        """
-        Get the screw form of the inverse transformation matrix.
+        """Get the screw form of the inverse transformation matrix
 
         Returns:
             A 6x6 Matrix.
@@ -222,8 +213,7 @@ class TransformationMatrix(object):
         return self._sinv.val
 
     def update(self, params):
-        """
-        Update the parameter values and all the matrices accordingly.
+        """Update the parameter values and all the matrices accordingly
 
         Args:
             params: A dict in which the keys correspond to the list of
@@ -231,7 +221,7 @@ class TransformationMatrix(object):
                 correspond to the values with which the parameters are
                 to be updated.
         """
-        for key, value in params.iteritems():
+        for key, value in params.items():
             attr = '_' + key
             if hasattr(self, attr):
                 setattr(self, attr, value)
@@ -243,15 +233,15 @@ class TransformationMatrix(object):
                 self._frame_i = int(value)
             else:
                 raise AttributeError(
-                    "%s is not a geometric parameter" % key
-                )
+                    '{} is not a geometric parameter'.format(key))
         self._compute_tmat()
         self._compute_tinv()
         self._compute_smat()
         self._compute_sinv()
 
     def _compute_tmat(self):
-        """
+        """Compute the transformation matrix between any two frames
+
         Call (proxy method) the actual function that computes the
         transformation matrix between any two frames.
         """
@@ -262,11 +252,9 @@ class TransformationMatrix(object):
         )
 
     def _compute_tinv(self):
-        """
-        Compute inverse of the transformation matrix.
-        """
+        """Compute the inverse of the transformation matrix"""
         if not hasattr(self, '_tmat'):
-            raise AttributeError("tmat is yet to be computed")
+            raise AttributeError('tmat is yet to be computed')
         self._tinv = sympy.eye(4)
         rot_inv = self.rot.transpose()
         trans_inv = -rot_inv * self.trans
@@ -274,18 +262,16 @@ class TransformationMatrix(object):
         self._tinv[0:3, 3:4] = trans_inv
 
     def _compute_smat(self):
-        """
-        Compute the transformation matrix in Screw (6x6) matrix form.
-        """
+        """Compute the transformation matrix in Screw (6x6) matrix form"""
         self._smat = Screw6(
             tl=self.rot, tr=tools.skew(self.trans),
             bl=sympy.zeros(3, 3), br=self.rot
         )
 
     def _compute_sinv(self):
-        """
-        Compute the inverse transformation matrix in Screw
-        (6x6) matrix form.
+        """Compute the inverse transformation matrix in screw matrix form
+
+        Compute the inverse transformation matrix in screw (6x6) matrix form.
         """
         self._sinv = Screw6(
             tl=self.inv_rot, tr=-(self.inv_rot * tools.skew(self.trans)),
@@ -293,7 +279,7 @@ class TransformationMatrix(object):
         )
 
     def _init_default(self):
-        """Initialise to 0 by default."""
+        """Initialise to 0 by default"""
         self._gamma = 0
         self._b = 0
         self._alpha = 0
@@ -302,9 +288,7 @@ class TransformationMatrix(object):
         self._r = 0
 
     def _has_frames(self, params):
-        """
-        Check if the frame and its antecedent are specified in a
-        given dict.
+        """Check if the frame and its antecedent are specified in a given dict
 
         Args:
             params: A dict containing the geometric parameters.
@@ -313,13 +297,13 @@ class TransformationMatrix(object):
             True if `frame` and `ant` keys are present in params. False
             otherwise.
         """
-        if params.has_key('frame') and params.has_key('ant'):
+        if 'frame' in params and 'ant' in params:
             return True
         else:
             return False
 
     def _cleanup(self):
-        """Remove attributes of the data structure."""
+        """Remove attributes of the data structure"""
         del self._tinv
         del self._tmat
         del self._gamma
@@ -328,5 +312,3 @@ class TransformationMatrix(object):
         del self._d
         del self._theta
         del self._r
-
-

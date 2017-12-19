@@ -34,6 +34,12 @@ from symoroui import kinematics as ui_kinematics
 from symoroui import labels as ui_labels
 from symoroviz import graphics
 
+if wx.version().startswith('3'):
+    g_wx_v3 = True
+else:
+    # WxPython 4+.
+    g_wx_v3 = False
+
 
 class MainFrame(wx.Frame):
     """This Frame contains the main window for SYMORO"""
@@ -63,12 +69,19 @@ class MainFrame(wx.Frame):
         # configure status bar
         self.statusbar.SetFieldsCount(number=2)
         self.statusbar.SetStatusWidths(widths=[-1, -1])
-        self.statusbar.SetStatusText(text="Ready", number=0)
-        self.statusbar.SetStatusText(
-            text="Location of robot files is {0}".format(
-                filemgr.get_base_path()
-            ), number=1
-        )
+        if g_wx_v3:
+            self.statusbar.SetStatusText(text='Ready', number=0)
+            self.statusbar.SetStatusText(
+                text='Location of robot files: "{0}"'.format(
+                    filemgr.get_base_path()
+                ), number=1
+            )
+        else:
+            self.statusbar.SetStatusText(text='Ready', i=0)
+            self.statusbar.SetStatusText(
+                text='Location of robot files: "{0}"'.format(
+                    filemgr.get_base_path()),
+                i=1)
 
     def load_robot(self):
         """
@@ -276,12 +289,15 @@ class MainFrame(wx.Frame):
             ), proportion=0,
             flag=wx.ALL | wx.ALIGN_LEFT, border=5
         )
-        szr_link.AddSpacer((4,4))
+        if g_wx_v3:
+            szr_link.AddSpacer((4,4))
+        else:
+            szr_link.AddSpacer(4)
         szr_link.Add(cmb_link, flag=wx.ALL | wx.ALIGN_RIGHT)
         szr_dyn_params.Add(szr_link, flag=wx.ALL | wx.ALIGN_CENTER)
         szr_grd_dyn = wx.GridBagSizer(0, 0)
         # add dynamic params to the grid
-        elements = OrderedDict(ui_labels.DYN_PARAMS.items()[1:])
+        elements = OrderedDict(list(ui_labels.DYN_PARAMS.items())[1:])
         self.params_in_grid(
             szr_grd_dyn, elements=elements, rows=4, cols=6, width=75
         )
@@ -405,8 +421,8 @@ class MainFrame(wx.Frame):
 
     def update_base_twist_params(self):
         pars = dict(
-            ui_labels.BASE_VEL_ACC.items() + \
-            ui_labels.GRAVITY_CMPNTS.items()
+            list(ui_labels.BASE_VEL_ACC.items()) + \
+            list(ui_labels.GRAVITY_CMPNTS.items())
         )
         for key in pars:
             par = pars[key].name
@@ -509,7 +525,10 @@ class MainFrame(wx.Frame):
         m_geom_constraint.Enable(constraint_enable)
         m_kin_constraint.Enable(constraint_enable)
         m_base_inertial_params.Enable(base_enable)
-        menu_bar.UpdateMenus()
+        if g_wx_v3:
+            menu_bar.UpdateMenus()
+        else:
+            menu_bar.Refresh()
 
     def create_menu(self):
         """Create the menu bar"""
@@ -520,32 +539,50 @@ class MainFrame(wx.Frame):
             file_menu, wx.ID_NEW, ui_labels.FILE_MENU['m_new']
         )
         self.Bind(wx.EVT_MENU, self.OnNew, m_new)
-        file_menu.AppendItem(m_new)
+        if g_wx_v3:
+            file_menu.AppendItem(m_new)
+        else:
+            file_menu.Append(m_new)
         m_open = wx.MenuItem(
             file_menu, wx.ID_OPEN, ui_labels.FILE_MENU['m_open']
         )
         self.Bind(wx.EVT_MENU, self.OnOpen, m_open)
-        file_menu.AppendItem(m_open)
+        if g_wx_v3:
+            file_menu.AppendItem(m_open)
+        else:
+            file_menu.Append(m_open)
         m_save = wx.MenuItem(
             file_menu, wx.ID_SAVE, ui_labels.FILE_MENU['m_save']
         )
         self.Bind(wx.EVT_MENU, self.OnSave, m_save)
-        file_menu.AppendItem(m_save)
+        if g_wx_v3:
+            file_menu.AppendItem(m_save)
+        else:
+            file_menu.Append(m_save)
         m_save_as = wx.MenuItem(
             file_menu, wx.ID_SAVEAS, ui_labels.FILE_MENU['m_save_as']
         )
         self.Bind(wx.EVT_MENU, self.OnSaveAs, m_save_as)
-        file_menu.AppendItem(m_save_as)
+        if g_wx_v3:
+            file_menu.AppendItem(m_save_as)
+        else:
+            file_menu.Append(m_save_as)
         m_pref = wx.MenuItem(
             file_menu, wx.ID_ANY, ui_labels.FILE_MENU['m_pref']
         )
-        file_menu.AppendItem(m_pref)
+        if g_wx_v3:
+            file_menu.AppendItem(m_pref)
+        else:
+            file_menu.Append(m_pref)
         file_menu.AppendSeparator()
         m_exit = wx.MenuItem(
             file_menu, wx.ID_EXIT, ui_labels.FILE_MENU['m_exit']
         )
         self.Bind(wx.EVT_MENU, self.OnClose, m_exit)
-        file_menu.AppendItem(m_exit)
+        if g_wx_v3:
+            file_menu.AppendItem(m_exit)
+        else:
+            file_menu.Append(m_exit)
         menu_bar.Append(file_menu, ui_labels.MAIN_MENU['file_menu'])
         # menu item - geometric
         geom_menu = wx.Menu()
@@ -555,27 +592,42 @@ class MainFrame(wx.Frame):
         self.Bind(
             wx.EVT_MENU, self.OnTransformationMatrix, m_trans_matrix
         )
-        geom_menu.AppendItem(m_trans_matrix)
+        if g_wx_v3:
+            geom_menu.AppendItem(m_trans_matrix)
+        else:
+            geom_menu.Append(m_trans_matrix)
         m_fast_dgm = wx.MenuItem(
             geom_menu, wx.ID_ANY, ui_labels.GEOM_MENU['m_fast_dgm']
         )
         self.Bind(wx.EVT_MENU, self.OnFastGeometricModel, m_fast_dgm)
-        geom_menu.AppendItem(m_fast_dgm)
+        if g_wx_v3:
+            geom_menu.AppendItem(m_fast_dgm)
+        else:
+            geom_menu.Append(m_fast_dgm)
         m_igm_paul = wx.MenuItem(
             geom_menu, wx.ID_ANY, ui_labels.GEOM_MENU['m_igm_paul']
         )
         self.Bind(wx.EVT_MENU, self.OnIgmPaul, m_igm_paul)
-        geom_menu.AppendItem(m_igm_paul)
+        if g_wx_v3:
+            geom_menu.AppendItem(m_igm_paul)
+        else:
+            geom_menu.Append(m_igm_paul)
         m_igm_pieper = wx.MenuItem(
             geom_menu, wx.ID_ANY, ui_labels.GEOM_MENU['m_igm_pieper']
         )
         self.Bind(wx.EVT_MENU, self.OnIgmPieper, m_igm_pieper)
-        geom_menu.AppendItem(m_igm_pieper)
+        if g_wx_v3:
+            geom_menu.AppendItem(m_igm_pieper)
+        else:
+            geom_menu.Append(m_igm_pieper)
         m_geom_constraint = wx.MenuItem(
             geom_menu, wx.ID_ANY, ui_labels.GEOM_MENU['m_geom_constraint']
         )
         self.Bind(wx.EVT_MENU, self.OnConstraintGeoEq, m_geom_constraint)
-        geom_menu.AppendItem(m_geom_constraint)
+        if g_wx_v3:
+            geom_menu.AppendItem(m_geom_constraint)
+        else:
+            geom_menu.Append(m_geom_constraint)
         menu_bar.Append(geom_menu, ui_labels.MAIN_MENU['geom_menu'])
         # menu item - kinematic
         kin_menu = wx.Menu()
@@ -583,33 +635,51 @@ class MainFrame(wx.Frame):
             kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_jac_matrix']
         )
         self.Bind(wx.EVT_MENU, self.OnJacobianMatrix, m_jac_matrix)
-        kin_menu.AppendItem(m_jac_matrix)
+        if g_wx_v3:
+            kin_menu.AppendItem(m_jac_matrix)
+        else:
+            kin_menu.Append(m_jac_matrix)
         m_determinant = wx.MenuItem(
             kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_determinant']
         )
         self.Bind(wx.EVT_MENU, self.OnDeterminant, m_determinant)
-        kin_menu.AppendItem(m_determinant)
+        if g_wx_v3:
+            kin_menu.AppendItem(m_determinant)
+        else:
+            kin_menu.Append(m_determinant)
         m_vel = wx.MenuItem(
             kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_vel']
         )
         self.Bind(wx.EVT_MENU, self.OnVelocities, m_vel)
-        kin_menu.AppendItem(m_vel)
+        if g_wx_v3:
+            kin_menu.AppendItem(m_vel)
+        else:
+            kin_menu.Append(m_vel)
         m_acc = wx.MenuItem(
             kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_acc']
         )
         self.Bind(wx.EVT_MENU, self.OnAccelerations, m_acc)
-        kin_menu.AppendItem(m_acc)
+        if g_wx_v3:
+            kin_menu.AppendItem(m_acc)
+        else:
+            kin_menu.Append(m_acc)
         m_jpqp = wx.MenuItem(
             kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_jpqp']
         )
         self.Bind(wx.EVT_MENU, self.OnJpqp, m_jpqp)
-        kin_menu.AppendItem(m_jpqp)
+        if g_wx_v3:
+            kin_menu.AppendItem(m_jpqp)
+        else:
+            kin_menu.Append(m_jpqp)
         #TODO: add the dialog, ask for projection frame
         m_kin_constraint = wx.MenuItem(
             kin_menu, wx.ID_ANY, ui_labels.KIN_MENU['m_kin_constraint']
         )
         self.Bind(wx.EVT_MENU, self.OnCkel, m_kin_constraint)
-        kin_menu.AppendItem(m_kin_constraint)
+        if g_wx_v3:
+            kin_menu.AppendItem(m_kin_constraint)
+        else:
+            kin_menu.Append(m_kin_constraint)
         menu_bar.Append(kin_menu, ui_labels.MAIN_MENU['kin_menu'])
         # menu item - dynamic
         dyn_menu = wx.Menu()
@@ -617,22 +687,34 @@ class MainFrame(wx.Frame):
             dyn_menu, wx.ID_ANY, ui_labels.DYN_MENU['m_idym']
         )
         self.Bind(wx.EVT_MENU, self.OnInverseDynamic, m_idym)
-        dyn_menu.AppendItem(m_idym)
+        if g_wx_v3:
+            dyn_menu.AppendItem(m_idym)
+        else:
+            dyn_menu.Append(m_idym)
         m_inertia_matrix = wx.MenuItem(
             dyn_menu, wx.ID_ANY, ui_labels.DYN_MENU['m_inertia_matrix']
         )
         self.Bind(wx.EVT_MENU, self.OnInertiaMatrix, m_inertia_matrix)
-        dyn_menu.AppendItem(m_inertia_matrix)
+        if g_wx_v3:
+            dyn_menu.AppendItem(m_inertia_matrix)
+        else:
+            dyn_menu.Append(m_inertia_matrix)
         m_h_term = wx.MenuItem(
             dyn_menu, wx.ID_ANY, ui_labels.DYN_MENU['m_h_term']
         )
         self.Bind(wx.EVT_MENU, self.OnCentrCoriolGravTorq, m_h_term)
-        dyn_menu.AppendItem(m_h_term)
+        if g_wx_v3:
+            dyn_menu.AppendItem(m_h_term)
+        else:
+            dyn_menu.Append(m_h_term)
         m_ddym = wx.MenuItem(
             dyn_menu, wx.ID_ANY, ui_labels.DYN_MENU['m_ddym']
         )
         self.Bind(wx.EVT_MENU, self.OnDirectDynamicModel, m_ddym)
-        dyn_menu.AppendItem(m_ddym)
+        if g_wx_v3:
+            dyn_menu.AppendItem(m_ddym)
+        else:
+            dyn_menu.Append(m_ddym)
         menu_bar.Append(dyn_menu, ui_labels.MAIN_MENU['dyn_menu'])
         # menu item - identification
         iden_menu = wx.Menu()
@@ -640,7 +722,10 @@ class MainFrame(wx.Frame):
             iden_menu, wx.ID_ANY, ui_labels.IDEN_MENU['m_dyn_iden_model']
         )
         self.Bind(wx.EVT_MENU, self.OnDynIdentifModel, m_dyn_iden_model)
-        iden_menu.AppendItem(m_dyn_iden_model)
+        if g_wx_v3:
+            iden_menu.AppendItem(m_dyn_iden_model)
+        else:
+            iden_menu.Append(m_dyn_iden_model)
         m_base_inertial_params = wx.MenuItem(
             iden_menu, wx.ID_ANY,
             ui_labels.IDEN_MENU['m_base_inertial_params']
@@ -648,7 +733,10 @@ class MainFrame(wx.Frame):
         self.Bind(
             wx.EVT_MENU, self.OnBaseInertialParams, m_base_inertial_params
         )
-        iden_menu.AppendItem(m_base_inertial_params)
+        if g_wx_v3:
+            iden_menu.AppendItem(m_base_inertial_params)
+        else:
+            iden_menu.Append(m_base_inertial_params)
         # TODO: uncomment lines below to include Energy Identification
         # Model
         #m_energy_iden_model = wx.MenuItem(
@@ -666,7 +754,10 @@ class MainFrame(wx.Frame):
             viz_menu, wx.ID_ANY, ui_labels.VIZ_MENU['m_viz']
         )
         self.Bind(wx.EVT_MENU, self.OnVisualisation, m_viz)
-        viz_menu.AppendItem(m_viz)
+        if g_wx_v3:
+            viz_menu.AppendItem(m_viz)
+        else:
+            viz_menu.Append(m_viz)
         menu_bar.Append(viz_menu, ui_labels.MAIN_MENU['viz_menu'])
         # set menu bar
         self.SetMenuBar(menu_bar)
@@ -702,13 +793,12 @@ class MainFrame(wx.Frame):
         dlg.Destroy()
 
     def model_success(self, out_file_path):
-        msg = ("The output of the computed model has been saved at:\n")
+        msg = ('The output of the computed model has been saved at:\n')
         msg = msg + out_file_path
         self.message_info(msg)
 
     def prompt_file_save(self, model_symo):
-        """
-        Prompt a file dialog box and save the file.
+        """Prompt a file dialog box and save the file.
 
         Args:
             model_symo: An instance of SymbolManager.

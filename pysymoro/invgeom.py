@@ -7,7 +7,7 @@
 
 """
 This module of SYMORO package provides symbolic
-solutions for inverse geompetric problem.
+solutions for the inverse geometric problem.
 """
 
 
@@ -20,10 +20,10 @@ from symoroutils import symbolmgr
 from symoroutils import tools
 
 
-EMPTY = var("EMPTY")
+EMPTY = var('EMPTY')
 
-T_GENERAL = Matrix([var("s1,n1,a1,p1"), var("s2,n2,a2,p2"),
-                    var("s3,n3,a3,p3"), [0, 0, 0, 1]])
+T_GENERAL = Matrix([var('s1,n1,a1,p1'), var('s2,n2,a2,p2'),
+                    var('s3,n3,a3,p3'), [0, 0, 0, 1]])
 
 # Dictionary for equation type classification.
 eq_dict = {(1, 0, 0): 0, (0, 1, 0): 1, (1, 1, 0): 2,
@@ -73,6 +73,7 @@ def _paul_solve(robo, symo, nTm, n, m, known_vars=None):
                 iTm = trc.matrix_inv() * iTm
             tr = tr_list.pop(0)
             if tr.val.atoms(Symbol) - knowns:
+                # If one of the symbols in tr is not in knowns.
                 M_eq = tr.matrix() * to_matrix(tr_list, simplify=False)
                 while True:
                     found = _look_for_eq(symo, M_eq - iTm,
@@ -90,8 +91,8 @@ def _paul_solve(robo, symo, nTm, n, m, known_vars=None):
 
 def _replace_EMPTY(T, tr_list):
     T_sym = to_matrix(tr_list, simplify=True)
-    for e1 in xrange(4):
-        for e2 in xrange(4):
+    for e1 in range(4):
+        for e2 in range(4):
             if T[e1, e2].has(EMPTY):
                 T[e1, e2] = T_sym[e1, e2]
 
@@ -116,9 +117,9 @@ def _extract_const_transforms(tr_list, knowns):
 
 def _look_for_eq(symo, M_eq, knowns, th_all, r_all):
     cont_search = False
-    eq_candidates = [list() for list_index in xrange(5)]
-    for e1 in xrange(3):
-        for e2 in xrange(4):
+    eq_candidates = [[] for _ in range(5)]
+    for e1 in range(3):
+        for e2 in range(4):
             eq = M_eq[e1, e2]
             if not isinstance(eq, Expr) or eq.is_Atom:
                 continue
@@ -146,15 +147,15 @@ def _look_for_eq(symo, M_eq, knowns, th_all, r_all):
 
 def loop_solve(robo, symo, know=None):
     # TODO: rewrite; Add parallelogram detection
-    q_vec = [robo.get_q(i) for i in xrange(robo.NF)]
+    q_vec = [robo.get_q(i) for i in range(robo.NF)]
     loops = []
     if know is None:
         know = robo.q_active
         # set(q for i, q in enumerate(q_vec) if robo.mu[i] == 1)
     for i, j in robo.loop_terminals:
         chain = robo.loop_chain(i, j)
-        know_ij = set(q_vec[i] for i in chain if q_vec[i] in know)
-        unknow_ij = set(q_vec[i] for i in chain if q_vec[i] not in know)
+        know_ij = {q_vec[i] for i in chain if q_vec[i] in know}
+        unknow_ij = {q_vec[i] for i in chain if q_vec[i] not in know}
         loops.append([len(unknow_ij), i, j, know_ij, unknow_ij])
     while loops:
         heapify(loops)
@@ -172,7 +173,8 @@ def igm_paul(robo, T_ref, n):
         T_ref = Matrix(4, 4, T_ref)
     symo = symbolmgr.SymbolManager()
     symo.file_open(robo, 'igm')
-    symo.write_params_table(robo, 'Inverse Geometric Model for frame %s' % n)
+    symo.write_params_table(robo,
+                            'Inverse Geometric Model for frame {}'.format(n))
     _paul_solve(robo, symo, T_ref, 0, n)
     symo.file_close()
     return symo
@@ -184,11 +186,11 @@ def _try_solve_0(symo, eq_sys, knowns):
     for eq, [r], th_names in eq_sys:
         X = tools.get_max_coef(eq, r)
         if X != 0:
-            Y = X*r - eq
-            symo.write_line("# Solving type 1")
+            Y = X * r - eq
+            symo.write_line('# Solving type 1')
             X = symo.replace(trigsimp(X), 'X', r)
             Y = symo.replace(trigsimp(Y), 'Y', r)
-            symo.add_to_dict(r, Y/X)
+            symo.add_to_dict(r, Y / X)
             knowns.add(r)
             res = True
     return res
@@ -196,21 +198,22 @@ def _try_solve_0(symo, eq_sys, knowns):
 
 def _try_solve_1(symo, eq_sys, knowns):
     res = False
-    for i in xrange(len(eq_sys)):
+    for i in range(len(eq_sys)):
         eqi, rs_i, [th_i] = eq_sys[i]
         if th_i in knowns:
             continue
         Xi, Yi, Zi, i_ok = _get_coefs(eqi, sin(th_i), cos(th_i), th_i)
         zero = tools.ZERO
-        i_ok &= sum([Xi == zero, Yi == zero, Zi == zero]) <= 1
+        # TODO: replace with a more Pythonic expression.
+        i_ok &= (sum([Xi == zero, Yi == zero, Zi == zero]) <= 1)
         if not i_ok:
             continue
         j_ok = False
-        for j in xrange(i+1, len(eq_sys)):
+        for j in range(i+1, len(eq_sys)):
             eqj, rs_j, [th_j] = eq_sys[j]
             if th_i == th_j:
                 Xj, Yj, Zj, j_ok = _get_coefs(eqj, sin(th_j), cos(th_j), th_i)
-                j_ok &= (Xi*Yj != Xj*Yi)
+                j_ok &= (Xi * Yj != Xj * Yi)
                 if j_ok:
                     break
         if j_ok:
@@ -227,9 +230,9 @@ def _try_solve_1(symo, eq_sys, knowns):
 def _try_solve_2(symo, eq_sys, knowns):
     if all(len(rs) == 0 for eq, rs, ths in eq_sys):
         return False
-    for i in xrange(len(eq_sys)):
+    for i in range(len(eq_sys)):
         all_ok = False
-        for j in xrange(len(eq_sys)):
+        for j in range(len(eq_sys)):
             eqj, rs_j, ths_j = eq_sys[j]
             eqi, rs_i, ths_i = eq_sys[i]
             if i == j or set(ths_i) != set(ths_j) or set(rs_j) != set(rs_i):
@@ -272,9 +275,9 @@ def _match_coef(A1, A2, B1, B2):
 
 
 def _try_solve_3(symo, eq_sys, knowns):
-    for i in xrange(len(eq_sys)):
+    for i in range(len(eq_sys)):
         all_ok = False
-        for j in xrange(len(eq_sys)):
+        for j in range(len(eq_sys)):
             eqj, rs_j, ths_i = eq_sys[j]
             eqi, rs_i, ths_j = eq_sys[i]
             if i == j or set(ths_i) != set(ths_j):
@@ -283,29 +286,29 @@ def _try_solve_3(symo, eq_sys, knowns):
             th2 = ths_i[1]
             C1, S1 = cos(th1), sin(th1)
             C2, S2 = cos(th2), sin(th2)
-            X1, Y1, ZW1, i_ok = _get_coefs(eqi, C1, S1, th1)
-            X2, Y2, ZW2, j_ok = _get_coefs(eqj, S1, C1, th1)
-            Y2 = -Y2
-            V1, W1, Z1, iw_ok = _get_coefs(ZW1, C2, S2, th1, th2)
-            V2, W2, Z2, jw_ok = _get_coefs(ZW2, S2, C2, th1, th2)
+            Xi1, Yi1, Zi1, i_ok = _get_coefs(eqi, C1, S1, th1)
+            Xj1, Yj1, Zj1, j_ok = _get_coefs(eqj, S1, C1, th1)
+            Yj1 = -Yj1
+            V1, W1, Z1, iw_ok = _get_coefs(Zi1, C2, S2, th1, th2)
+            V2, W2, Z2, jw_ok = _get_coefs(Zj1, S2, C2, th1, th2)
             W2 = -W2
             all_ok = j_ok and i_ok and jw_ok and iw_ok
-            all_ok &= _check_const((X1, Y1), th2)
-            if X1 == 0 or Y1 == 0:
-                X1, Y1, V1, W1 = V1, W1, X1, Y1
-                X2, Y2, V2, W2 = V2, W2, X2, Y2
+            all_ok &= _check_const((Xi1, Yi1), th2)
+            if Xi1 == 0 or Yi1 == 0:
+                Xi1, Yi1, V1, W1 = V1, W1, Xi1, Yi1
+                Xj1, Yj1, V2, W2 = V2, W2, Xj1, Yj1
                 th1, th2 = th2, th1
-            all_ok &= _match_coef(X1, X2, Y1, Y2)
+            all_ok &= _match_coef(Xi1, Xj1, Yi1, Yj1)
             all_ok &= _match_coef(V1, V2, W1, W2)
             eps = 1
-            if X1 == X2 and Y1 == Y2:
+            if Xi1 == Xj1 and Yi1 == Yj1:
                 if W1 == -W2 and V1 == -V2:
                     eps = -1
             else:
                 if W1 == W2 and V1 == V2:
                     eps = -1
                 Z2 = -Z2
-            for a in (X1, X2, Y1, Y2):
+            for a in (Xi1, Xj1, Yi1, Yj1):
                 all_ok &= not a.has(C2)
                 all_ok &= not a.has(S2)
             if all_ok:
@@ -313,7 +316,7 @@ def _try_solve_3(symo, eq_sys, knowns):
         if not all_ok:
             continue
         symo.write_line("# Solving type 6, 7")
-        _solve_type_7(symo, V1, W1, -X1, -Y1, -Z1, -Z2, eps, th1, th2)
+        _solve_type_7(symo, V1, W1, -Xi1, -Yi1, -Z1, -Z2, eps, th1, th2)
         knowns |= {th1, th2}
         return True
     return False
@@ -322,9 +325,9 @@ def _try_solve_3(symo, eq_sys, knowns):
 # TODO: make it with itertool
 def _try_solve_4(symo, eq_sys, knowns):
     res = False
-    for i in xrange(len(eq_sys)):
+    for i in range(len(eq_sys)):
         all_ok = False
-        for j in xrange(len(eq_sys)):
+        for j in range(len(eq_sys)):
             eqj, rs_j, ths_j = eq_sys[j]
             eqi, rs_i, ths_i = eq_sys[i]
             if i == j or set(ths_i) != set(ths_j):

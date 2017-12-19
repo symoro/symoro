@@ -20,21 +20,21 @@ from collections import OrderedDict
 
 # main window
 MAIN_WIN = dict(
-    prog_name="SYMORO",
-    window_title="SYMORO - SYmbolic MOdelling of RObots"
+    prog_name='SYMORO',
+    window_title='SYMORO - SYmbolic MOdelling of RObots'
 )
 
 # interface contents
 # TODO: add event handlers to dict entries as well
 BOX_TITLES = dict(
-    robot_des="Robot Description",
-    robot_type="Robot Type",
-    gravity="Gravity Components",
-    location="Robot Location",
-    geom_params="Geometric Parameters",
-    dyn_params="Dynamic Parameters and External Forces",
-    base_vel_acc="Velocity and Acceleration of the base",
-    joint_params="Joint Stiffness, Velocity and Acceleration"
+    robot_des='Robot Description',
+    robot_type='Robot Type',
+    gravity='Gravity Components',
+    location='Robot Location',
+    geom_params='Geometric Parameters',
+    dyn_params='Dynamic Parameters and External Forces',
+    base_vel_acc='Velocity and Acceleration of the base',
+    joint_params='Joint Stiffness, Velocity and Acceleration'
 )
 # named tuple to hold the content field entries
 FieldEntry = namedtuple(
@@ -97,12 +97,11 @@ DYN_PARAMS_F = OrderedDict([
 ])
 # dynamic params got by concatenation
 DYN_PARAMS = OrderedDict(
-    [('link', FieldEntry('Link', 'link', 'cmb', None, 'OnLinkChanged', -1))] + \
-    DYN_PARAMS_I.items() + \
-    DYN_PARAMS_M.items() + \
-    DYN_PARAMS_X.items() + \
-    DYN_PARAMS_F.items()
-)
+    [('link', FieldEntry('Link', 'link', 'cmb', None, 'OnLinkChanged', -1))])
+DYN_PARAMS.update(DYN_PARAMS_I)
+DYN_PARAMS.update(DYN_PARAMS_M)
+DYN_PARAMS.update(DYN_PARAMS_X)
+DYN_PARAMS.update(DYN_PARAMS_F)
 # geometric params
 GEOM_PARAMS = OrderedDict([
     ('frame', FieldEntry('Frame', 'frame', 'cmb', (0, 0), 'OnFrameChanged', -1)),
@@ -136,49 +135,48 @@ ROBOT_TYPE = OrderedDict([
 
 # menu bar
 # TODO: add event handlers to dict entries as well
-MAIN_MENU = OrderedDict(
-    file_menu="&File",
-    geom_menu="&Geometric",
-    kin_menu="&Kinematic",
-    dyn_menu="&Dynamic",
-    iden_menu="&Identification",
-    optim_menu="&Optimiser",
-    viz_menu="&Visualisation"
-)
-VIZ_MENU = OrderedDict(m_viz="&Visualisation")
-IDEN_MENU = OrderedDict(
-    m_base_inertial_params="Base Inertial parameters",
-    m_dyn_iden_model="Dynamic Identification Model",
-    m_energy_iden_model="Energy Identification Model"
-)
-DYN_MENU = OrderedDict(
-    m_idym="Inverse Dynamic Model",
-    m_inertia_matrix="Inertia matrix",
-    m_h_term="Centrifugal, Coriolis & Gravity torques",
-    m_ddym="Direct Dynamic Model"
-)
-KIN_MENU = OrderedDict(
-    m_jac_matrix="Jacobian matrix",
-    m_determinant="Determinant of a Jacobian",
-    m_kin_constraint="Kinematic constraint equation of loops",
-    m_vel="Velocities",
-    m_acc="Accelerations",
-    m_jpqp="Jpqp"
-)
-GEOM_MENU = OrderedDict(
-    m_trans_matrix="Transformation matrix",
-    m_fast_dgm="Fast Geometric model",
-    m_igm_paul="IGM - Paul method",
-    m_igm_pieper="IGM - Pieper method",
-    m_geom_constraint="Geometric constraint equation of loops"
-)
-FILE_MENU = OrderedDict(
-    m_new="&New",
-    m_open="&Open",
-    m_save="&Save",
-    m_save_as="Save &As New Robot",
-    m_pref="Preferences -- (unavailable)",
-    m_exit="E&xit"
-)
-
+MAIN_MENU = OrderedDict([
+    ('file_menu', '&File'),
+    ('geom_menu', '&Geometric'),
+    ('kin_menu', '&Kinematic'),
+    ('dyn_menu', '&Dynamic'),
+    ('iden_menu', '&Identification'),
+    ('optim_menu', '&Optimiser'),
+    ('viz_menu', '&Visualisation'),
+])
+VIZ_MENU = OrderedDict(m_viz='&Visualisation')
+IDEN_MENU = OrderedDict([
+    ('m_base_inertial_params', 'Base Inertial parameters'),
+    ('m_dyn_iden_model', 'Dynamic Identification Model'),
+    ('m_energy_iden_model', 'Energy Identification Model'),
+])
+DYN_MENU = OrderedDict([
+    ('m_idym', 'Inverse Dynamic Model'),
+    ('m_inertia_matrix', 'Inertia matrix'),
+    ('m_h_term', 'Centrifugal, Coriolis & Gravity torques'),
+    ('m_ddym', 'Direct Dynamic Model'),
+])
+KIN_MENU = OrderedDict([
+    ('m_jac_matrix', 'Jacobian matrix'),
+    ('m_determinant', 'Determinant of a Jacobian'),
+    ('m_kin_constraint', 'Kinematic constraint equation of loops'),
+    ('m_vel', 'Velocities'),
+    ('m_acc', 'Accelerations'),
+    ('m_jpqp', 'Jpqp'),
+])
+GEOM_MENU = OrderedDict([
+    ('m_trans_matrix', 'Transformation matrix'),
+    ('m_fast_dgm', 'Fast Geometric model'),
+    ('m_igm_paul', 'IGM - Paul method'),
+    ('m_igm_pieper', 'IGM - Pieper method'),
+    ('m_geom_constraint', 'Geometric constraint equation of loops'),
+])
+FILE_MENU = OrderedDict([
+    ('m_new', '&New'),
+    ('m_open', '&Open'),
+    ('m_save', '&Save'),
+    ('m_save_as', 'Save &As New Robot'),
+    ('m_pref', 'Preferences -- (unavailable)'),
+    ('m_exit', 'E&xit'),
+])
 
