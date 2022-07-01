@@ -480,7 +480,7 @@ class MainWindow(wx.Frame):
         btn_reset = wx.Button(self.p, label="Reset All")
         btn_reset.Bind(wx.EVT_BUTTON, self.OnResetJoints)
         grd_szr_control.Add(btn_reset, pos=(5, 0), flag=wx.ALIGN_CENTER)
-        # random buttom
+        # random button
         btn_random = wx.Button(self.p, label="Random")
         btn_random.Bind(wx.EVT_BUTTON, self.OnFindRandom)
         grd_szr_control.Add(btn_random, pos=(6, 0), flag=wx.ALIGN_CENTER)

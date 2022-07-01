@@ -21,7 +21,7 @@ def get_transformation_matrix(gamma, b, alpha, d, theta, r):
         that give the relationship between any two frames that are
         defined using the modified DH-method.
     Returns:
-        A 4x4 Matrix that is the homogenous transformation matrix
+        A 4x4 Matrix that is the homogeneous transformation matrix
         between the frames.
     """
     # simplify computation

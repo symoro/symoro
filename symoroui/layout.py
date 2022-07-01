@@ -95,7 +95,7 @@ class MainFrame(wx.Frame):
             elif flag == tools.FAIL:
                 robo = samplerobots.rx90()
                 self.message_warning(
-                    "While reading file an error occured."
+                    "While reading file an error occurred."
                 )
             return robo
 
@@ -839,7 +839,7 @@ class MainFrame(wx.Frame):
             else:
                 if flag == tools.FAIL:
                     self.message_warning(
-                        "While reading file an error occured."
+                        "While reading file an error occurred."
                     )
                 self.robo = new_robo
                 self.feed_data(defaults=False)

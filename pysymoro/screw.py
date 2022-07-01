@@ -17,7 +17,7 @@ class Screw(object):
         three rows represent the linear term and the last three rows
         represent the angular term.
         This class basically adds a lot of constraints to the Matrix
-        class of sympy - atleast tries to :)
+        class of sympy - at least tries to :)
     """
     def __init__(self, lin=zeros(3, 1), ang=zeros(3, 1)):
         """

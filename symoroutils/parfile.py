@@ -124,7 +124,7 @@ def writepar(robo):
 def readpar(robo_name, file_path):
     """Return:
         robo: an instance of Robot, read from file
-        flag: indicates if any errors accured. (tools.FAIL)
+        flag: indicates if any errors occurred. (tools.FAIL)
     """
     with open(file_path, 'r') as f:
         f.seek(0)
