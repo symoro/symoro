@@ -318,7 +318,7 @@ class Robot(object):
     def compute_pseudotorques(self):
         """
         Compute Coriolis, Centrifugal, Gravity, Friction and external
-        torques using Newton-Euler algortihm.
+        torques using Newton-Euler algorithm.
         """
         pseudo_robo = copy.deepcopy(self)
         pseudo_robo.qddot = zeros(pseudo_robo.NL, 1)
@@ -620,7 +620,7 @@ class Robot(object):
             j = self.ant[j]
 
     def get_inert_param(self, j):
-        """Returns 10-vector of inertia paremeters of link j.
+        """Returns 10-vector of inertia parameters of link j.
 
         Parameters
         ==========

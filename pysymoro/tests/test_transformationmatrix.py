@@ -83,7 +83,7 @@ class TestTransformationMatrix(unittest.TestCase):
         )
 
     def test_init(self):
-        """Test contructor"""
+        """Test constructor"""
         params = self.params
         # test raise NotImplementedError
         self.assertRaises(NotImplementedError, TransformationMatrix)

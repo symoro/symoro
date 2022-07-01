@@ -377,7 +377,7 @@ def _transform(robo, j, invert=False):
 
 def compute_transform(robo, symo, j, antRj, antPj):
     """Internal function. Computes rotation matrix and translation vector
-    of ant_T_j homogenuous transform. Does the trigonometric subsctitution
+    of ant_T_j homogeneous transform. Does the trigonometric substitution
     and saves the symbols into symo.sydi
 
     Notes

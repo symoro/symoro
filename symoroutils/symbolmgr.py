@@ -206,7 +206,7 @@ class SymbolManager(object):
         name: string or var
             denotion of the expression
         index: int or string, optional
-            will be attached to the name. Usualy used for link or joint number.
+            will be attached to the name. Usually used for link or joint number.
             Parameter exists for usage convenience
         forced: bool, optional
             If True, the new symbol will be created even if old symbol
@@ -214,7 +214,7 @@ class SymbolManager(object):
 
         Notes
         =====
-        Generaly only complex expressions, which contain + - * / ** operations
+        Generally only complex expressions, which contain + - * / ** operations
         will be replaced by a new symbol
         """
         if not forced:
@@ -241,7 +241,7 @@ class SymbolManager(object):
         name: string
             denotion of the expression
         index: int or string, optional
-            will be attached to the name. Usualy used for link
+            will be attached to the name. Usually used for link
             or joint number. Parameter exists for usage convenience
         forced: bool, optional
             If True, the new symbol will be created even if old symbol
@@ -346,7 +346,7 @@ class SymbolManager(object):
 
         Notes
         =====
-        The synamic model generation program can be started with this function
+        The dynamic model generation program can be started with this function
         """
         if title != '':
             self.write_line(title)
@@ -405,7 +405,7 @@ class SymbolManager(object):
         self.write_line(str(A) + ' = ' + str(B) + ';')
 
     def write_line(self, line=''):
-        """Writes string data into tha output with new line symbol
+        """Writes string data into the output with new line symbol
 
         Parameters
         ==========
@@ -434,7 +434,7 @@ class SymbolManager(object):
         robo: Robot instance
             provides the robot's name
         ext: string
-            provides the file name extention
+            provides the file name extension
         """
         fname = filemgr.get_file_path(robo, ext)
         self.file_out = open(fname, 'w')
@@ -448,7 +448,7 @@ class SymbolManager(object):
         robo: Robot instance
             provides the robot's name
         ext: string
-            provides the file name extention
+            provides the file name extension
         """
         if self.file_out is not None:
             self.write_line('*=*')
@@ -575,11 +575,11 @@ class SymbolManager(object):
         ==========
         name: string
             Future function's name, must be different for
-            different fucntions
+            different functions
         to_return: list, Matrix or tuple of them
-            Determins the shape of the output and symbols inside it
+            Determines the shape of the output and symbols inside it
         *args: any number of lists, Matrices or tuples of them
-            Determins the shape of the input and symbols
+            Determines the shape of the input and symbols
             names to assigned
 
         Notes
@@ -606,11 +606,11 @@ class SymbolManager(object):
         ==========
         name: string
             Future function's name, must be different for
-            different fucntions
+            different functions
         to_return: list, Matrix or tuple of them
-            Determins the shape of the output and symbols inside it
+            Determines the shape of the output and symbols inside it
         *args: any number of lists, Matrices or tuples of them
-            Determins the shape of the input and symbols
+            Determines the shape of the input and symbols
             names to assigned
 
         Notes

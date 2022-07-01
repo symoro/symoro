@@ -25,7 +25,7 @@ class Screw6(object):
         Screw6()
         >>> # initialise to a given 6x6 matrix
         Screw6(<value>)
-        >>> # intiialise each of the 4 sub-matrices individually
+        >>> # initialise each of the 4 sub-matrices individually
         Screw6(<top-left>, <top-right>, <bottom-left>, <bottom-right>)
         >>> # initialise using keywords
         Screw6(value=<value>)

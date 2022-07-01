@@ -6,7 +6,7 @@
 
 
 """
-This module creates the dialog box for differrent kinematic model
+This module creates the dialog box for different kinematic model
 parameters.
 """
 

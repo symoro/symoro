@@ -223,7 +223,7 @@ def compute_vel_acc(
     first_link = 1
     if floating or robo.is_floating or robo.is_mobile:
         first_link = 0
-    #init auxilary matrix
+    #init auxiliary matrix
     U = ParamsInit.init_u(robo)
     for j in xrange(first_link, robo.NL):
         if j == 0:

@@ -116,7 +116,7 @@ def _compute_joint_torque_deriv(symo, param, arg, index):
             Dynamic parameter
         arg : var
             The real torque is equal to arg*param
-        index : strig
+        index : string
             identifies the parameter in the sybstituted symbol's name
     """
     if param != tools.ZERO and arg != tools.ZERO:

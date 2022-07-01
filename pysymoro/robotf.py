@@ -81,7 +81,7 @@ class FloatingRobot(object):
         to a separate function.
         The indices of the list start with 0 and the first object
         corresponds to parameters of frame 0 (base) wrt its antecedent
-        (some arbitary reference frame).
+        (some arbitrary reference frame).
         """
         self.geos = [GeoParams(j) for j in self.frame_nums]
         # properties independent of number of links, joints and frames
@@ -224,7 +224,7 @@ class FloatingRobot(object):
         Update the parameter values of the robot.
 
         Args:
-            kind: A string metioning the paramter type. More specifically
+            kind: A string metioning the parameter type. More specifically
                 indicating whether the parameters correspond to geometric
                 (`geos`), dynamic (`dyns`), base velocity (`base`),
                 base acceleration (`base`) or others (`misc`).
@@ -310,7 +310,7 @@ class FloatingRobot(object):
         Get the link numbers.
 
         Returns:
-            An iteratable object with the link numbers.
+            An iterable object with the link numbers.
         Note:
             Add 1 to number of links. This serves two purposes -
             one, it indicates a virtual link - to represent the base and
@@ -325,7 +325,7 @@ class FloatingRobot(object):
         Get the joint numbers.
 
         Returns:
-            An iteratable object with the joint numbers.
+            An iterable object with the joint numbers.
         Note:
             Add 1 to number of joints. This serves two purposes -
             one, it indicates a virtual joint 0 to represent the base and
@@ -340,7 +340,7 @@ class FloatingRobot(object):
         Get the frame numbers.
 
         Returns:
-            An iteratable object with the frame numbers.
+            An iterable object with the frame numbers.
         Note:
             Add 1 to number of frames in order to include the base
             frame as well. This also makes the list index 1 correspond
@@ -449,7 +449,7 @@ class FloatingRobot(object):
                         param[idx] = curr_params[attr]
                     except IndexError:
                         raise IndexError((
-                            "`{0}` doesnt have {1} index value."
+                            "`{0}` doesn't have {1} index value."
                         ).format(attr, str(idx)))
 
     def _update_dyns_geos(self, attr, params):
@@ -463,7 +463,7 @@ class FloatingRobot(object):
                 param[idx].update_params(params[key])
             except IndexError:
                 raise IndexError((
-                    "`{0}` doesnt have {1} index value."
+                    "`{0}` doesn't have {1} index value."
                 ).format(attr, str(idx)))
 
     def _init_maps(self):
